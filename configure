@@ -1,0 +1,11 @@
+#!/bin/sh
+
+case `uname` in
+Darwin)
+  qmake -spec macx-g++ CONFIG+=x86 modules="none +vlc_audio_video" VLC=/Users/jerome/Desktop/vlc-1.2.0-git/VLC.app/Contents/MacOS "$@"
+  ;;
+MINGW*)
+  qmake -spec win32-g++ modules="none +vlc_audio_video" VLC=/c/Users/Jerome/Desktop/vlc-1.2.0-git-20111024-0002/sdk "$@"
+  ;;
+esac
+
