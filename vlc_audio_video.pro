@@ -62,11 +62,24 @@
   # License: CC BY-SA 3.0
   INSTALLS += thismod_icon
 
-  macx:vlc_libs.path = $${MODINSTPATH}/lib/lib
-  !macx:vlc_libs.path = $${MODINSTPATH}/lib
-  vlc_libs.files = $${VLC}/lib/*
-  macx:vlc_plugins.path  = $${MODINSTPATH}/lib/plugins
-  !macx:vlc_plugins.path  = $${MODINSTPATH}/plugins
-  vlc_plugins.files = $${VLC}/plugins/*
+  macx {
+    vlc_libs.path = $${MODINSTPATH}/lib/lib
+    vlc_libs.files = $${VLC}/lib/*
+    vlc_plugins.path  = $${MODINSTPATH}/lib/plugins
+    vlc_plugins.files = $${VLC}/plugins/*
+  }
+  linux-g++* {
+    # Untested
+    vlc_libs.path = $${MODINSTPATH}/lib
+    vlc_libs.files = $${VLC}/lib/*
+    vlc_plugins.path  = $${MODINSTPATH}/plugins
+    vlc_plugins.files = $${VLC}/plugins/*
+  }
+  win32 {
+    vlc_libs.path = $${MODINSTPATH}/lib
+    vlc_libs.files = $${VLC}/../*.dll
+    vlc_plugins.path  = $${MODINSTPATH}/lib
+    vlc_plugins.files = $${VLC}/../plugins
+  }
   INSTALLS += vlc_libs vlc_plugins
 }
