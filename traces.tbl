@@ -38,4 +38,4 @@
 TRACE(builtins)
 TRACE(fileload)
 TRACE(video)
-
+TRACE(vlc)

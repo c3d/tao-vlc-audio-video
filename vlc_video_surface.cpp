@@ -38,7 +38,8 @@
 #ifdef Q_OS_WIN32
 #include <malloc.h>
 #endif
-
+#include <QStringList>
+#include <QVector>
 
 libvlc_instance_t *         VlcVideoSurface::vlc = NULL;
 VlcVideoSurface::VlcCleanup VlcVideoSurface::cleanup;
@@ -125,8 +126,8 @@ void VlcVideoSurface::stop()
         return;
     IFTRACE(video)
         debug() << "Stop\n";
-    libvlc_media_player_stop(player);
     libvlc_media_release(media);
+    libvlc_media_player_stop(player);
     media = NULL;
     state = VS_STOPPED;
 }
@@ -480,19 +481,25 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
 {
     if (!vlc)
     {
-        IFTRACE(video)
-            sdebug() << "Initializing VLC instance\n";
+        QVector<const char *> argv;
+        argv.append("--no-video-title-show");
+        IFTRACE(vlc)
+        {
+            argv.append("--extraintf=logger");
+            argv.append("--verbose=2");
+        }
+        else
+        {
+            argv.append("-q");
+        }
 
-        const char * const args[] = {
-            "--no-video-title-show",
-#if 0 // Debug
-            "--extraintf=logger", /* Log everything */
-            "--verbose=2", /* Be verbose */
-#else
-            "-q",
-#endif
-        };
-        vlc = libvlc_new(sizeof(args) / sizeof(args[0]), args);
+        IFTRACE(video)
+        {
+            sdebug() << "Initializing VLC instance with parameters:\n";
+            for (int i = 0; i < argv.size(); i++)
+                sdebug() << "  " << argv[i] << "\n";
+        }
+        vlc = libvlc_new(argv.size(), argv.data());
     }
     return vlc;
 }
