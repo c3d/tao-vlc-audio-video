@@ -22,8 +22,11 @@ module_description "fr",
                 "Le module VLCAudioVideo est Open Source et couvert par la " &
                 "license GPL."
 
-movie x, y, sx, sy, name ->
+movie x:real, y:real, sx:real, sy:real, name:text ->
     locally
         color "white"
         movie_texture name
+        scale sx, sy, 1
         rectangle x, y, texture_width, texture_height
+
+movie name:text -> movie 0, 0, 1, 1, name
