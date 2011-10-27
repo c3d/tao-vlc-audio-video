@@ -54,7 +54,10 @@ public:
         VS_PARSING,
         VS_PARSED,
         VS_PLAYING_FOR_ANALYSIS,
-        VS_READY_FOR_ANALYSIS
+        VS_READY_FOR_ANALYSIS,
+        VS_WAITING_FOR_SUBITEMS,
+        VS_ALL_SUBITEMS_RECEIVED,
+        VS_READY_FOR_PLAYBACK
     };
 
 public:
@@ -87,7 +90,8 @@ protected:
     bool                    updated;
     GLuint                  textureId;
     State                   state;
-    libvlc_event_manager_t *evm;
+    libvlc_event_manager_t *pevm;
+    libvlc_event_manager_t *mevm;
 
 protected:
     struct VlcCleanup
@@ -105,6 +109,7 @@ protected:
     void           getMediaInfo();
     void           startPlayback();
     void           startPlaybackForAnalysis();
+    void           getMediaSubItems();
 
 protected:
     static libvlc_instance_t *  vlcInstance();
@@ -113,10 +118,11 @@ protected:
     static void *  lockFrame(void *obj, void **plane);
     static void    unlockFrame(void *obj, void *picture, void *const *plane);
     static void    displayFrame(void *obj, void *picture);
-    static void    dropFrame(void *obj, void *picture);
 
     static void    mediaParsed(const struct libvlc_event_t *, void *obj);
-    static void    readyForInfo(const struct libvlc_event_t *, void *obj);
+    static void    playerPlaying(const struct libvlc_event_t *, void *obj);
+    static void    mediaSubItemAdded(const struct libvlc_event_t *, void *obj);
+    static void    playerEndReached(const struct libvlc_event_t *, void *obj);
 
 protected:
     static libvlc_instance_t *  vlc;

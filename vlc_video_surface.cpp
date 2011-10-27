@@ -36,6 +36,7 @@
 #include <malloc.h>
 #endif
 #include <vlc/libvlc_events.h>
+#include <vlc/libvlc_media_list.h>
 
 #ifndef IFTRACE
 #  define IFTRACE(x) if (true)
@@ -43,9 +44,11 @@
 #endif
 
 inline QString operator +(std::string s)
+
 {
     return QString::fromUtf8(s.data(), s.length());
 }
+
 
 inline std::string operator +(QString s)
 {
@@ -60,7 +63,7 @@ VlcVideoSurface::VlcVideoSurface()
 //   Initialize a VLC media player to render a video
 // ----------------------------------------------------------------------------
     : w(0), h(0), player(NULL), media(NULL), updated(false), textureId(0),
-      state(VS_STOPPED), evm(NULL)
+      state(VS_STOPPED), pevm(NULL), mevm(NULL)
 {
     IFTRACE(video)
         debug() << "Creating media player\n";
@@ -78,13 +81,15 @@ VlcVideoSurface::~VlcVideoSurface()
 // ----------------------------------------------------------------------------
 {
     IFTRACE(video)
-        debug() << "Deleting media player and texture\n";
+        debug() << "Deleting media player, media and texture\n";
 
     if (player)
     {
         libvlc_media_player_stop(player);
         libvlc_media_player_release(player);
     }
+    if (media)
+        libvlc_media_release(media);
     glDeleteTextures(1, &textureId);
     state = VS_STOPPED;
 }
@@ -184,8 +189,8 @@ void VlcVideoSurface::startGetMediaInfo()
     IFTRACE(video)
         debug() << "Requesting asynchronous parsing of media\n";
     state = VS_PARSING;
-    evm = libvlc_media_event_manager(media);
-    libvlc_event_attach(evm, libvlc_MediaParsedChanged, mediaParsed, this);
+    pevm = libvlc_media_event_manager(media);
+    libvlc_event_attach(pevm, libvlc_MediaParsedChanged, mediaParsed, this);
     libvlc_media_parse_async(media);
 }
 
@@ -199,7 +204,7 @@ void VlcVideoSurface::mediaParsed(const struct libvlc_event_t *, void *obj)
         debug() << "Media parsed\n";
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
     v->state = VS_PARSED;
-    libvlc_event_attach(v->evm, libvlc_MediaParsedChanged, mediaParsed, v);
+    libvlc_event_detach(v->pevm, libvlc_MediaParsedChanged, mediaParsed, v);
 }
 
 
@@ -261,6 +266,28 @@ void VlcVideoSurface::getMediaInfo()
 }
 
 
+void VlcVideoSurface::getMediaSubItems()
+// ----------------------------------------------------------------------------
+//   After playback when media is a playlist: get subitem(s) and play media
+// ----------------------------------------------------------------------------
+{
+    IFTRACE(video)
+        debug() << "Getting media subitems\n";
+   libvlc_media_list_t *mlist = libvlc_media_subitems(media);
+   if (mlist)
+   {
+       IFTRACE(video)
+           debug() << "Selecting first entry for playback\n";
+       libvlc_media_list_lock(mlist);
+       libvlc_media_release(media);
+       media = libvlc_media_list_item_at_index(mlist, 0);
+       libvlc_media_list_unlock(mlist);
+       libvlc_media_list_release(mlist);
+       startGetMediaInfo();
+   }
+}
+
+
 void VlcVideoSurface::startPlaybackForAnalysis()
 // ----------------------------------------------------------------------------
 //   Play with no audio/video output to enable stream analysis
@@ -270,21 +297,24 @@ void VlcVideoSurface::startPlaybackForAnalysis()
         debug() << "Starting dummy playback for media analysis\n";
 
     state = VS_PLAYING_FOR_ANALYSIS;
-    evm = libvlc_media_player_event_manager(player);
-    libvlc_event_attach(evm, libvlc_MediaPlayerPlaying, readyForInfo, this);
+    pevm = libvlc_media_player_event_manager(player);
+    libvlc_event_attach(pevm, libvlc_MediaPlayerPlaying, playerPlaying, this);
+    libvlc_event_attach(pevm, libvlc_MediaPlayerEndReached, playerEndReached, this);
+
+    mevm = libvlc_media_event_manager(media);
+    libvlc_event_attach(mevm, libvlc_MediaSubItemAdded, mediaSubItemAdded, this);
 
     libvlc_audio_set_mute(player, true);
     w = h = 1;
     libvlc_video_set_format(player, "RV32", w, h, w*4);
-    // TODO REVISIT dropFrame => NULL
     libvlc_video_set_callbacks(player, lockFrame, unlockFrame,
-                               dropFrame, this);
+                               NULL, this);
     libvlc_media_player_set_media(player, media);
     libvlc_media_player_play(player);
 }
 
 
-void VlcVideoSurface::readyForInfo(const struct libvlc_event_t *, void *obj)
+void VlcVideoSurface::playerPlaying(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
 //   Change state to notify that media started playing and info may be read
 // ----------------------------------------------------------------------------
@@ -293,9 +323,39 @@ void VlcVideoSurface::readyForInfo(const struct libvlc_event_t *, void *obj)
         debug() << "Play started, ready to read media information\n";
 
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
-    v->state = VS_READY_FOR_ANALYSIS;
-    libvlc_event_detach(v->evm, libvlc_MediaPlayerPlaying, readyForInfo, v);
+    libvlc_event_detach(v->pevm, libvlc_MediaPlayerPlaying, playerPlaying, v);
     libvlc_audio_set_mute(v->player, false);
+    v->state = VS_READY_FOR_ANALYSIS;
+}
+
+
+void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
+// ----------------------------------------------------------------------------
+//   Change state when player reaches end of media
+// ----------------------------------------------------------------------------
+{
+    IFTRACE(video)
+        debug() << "Player reached end of media\n";
+
+    VlcVideoSurface *v = (VlcVideoSurface *)obj;
+    libvlc_event_detach(v->pevm, libvlc_MediaPlayerEndReached, playerEndReached, v);
+    if (v->state == VS_WAITING_FOR_SUBITEMS)
+        v->state = VS_ALL_SUBITEMS_RECEIVED;
+}
+
+
+
+void VlcVideoSurface::mediaSubItemAdded(const struct libvlc_event_t *, void *obj)
+// ----------------------------------------------------------------------------
+//   Change state when a media sub-item is added (e.g., playlist parsed)
+// ----------------------------------------------------------------------------
+{
+    IFTRACE(video)
+        debug() << "Media sub-item added\n";
+
+    Q_UNUSED(obj);
+    VlcVideoSurface *v = (VlcVideoSurface *)obj;
+    v->state = VS_WAITING_FOR_SUBITEMS;
 }
 
 
@@ -411,6 +471,12 @@ GLuint VlcVideoSurface::texture()
         if (state != VS_ERROR)
             startPlayback();
     }
+    else if (state == VS_ALL_SUBITEMS_RECEIVED)
+    {
+        getMediaSubItems();
+        if (state == VS_READY_FOR_PLAYBACK)
+            startPlayback();
+    }
     return textureId;
 }
 
@@ -429,7 +495,7 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
                   "-I", "dummy", /* Don't use any interface */
                   "--ignore-config", /* Don't use VLC's config */
                   "--no-video-title-show",
-#if 0 // Debug
+#if 1 // Debug
                   "--extraintf=logger", /* Log everything */
                   "--verbose=2", /* Be verbose */
 #endif
@@ -502,14 +568,4 @@ void VlcVideoSurface::displayFrame(void *obj, void *picture)
     v->image = converted;
     v->updated = true;
     v->mutex.unlock();
-}
-
-
-void VlcVideoSurface::dropFrame(void *obj, void *picture)
-// ----------------------------------------------------------------------------
-//   Called during media analysis phase. Do nothing with decoded picture.
-// ----------------------------------------------------------------------------
-{
-    Q_UNUSED(obj);
-    Q_UNUSED(picture);
 }

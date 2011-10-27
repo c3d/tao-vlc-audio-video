@@ -63,10 +63,13 @@
   INSTALLS += thismod_icon
 
   macx {
-    vlc_libs.path = $${MODINSTPATH}/lib/lib
-    vlc_libs.files = $${VLC}/lib/*
-    vlc_plugins.path  = $${MODINSTPATH}/lib/plugins
-    vlc_plugins.files = $${VLC}/plugins/*
+    # Install will create <module>/lib/{lib,plugins,share/lua}
+    vlc_libs.path = $${MODINSTPATH}/lib
+    vlc_libs.files = $${VLC}/lib
+    vlc_plugins.path  = $${MODINSTPATH}/lib
+    vlc_plugins.files = $${VLC}/plugins
+    vlc_lua.path = $${MODINSTPATH}/lib/share
+    vlc_lua.files = $${VLC}/share/lua
   }
   linux-g++* {
     # Untested
@@ -74,12 +77,17 @@
     vlc_libs.files = $${VLC}/lib/*
     vlc_plugins.path  = $${MODINSTPATH}/plugins
     vlc_plugins.files = $${VLC}/plugins/*
+    vlc_lua.path = $${MODINSTPATH}/lib
+    vlc_lua.files = $${VLC}/share
   }
   win32 {
+    # Install will create <module>/lib/{plugins,lua}
     vlc_libs.path = $${MODINSTPATH}/lib
     vlc_libs.files = $${VLC}/../*.dll
     vlc_plugins.path  = $${MODINSTPATH}/lib
     vlc_plugins.files = $${VLC}/../plugins
+    vlc_lua.path  = $${MODINSTPATH}/lib
+    vlc_lua.files = $${VLC}/../lua
   }
-  INSTALLS += vlc_libs vlc_plugins
+  INSTALLS += vlc_libs vlc_plugins vlc_lua
 }
