@@ -197,7 +197,7 @@ void VlcVideoSurface::mediaParsed(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
 {
     IFTRACE(video)
-        debug() << "Media parsed\n";
+        sdebug() << "Media parsed\n";
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
     v->state = VS_PARSED;
     libvlc_event_detach(v->pevm, libvlc_MediaParsedChanged, mediaParsed, v);
@@ -273,6 +273,7 @@ void VlcVideoSurface::getMediaSubItems()
    {
        IFTRACE(video)
            debug() << "Selecting first entry for playback\n";
+
        libvlc_media_list_lock(mlist);
        libvlc_media_release(media);
        media = libvlc_media_list_item_at_index(mlist, 0);
@@ -315,7 +316,7 @@ void VlcVideoSurface::playerPlaying(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
 {
     IFTRACE(video)
-        debug() << "Play started, ready to read media information\n";
+        sdebug() << "Play started, ready to read media information\n";
 
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
     libvlc_event_detach(v->pevm, libvlc_MediaPlayerPlaying, playerPlaying, v);
@@ -330,14 +331,21 @@ void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
 {
     IFTRACE(video)
-        debug() << "Player reached end of media\n";
+        sdebug() << "Player reached end of media\n";
 
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
     libvlc_event_detach(v->pevm, libvlc_MediaPlayerEndReached, playerEndReached, v);
-    if (v->state == VS_WAITING_FOR_SUBITEMS)
-        v->state = VS_ALL_SUBITEMS_RECEIVED;
-    else if (v->state == VS_PLAYING)
+    switch (v->state)
+    {
+    case VS_PLAYING:
         v->state = VS_PLAY_ENDED;
+        break;
+    case VS_WAITING_FOR_SUBITEMS:
+        v->state = VS_ALL_SUBITEMS_RECEIVED;
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -348,7 +356,7 @@ void VlcVideoSurface::mediaSubItemAdded(const struct libvlc_event_t *, void *obj
 // ----------------------------------------------------------------------------
 {
     IFTRACE(video)
-        debug() << "Media sub-item added\n";
+        sdebug() << "Media sub-item found\n";
 
     Q_UNUSED(obj);
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
@@ -424,8 +432,11 @@ GLuint VlcVideoSurface::texture()
 // ----------------------------------------------------------------------------
 {
     GLuint tex = 0;
-    if (state == VS_PLAYING || state == VS_PLAY_ENDED)
+
+    switch (state)
     {
+    case VS_PLAYING:
+    case VS_PLAY_ENDED:
         mutex.lock();
         if (updated)
         {
@@ -437,25 +448,30 @@ GLuint VlcVideoSurface::texture()
         }
         mutex.unlock();
         tex = textureId;
-    }
-    else if (state == VS_PARSED)
-    {
+        break;
+
+    case VS_PARSED:
         getMediaInfo();
         if (state == VS_READY_FOR_PLAYBACK)
             startPlayback();
         else
             startPlaybackForAnalysis();
-    }
-    else if (state == VS_READY_FOR_ANALYSIS)
-    {
+        break;
+
+    case VS_READY_FOR_ANALYSIS:
         getMediaInfo();
         if (state == VS_READY_FOR_PLAYBACK)
             startPlayback();
-    }
-    else if (state == VS_ALL_SUBITEMS_RECEIVED)
-    {
+        break;
+
+    case VS_ALL_SUBITEMS_RECEIVED:
         getMediaSubItems();
+        break;
+
+    default:
+        break;
     }
+
     return tex;
 }
 
@@ -468,13 +484,13 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
     if (!vlc)
     {
         IFTRACE(video)
-            debug() << "Initializing VLC instance\n";
+            sdebug() << "Initializing VLC instance\n";
 
         const char * const args[] = {
                   "-I", "dummy", /* Don't use any interface */
                   "--ignore-config", /* Don't use VLC's config */
                   "--no-video-title-show",
-#if 1 // Debug
+#if 0 // Debug
                   "--extraintf=logger", /* Log everything */
                   "--verbose=2", /* Be verbose */
 #endif
@@ -486,6 +502,16 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
 
 
 std::ostream & VlcVideoSurface::debug()
+// ----------------------------------------------------------------------------
+//   Convenience method to log with a common prefix
+// ----------------------------------------------------------------------------
+{
+    std::cerr << "[VlcVideoSurface " << (void*)this << "] ";
+    return std::cerr;
+}
+
+
+std::ostream & VlcVideoSurface::sdebug()
 // ----------------------------------------------------------------------------
 //   Convenience method to log with a common prefix
 // ----------------------------------------------------------------------------

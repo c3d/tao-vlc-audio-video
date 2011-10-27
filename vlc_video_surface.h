@@ -110,10 +110,11 @@ protected:
     void           startPlayback();
     void           startPlaybackForAnalysis();
     void           getMediaSubItems();
+    std::ostream & debug();
 
 protected:
     static libvlc_instance_t *  vlcInstance();
-    static std::ostream &       debug();
+    static std::ostream &       sdebug();
 
     static void *  lockFrame(void *obj, void **plane);
     static void    unlockFrame(void *obj, void *picture, void *const *plane);
