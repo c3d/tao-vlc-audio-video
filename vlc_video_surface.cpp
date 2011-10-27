@@ -119,7 +119,6 @@ void VlcVideoSurface::play()
     IFTRACE(video)
         debug() << "Play\n";
     libvlc_media_player_set_pause(player, false);
-    state = VS_PLAYING;
 }
 
 
@@ -173,7 +172,6 @@ void VlcVideoSurface::play(const QString &name)
                 return;
             }
 
-            w = 800 ; h = 600;
             startGetMediaInfo();
         }
         playing = name;
@@ -250,17 +248,16 @@ void VlcVideoSurface::getMediaInfo()
             if (has_video)
                 debug() << "Video resolution is " << w << "x" << h << "\n";
         }
-        this->w = w;
-        this->h = h;
+        state = VS_READY_FOR_PLAYBACK;
     }
     else
     {
         IFTRACE(video)
             debug() << "Found no audio and no video\n";
         state = VS_ERROR;
-        this->w = 0;
-        this->h = 0;
     }
+    this->w = w;
+    this->h = h;
     if (streams)
         free(ti);
 }
@@ -268,7 +265,7 @@ void VlcVideoSurface::getMediaInfo()
 
 void VlcVideoSurface::getMediaSubItems()
 // ----------------------------------------------------------------------------
-//   After playback when media is a playlist: get subitem(s) and play media
+//   After playback when media is a playlist: get subitem(s)
 // ----------------------------------------------------------------------------
 {
     IFTRACE(video)
@@ -373,8 +370,6 @@ void VlcVideoSurface::startPlayback()
                                displayFrame, this);
     libvlc_media_player_set_media(player, media);
     libvlc_media_player_play(player);
-
-    state = VS_PLAYING;
 }
 
 
@@ -428,14 +423,14 @@ void VlcVideoSurface::clearTexture()
 //   Make texture transparent
 // ----------------------------------------------------------------------------
 {
-    unsigned w = 1;
-    unsigned h = 1;
-    unsigned char tex[4] = {0, 0, 0, 0};
+//    unsigned w = 1;
+//    unsigned h = 1;
+//    unsigned char tex[4] = {0, 0, 0, 0};
 
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3,
-                 w, h, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, tex);
+//    glBindTexture(GL_TEXTURE_2D, textureId);
+//    glTexImage2D(GL_TEXTURE_2D, 0, 3,
+//                 w, h, 0, GL_RGBA,
+//                 GL_UNSIGNED_BYTE, tex);
 }
 
 
@@ -444,6 +439,7 @@ GLuint VlcVideoSurface::texture()
 //   Update texture with current frame and return texture ID
 // ----------------------------------------------------------------------------
 {
+    GLuint tex = 0;
     if (state == VS_PLAYING)
     {
         mutex.lock();
@@ -456,28 +452,27 @@ GLuint VlcVideoSurface::texture()
             updated = false;
         }
         mutex.unlock();
+        tex = textureId;
     }
     else if (state == VS_PARSED)
     {
         getMediaInfo();
-        if (state == VS_ERROR)
-            startPlaybackForAnalysis();
-        else
+        if (state == VS_READY_FOR_PLAYBACK)
             startPlayback();
+        else
+            startPlaybackForAnalysis();
     }
     else if (state == VS_READY_FOR_ANALYSIS)
     {
         getMediaInfo();
-        if (state != VS_ERROR)
+        if (state == VS_READY_FOR_PLAYBACK)
             startPlayback();
     }
     else if (state == VS_ALL_SUBITEMS_RECEIVED)
     {
         getMediaSubItems();
-        if (state == VS_READY_FOR_PLAYBACK)
-            startPlayback();
     }
-    return textureId;
+    return tex;
 }
 
 
@@ -565,6 +560,7 @@ void VlcVideoSurface::displayFrame(void *obj, void *picture)
     QImage image((const uchar *)picture, v->w, v->h, QImage::Format_RGB32);
     QImage converted = QGLWidget::convertToGLFormat(image);
     v->mutex.lock();
+    v->state = VS_PLAYING;
     v->image = converted;
     v->updated = true;
     v->mutex.unlock();
