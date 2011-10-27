@@ -22,11 +22,24 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 # ******************************************************************************
 
+isEmpty(VLC) {
+  # Default location for VLC SDK
+  VLC_TOP=$$PWD/../../../vlc
+  macx:VLC=$$VLC_TOP/VLC.app/Contents/MacOS
+  win32:VLC=$$VLC_TOP/sdk
+  linux-g++*:VLC=$$VLC_TOP
+
+  !exists($$VLC/include/vlc/libvlc.h) {
+    VLC=
+    message(VLC was not found in the default location: $$VLC_TOP)
+  }
+}
+
 !build_pass:isEmpty(VLC) {
 
-  message(VLC is not defined!)
+  message()
   message("To build the VLCAudioVideo module, I need VLC >= 1.2.0")
-  message(Please set the VLC variable during qmake.)
+  message("If you have the VLC SDK, please set the VLC variable during qmake.")
   message(For instance:)
   message([MacOSX] qmake <options> VLC=/Users/jerome/Desktop/vlc-1.2.0-git/VLC.app/Contents/MacOS)
   message([Windows] qmake <options> VLC=/c/Users/Jerome/Desktop/vlc-1.2.0-git-20111024-0002/sdk)
