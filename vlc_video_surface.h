@@ -51,6 +51,7 @@ public:
         VS_PLAYING,
         VS_PAUSED,
         VS_ERROR,
+        VS_PLAY_ENDED,
         VS_PARSING,
         VS_PARSED,
         VS_PLAYING_FOR_ANALYSIS,
@@ -104,7 +105,6 @@ protected:
     };
 
 protected:
-    void           clearTexture();
     void           startGetMediaInfo();
     void           getMediaInfo();
     void           startPlayback();

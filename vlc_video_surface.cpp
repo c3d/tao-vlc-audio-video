@@ -71,7 +71,6 @@ VlcVideoSurface::VlcVideoSurface()
     glGenTextures(1, &textureId);
     IFTRACE(video)
         debug() << "Will render to texture #" << textureId << "\n";
-    clearTexture();
 }
 
 
@@ -135,7 +134,6 @@ void VlcVideoSurface::stop()
     libvlc_media_release(media);
     media = NULL;
     state = VS_STOPPED;
-    clearTexture();
 }
 
 
@@ -338,6 +336,8 @@ void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
     libvlc_event_detach(v->pevm, libvlc_MediaPlayerEndReached, playerEndReached, v);
     if (v->state == VS_WAITING_FOR_SUBITEMS)
         v->state = VS_ALL_SUBITEMS_RECEIVED;
+    else if (v->state == VS_PLAYING)
+        v->state = VS_PLAY_ENDED;
 }
 
 
@@ -418,29 +418,13 @@ float VlcVideoSurface::position()
 }
 
 
-void VlcVideoSurface::clearTexture()
-// ----------------------------------------------------------------------------
-//   Make texture transparent
-// ----------------------------------------------------------------------------
-{
-//    unsigned w = 1;
-//    unsigned h = 1;
-//    unsigned char tex[4] = {0, 0, 0, 0};
-
-//    glBindTexture(GL_TEXTURE_2D, textureId);
-//    glTexImage2D(GL_TEXTURE_2D, 0, 3,
-//                 w, h, 0, GL_RGBA,
-//                 GL_UNSIGNED_BYTE, tex);
-}
-
-
 GLuint VlcVideoSurface::texture()
 // ----------------------------------------------------------------------------
 //   Update texture with current frame and return texture ID
 // ----------------------------------------------------------------------------
 {
     GLuint tex = 0;
-    if (state == VS_PLAYING)
+    if (state == VS_PLAYING || state == VS_PLAY_ENDED)
     {
         mutex.lock();
         if (updated)
