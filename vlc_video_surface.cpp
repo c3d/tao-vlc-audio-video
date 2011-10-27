@@ -32,31 +32,26 @@
 // ****************************************************************************
 
 #include "vlc_video_surface.h"
+#include "base.h"  // IFTRACE()
+#include <vlc/libvlc_events.h>
+#include <vlc/libvlc_media_list.h>
 #ifdef Q_OS_WIN32
 #include <malloc.h>
 #endif
-#include <vlc/libvlc_events.h>
-#include <vlc/libvlc_media_list.h>
 
-#ifndef IFTRACE
-#  define IFTRACE(x) if (true)
-#  define IFTRACE2(x,y) if (true)
-#endif
 
-inline QString operator +(std::string s)
-
-{
-    return QString::fromUtf8(s.data(), s.length());
-}
+libvlc_instance_t *         VlcVideoSurface::vlc = NULL;
+VlcVideoSurface::VlcCleanup VlcVideoSurface::cleanup;
 
 
 inline std::string operator +(QString s)
+// ----------------------------------------------------------------------------
+//   Convert QString to std::string
+// ----------------------------------------------------------------------------
 {
     return std::string(s.toUtf8().constData());
 }
 
-libvlc_instance_t *         VlcVideoSurface::vlc = NULL;
-VlcVideoSurface::VlcCleanup VlcVideoSurface::cleanup;
 
 VlcVideoSurface::VlcVideoSurface()
 // ----------------------------------------------------------------------------
@@ -334,7 +329,8 @@ void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
         sdebug() << "Player reached end of media\n";
 
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
-    libvlc_event_detach(v->pevm, libvlc_MediaPlayerEndReached, playerEndReached, v);
+    libvlc_event_detach(v->pevm, libvlc_MediaPlayerEndReached,
+                        playerEndReached, v);
     switch (v->state)
     {
     case VS_PLAYING:
@@ -350,7 +346,8 @@ void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
 
 
 
-void VlcVideoSurface::mediaSubItemAdded(const struct libvlc_event_t *, void *obj)
+void VlcVideoSurface::mediaSubItemAdded(const struct libvlc_event_t *,
+                                        void *obj)
 // ----------------------------------------------------------------------------
 //   Change state when a media sub-item is added (e.g., playlist parsed)
 // ----------------------------------------------------------------------------
@@ -478,7 +475,7 @@ GLuint VlcVideoSurface::texture()
 
 libvlc_instance_t * VlcVideoSurface::vlcInstance()
 // ----------------------------------------------------------------------------
-//   Return the VLC instance
+//   Return/create the VLC instance
 // ----------------------------------------------------------------------------
 {
     if (!vlc)
@@ -487,12 +484,12 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
             sdebug() << "Initializing VLC instance\n";
 
         const char * const args[] = {
-                  "-I", "dummy", /* Don't use any interface */
-                  "--ignore-config", /* Don't use VLC's config */
-                  "--no-video-title-show",
+            "--no-video-title-show",
 #if 0 // Debug
-                  "--extraintf=logger", /* Log everything */
-                  "--verbose=2", /* Be verbose */
+            "--extraintf=logger", /* Log everything */
+            "--verbose=2", /* Be verbose */
+#else
+            "-q",
 #endif
         };
         vlc = libvlc_new(sizeof(args) / sizeof(args[0]), args);
