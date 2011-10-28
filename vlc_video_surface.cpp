@@ -64,6 +64,10 @@ VlcVideoSurface::VlcVideoSurface()
     IFTRACE(video)
         debug() << "Creating media player\n";
     player = libvlc_media_player_new(vlcInstance());
+    pevm = libvlc_media_player_event_manager(player);
+    libvlc_event_attach(pevm, libvlc_MediaPlayerEncounteredError, playerError,
+                        this);
+
     glGenTextures(1, &textureId);
     IFTRACE(video)
         debug() << "Will render to texture #" << textureId << "\n";
@@ -181,8 +185,8 @@ void VlcVideoSurface::startGetMediaInfo()
     IFTRACE(video)
         debug() << "Requesting asynchronous parsing of media\n";
     state = VS_PARSING;
-    pevm = libvlc_media_event_manager(media);
-    libvlc_event_attach(pevm, libvlc_MediaParsedChanged, mediaParsed, this);
+    mevm = libvlc_media_event_manager(media);
+    libvlc_event_attach(mevm, libvlc_MediaParsedChanged, mediaParsed, this);
     libvlc_media_parse_async(media);
 }
 
@@ -196,7 +200,7 @@ void VlcVideoSurface::mediaParsed(const struct libvlc_event_t *, void *obj)
         sdebug() << "Media parsed\n";
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
     v->state = VS_PARSED;
-    libvlc_event_detach(v->pevm, libvlc_MediaParsedChanged, mediaParsed, v);
+    libvlc_event_detach(v->mevm, libvlc_MediaParsedChanged, mediaParsed, v);
 }
 
 
@@ -338,6 +342,8 @@ void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
         v->state = VS_PLAY_ENDED;
         break;
     case VS_WAITING_FOR_SUBITEMS:
+        libvlc_event_detach(v->mevm, libvlc_MediaSubItemAdded,
+                            mediaSubItemAdded, v);
         v->state = VS_ALL_SUBITEMS_RECEIVED;
         break;
     default:
@@ -345,6 +351,18 @@ void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
     }
 }
 
+
+void VlcVideoSurface::playerError(const struct libvlc_event_t *, void *obj)
+// ----------------------------------------------------------------------------
+//   Save error
+// ----------------------------------------------------------------------------
+{
+    VlcVideoSurface *v = (VlcVideoSurface *)obj;
+    const char *err = libvlc_errmsg();
+    if (v->lastError != "")
+        v->lastError += "\n";
+    v->lastError += QString(err);
+}
 
 
 void VlcVideoSurface::mediaSubItemAdded(const struct libvlc_event_t *,

@@ -33,10 +33,6 @@
 
 #include "vlc_audio_video.h"
 #include "errors.h"
-//#include <QUrl>
-//#include <QFileInfo>
-//#include <QDir>
-//#include <QEvent>
 
 inline QString operator +(std::string s)
 {

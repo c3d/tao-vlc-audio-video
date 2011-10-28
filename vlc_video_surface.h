@@ -124,6 +124,7 @@ protected:
     static void    playerPlaying(const struct libvlc_event_t *, void *obj);
     static void    mediaSubItemAdded(const struct libvlc_event_t *, void *obj);
     static void    playerEndReached(const struct libvlc_event_t *, void *obj);
+    static void    playerError(const struct libvlc_event_t *, void *obj);
 
 protected:
     static libvlc_instance_t *  vlc;
