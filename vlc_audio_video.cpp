@@ -32,6 +32,7 @@
 // ****************************************************************************
 
 #include "vlc_audio_video.h"
+#include "vlc_preferences.h"
 #include "errors.h"
 
 inline QString operator +(std::string s)
@@ -174,5 +175,15 @@ int module_exit()
 //   Uninitialize the Tao module
 // ----------------------------------------------------------------------------
 {
+    return 0;
+}
+
+
+int show_preferences()
+// ----------------------------------------------------------------------------
+//   Show the preference dialog
+// ----------------------------------------------------------------------------
+{
+    VLCPreferences().exec();
     return 0;
 }

@@ -59,8 +59,8 @@ isEmpty(VLC) {
   include(../modules.pri)
 
   DEFINES    += GLEW_STATIC
-  HEADERS     = vlc_audio_video.h vlc_video_surface.h
-  SOURCES     = vlc_audio_video.cpp vlc_video_surface.cpp
+  HEADERS     = vlc_audio_video.h vlc_video_surface.h vlc_preferences.h
+  SOURCES     = vlc_audio_video.cpp vlc_video_surface.cpp vlc_preferences.cpp
   !macx:SOURCES += $${TAOTOPSRC}/tao/include/tao/GL/glew.c
   TBL_SOURCES = vlc_audio_video.tbl
   OTHER_FILES = vlc_audio_video.xl vlc_audio_video.tbl traces.tbl

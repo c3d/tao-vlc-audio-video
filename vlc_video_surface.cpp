@@ -518,6 +518,13 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
                 sdebug() << "  " << argv[i] << "\n";
         }
         vlc = libvlc_new(argv.size(), argv.data());
+
+        IFTRACE(video)
+        {
+            sdebug() << "libLVC version: " << libvlc_get_version() << "\n";
+            sdebug() << "libLVC changeset: " << libvlc_get_changeset() << "\n";
+            sdebug() << "libLVC compiler: " << libvlc_get_compiler() << "\n";
+        }
     }
     return vlc;
 }
