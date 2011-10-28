@@ -2,18 +2,33 @@
  * @addtogroup VLCAudioVideo VLC audio and video playback
  * @ingroup Modules
  *
- * Play audio and video content using the VideoLAN (VLC) player.
+ * Play audio and video content. The @c VLCAudioVideo module is
+ * based on the
+ * <a href="http://www.videolan.org/vlc/">VideoLAN (VLC) player</a>,
+ * a free and open source cross-platform multimedia framework that
+ * plays most multimedia files as well as DVD, Audio CD, VCD, and
+ * various streaming protocols.
  *
- * The primitives documented in this page provide audio and video
- * playback capabilities. You can use them to add music and videos
- * to your presentations. Thanks to the rich format and codec support
- * of libVLC, most common audio and video formats are
- * supported on all platformas (Windows, MacOSX, Linux).
+ * You can use the commands documented on this page to add music and videos
+ * to your presentations. You can even embbed YouTube videos, for example:
  *
- * One multimedia stream is associated with each call to movie or
- * movie_texture. It is possible to play several audio or video
- * files simultaneously. The following examples shows how you can control
- * the playback through a common function, @c play.
+ * @code
+import VLCAudioVideo
+movie "http://www.youtube.com/watch?v=jNQXAC9IVRw"
+ * @endcode
+ * @image html YouTube.png "Playing a YouTube video in a Tao document"
+ *
+ * One multimedia stream is associated with each call to @c movie or
+ * @c movie_texture. As such, it is possible to play several audio or video
+ * files simultaneously, or play files in sequence.
+ *
+ * The following example shows how you can control
+ * the playback through a common function, @c play. In this example, there
+ * is only one call to @c movie_texture, in the @c play function.
+ * So, there can be only one video
+ * playing at any time. By calling @c play with different file names at
+ * different times, you can switch between videos. Passing a empty string
+ * stops the playback.
  *
  * @code
 play T:text ->
@@ -44,16 +59,25 @@ page "The End",
  */
 
 /**
- * Plays a video.
- * This primitive creates a rectangular video display centered at @p x, @p y
+ * Plays audio and/or video.
+ * This function creates a rectangular video display centered at @p x, @p y
  * in the plane z = 0. The size of the rectangle depends on the resolution
  * of the video source, and the scaling factors @p sx and @p sy. Set @p sx and
  * @p sy to 1.0 to keep the original resolution.
+ * If @p name contains no video, nothing is displayed (only the audio track
+ * will be played, if present).
  * The @p name parameter specifies a local file or a URL; an empty string
  * @c "" stops playback of the current video.
+ * This function is based on @ref movie_texture.
  * @see movie_texture.
  */
 movie(x:real, y:real, sx:real, sy:real, name:text);
+
+/**
+ * Plays audio and/or video.
+ * This function is equivalent to <tt>movie 0, 0, 1, 1, name</tt>.
+ */
+movie(name:text);
 
 /**
  * Creates a video texture.
@@ -62,6 +86,12 @@ movie(x:real, y:real, sx:real, sy:real, name:text);
  * or any other shape in the 3D space.
  * The @p name parameter specifies a local file or a URL; an empty string
  * @c "" stops playback of the current video.
+ * If @p name refers to a video, the resolution is made available through
+ * the @ref texture_width and @ref texture_height primitives. No texture
+ * is bound when @p name contains no video, or until the first frame is
+ * available.
+ * When the end of the media stream is reached, playback stops and the last
+ * frame remains available as a texture.
  */
 movie_texture(name:text);
 
