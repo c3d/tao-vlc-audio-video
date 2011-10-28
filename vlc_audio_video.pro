@@ -25,7 +25,14 @@
 isEmpty(VLC) {
   # Default location for VLC SDK
   VLC_TOP=$$PWD/../../../vlc
-  macx:VLC=$$VLC_TOP/VLC.app/Contents/MacOS
+  macx {
+    contains(CONFIG, x86) {
+      VLC_TOP=$${VLC_TOP}_x86
+    } else {
+      VLC_TOP=$${VLC_TOP}_x86_64
+    }
+    VLC=$$VLC_TOP/VLC.app/Contents/MacOS
+  }
   win32:VLC=$$VLC_TOP/sdk
   linux-g++*:VLC=$$VLC_TOP
 
