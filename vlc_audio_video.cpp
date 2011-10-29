@@ -66,12 +66,12 @@ VideoSurfaceInfo::~VideoSurfaceInfo()
 }
 
 
-GLuint VideoSurfaceInfo::bind(XL::Text *urlTree)
+GLuint VideoSurfaceInfo::bind(text url)
 // ----------------------------------------------------------------------------
 //    Start playback or refresh the surface and bind to the texture
 // ----------------------------------------------------------------------------
 {
-    play(+urlTree->value);
+    play(+url);
     return texture();
 }
 
@@ -103,7 +103,7 @@ XL::Integer_p VideoSurfaceInfo::movie_texture(XL::Context_p context,
 
     if (name != surface->unresolvedName)
     {
-        // name has not been converted to URL format, or has changed
+        // Name has not been converted to URL format, or has changed
         surface->unresolvedName = name;
         if (name != "")
         {
@@ -136,7 +136,7 @@ XL::Integer_p VideoSurfaceInfo::movie_texture(XL::Context_p context,
     }
 
     // Resize to requested size, and bind texture
-    GLuint id = surface->bind(new Text(name));
+    GLuint id = surface->bind(name);
     if (surface->lastError != "")
     {
         XL::Ooops("Cannot play: $1", self);

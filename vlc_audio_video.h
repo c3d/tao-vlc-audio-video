@@ -54,7 +54,7 @@ public:
     ~VideoSurfaceInfo();
     virtual void               Delete() { tao->deferredDelete(this); }
     operator                   data_t() { return this; }
-    virtual GLuint             bind(XL::Text *url);
+    GLuint                     bind(text url);
 
 public:
     // XL interface
