@@ -142,11 +142,11 @@ void VlcVideoSurface::play(const QString &name)
 //   Play a file or URL. No-op if 'name' is already playing. True on success.
 // ----------------------------------------------------------------------------
 {
-    if (name != playing)
+    if (name != mediaName)
     {
         IFTRACE2(fileload, video)
         {
-            std::string prev = +playing;
+            std::string prev = +mediaName;
             if (prev == "")
                 prev = "\"\"";
             debug() << "Play: " << +name << "\n";
@@ -172,7 +172,7 @@ void VlcVideoSurface::play(const QString &name)
 
             startGetMediaInfo();
         }
-        playing = name;
+        mediaName = name;
     }
 }
 
@@ -406,21 +406,88 @@ void VlcVideoSurface::mute(bool mute)
 }
 
 
-void VlcVideoSurface::setVolume(int vol)
+float VlcVideoSurface::volume()
 // ----------------------------------------------------------------------------
-//   Set volume (0 <= vol <= 100)
+//   Return current volume level (0.0 <= volume <= 1.0)
 // ----------------------------------------------------------------------------
 {
-    libvlc_audio_set_volume(player, vol);
+    return libvlc_audio_get_volume(player) * 0.01;
 }
 
 
-int VlcVideoSurface::volume()
+float VlcVideoSurface::position()
 // ----------------------------------------------------------------------------
-//   Return current volume level
+//   Return current position
 // ----------------------------------------------------------------------------
 {
-    return libvlc_audio_get_volume(player);
+    return libvlc_media_player_get_position(player);
+}
+
+
+float VlcVideoSurface::time()
+// ----------------------------------------------------------------------------
+//   Return current time in seconds
+// ----------------------------------------------------------------------------
+{
+    return libvlc_media_player_get_time(player) * 0.001;
+}
+
+
+float VlcVideoSurface::length()
+// ----------------------------------------------------------------------------
+//   Return length for current media
+// ----------------------------------------------------------------------------
+{
+    return libvlc_media_player_get_length(player) * 0.001;
+}
+
+
+float VlcVideoSurface::rate()
+// ----------------------------------------------------------------------------
+//   Return play rate for current media
+// ----------------------------------------------------------------------------
+{
+    return libvlc_media_player_get_rate(player);
+}
+
+
+bool VlcVideoSurface::playing()
+// ----------------------------------------------------------------------------
+//   Return true if media is currently playing
+// ----------------------------------------------------------------------------
+{
+    return state == VS_PLAYING && libvlc_media_player_is_playing(player);
+}
+
+
+bool VlcVideoSurface::paused()
+// ----------------------------------------------------------------------------
+//   Return true if the surface is paused
+// ----------------------------------------------------------------------------
+{
+    return state == VS_PAUSED;
+}
+
+
+bool VlcVideoSurface::done()
+// ----------------------------------------------------------------------------
+//   Return true if the surface is done playing its contents
+// ----------------------------------------------------------------------------
+{
+    if (state == VS_PLAYING && !libvlc_media_player_is_playing(player))
+        state = VS_PLAY_ENDED;
+    return state==VS_PLAY_ENDED || state==VS_ERROR;
+}
+
+
+void VlcVideoSurface::setVolume(float vol)
+// ----------------------------------------------------------------------------
+//   Set volume (0.0 <= vol <= 1.0)
+// ----------------------------------------------------------------------------
+{
+    if (vol < 0) vol = 0;
+    if (vol > 1) vol = 1;
+    libvlc_audio_set_volume(player, int(vol * 100));
 }
 
 
@@ -433,12 +500,21 @@ void VlcVideoSurface::setPosition(float pos)
 }
 
 
-float VlcVideoSurface::position()
+void VlcVideoSurface::setTime(float t)
 // ----------------------------------------------------------------------------
-//   Return current position
+//   Skip to the given time
 // ----------------------------------------------------------------------------
 {
-    return libvlc_media_player_get_position(player);
+    libvlc_media_player_set_time(player, libvlc_time_t(t * 1000));
+}
+
+
+void VlcVideoSurface::setRate(float rate)
+// ----------------------------------------------------------------------------
+//   Set play rate for the current media
+// ----------------------------------------------------------------------------
+{
+    libvlc_media_player_set_rate(player, rate);
 }
 
 
@@ -556,9 +632,11 @@ void * VlcVideoSurface::lockFrame(void *obj, void **plane)
 // ----------------------------------------------------------------------------
 {
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
-    Q_ASSERT(v->w && v->h && "Invalid video size");
+    // Q_ASSERT(v->w && v->h && "Invalid video size");
 
     size_t size = v->w * v->h * 4;
+    if (!size)
+        size = 1;
  #ifdef Q_OS_WIN32
      *plane = __mingw_aligned_malloc(size, 32);
      if (!*plane)

@@ -55,10 +55,33 @@ struct VideoSurface : VlcVideoSurface
 public:
     // XL interface
     static XL::Integer_p        movie_texture(XL::Context_p context,
-                                              XL::Tree_p self, text name);
+                                              XL::Tree_p self,
+                                              text name);
+    static XL::Name_p           movie_purge(text name);
+    static XL::Name_p           movie_only(text name);
+    static XL::Name_p           movie_play(text name);
+    static XL::Name_p           movie_pause(text name);
+    static XL::Name_p           movie_stop(text name);
 
+    static XL::Real_p           movie_volume(XL::Tree_p self, text name);
+    static XL::Real_p           movie_position(XL::Tree_p self, text name);
+    static XL::Real_p           movie_time(XL::Tree_p self, text name);
+    static XL::Real_p           movie_length(XL::Tree_p self, text name);
+    static XL::Real_p           movie_rate(XL::Tree_p self, text name);
+
+
+    static XL::Name_p           movie_playing(text name);
+    static XL::Name_p           movie_paused(text name);
+    static XL::Name_p           movie_done(text name);
+
+    static XL::Name_p           movie_set_volume(text name, float volume);
+    static XL::Name_p           movie_set_position(text name, float position);
+    static XL::Name_p           movie_set_time(text name, float position);
+    static XL::Name_p           movie_set_rate(text name, float rate);
+    
 protected:
     std::ostream &              debug();
+    static VideoSurface *       surface(text name);
 
 public:
     static video_map            videos;
