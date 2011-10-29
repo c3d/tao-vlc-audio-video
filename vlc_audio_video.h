@@ -41,14 +41,11 @@
 #include "tao/tao_info.h"
 #include "vlc_video_surface.h"
 
-struct VideoSurfaceInfo : QObject, VlcVideoSurface, Tao::Info
+struct VideoSurfaceInfo : VlcVideoSurface, Tao::Info
 // ----------------------------------------------------------------------------
 //    Play audio and/or video using VLCVideoSurface
 // ----------------------------------------------------------------------------
 {
-    Q_OBJECT
-
-public:
     typedef VideoSurfaceInfo * data_t;
     VideoSurfaceInfo();
     ~VideoSurfaceInfo();
