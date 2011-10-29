@@ -35,21 +35,32 @@
 #include "vlc_preferences.h"
 #include "errors.h"
 
+
 inline QString operator +(std::string s)
+// ----------------------------------------------------------------------------
+//   UTF-8 conversion from std::string to QString
+// ----------------------------------------------------------------------------
 {
     return QString::fromUtf8(s.data(), s.length());
 }
 
+
 inline std::string operator +(QString s)
+// ----------------------------------------------------------------------------
+//   UTF-8 conversion from QString to std::string
+// ----------------------------------------------------------------------------
 {
     return std::string(s.toUtf8().constData());
 }
 
+
 using namespace XL;
 
-const Tao::ModuleApi * VideoSurfaceInfo::tao = NULL;
+const Tao::ModuleApi * VideoSurface::tao = NULL;
+VideoSurface::video_map VideoSurface::videos;
 
-VideoSurfaceInfo::VideoSurfaceInfo()
+
+VideoSurface::VideoSurface()
 // ----------------------------------------------------------------------------
 //   Create the video player
 // ----------------------------------------------------------------------------
@@ -58,7 +69,7 @@ VideoSurfaceInfo::VideoSurfaceInfo()
 }
 
 
-VideoSurfaceInfo::~VideoSurfaceInfo()
+VideoSurface::~VideoSurface()
 // ----------------------------------------------------------------------------
 //    Stop the player and delete resources
 // ----------------------------------------------------------------------------
@@ -66,7 +77,7 @@ VideoSurfaceInfo::~VideoSurfaceInfo()
 }
 
 
-GLuint VideoSurfaceInfo::bind(text url)
+GLuint VideoSurface::bind(text url)
 // ----------------------------------------------------------------------------
 //    Start playback or refresh the surface and bind to the texture
 // ----------------------------------------------------------------------------
@@ -76,7 +87,7 @@ GLuint VideoSurfaceInfo::bind(text url)
 }
 
 
-std::ostream & VideoSurfaceInfo::debug()
+std::ostream & VideoSurface::debug()
 // ----------------------------------------------------------------------------
 //   Convenience method to log with a common prefix
 // ----------------------------------------------------------------------------
@@ -87,24 +98,19 @@ std::ostream & VideoSurfaceInfo::debug()
 
 
 
-XL::Integer_p VideoSurfaceInfo::movie_texture(XL::Context_p context,
-                                              XL::Tree_p self, text name)
+XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
+                                          XL::Tree_p self, text name)
 // ----------------------------------------------------------------------------
 //   Make a video player texture
 // ----------------------------------------------------------------------------
 {
     // Get or build the current frame if we don't have one
-    VideoSurfaceInfo *surface = self->GetInfo<VideoSurfaceInfo>();
+    VideoSurface *surface = videos[name];
     if (!surface)
     {
-        surface = new VideoSurfaceInfo();
-        self->SetInfo<VideoSurfaceInfo> (surface);
-    }
+        surface = new VideoSurface();
+        videos[name] = surface;
 
-    if (name != surface->unresolvedName)
-    {
-        // Name has not been converted to URL format, or has changed
-        surface->unresolvedName = name;
         if (name != "")
         {
             QRegExp re("[a-z]+://");
@@ -165,7 +171,7 @@ int module_init(const Tao::ModuleApi *api, const Tao::ModuleInfo *mod)
     Q_UNUSED(mod);
     glewInit();
     XL_INIT_TRACES();
-    VideoSurfaceInfo::tao = api;
+    VideoSurface::tao = api;
     return 0;
 }
 

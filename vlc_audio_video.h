@@ -34,37 +34,35 @@
 // ****************************************************************************
 
 #include "tao/tao_gl.h"
-#include <QObject>
 #include "tree.h"
 #include "context.h"
 #include "tao/module_api.h"
 #include "tao/tao_info.h"
 #include "vlc_video_surface.h"
+#include <map>
 
-struct VideoSurfaceInfo : VlcVideoSurface, Tao::Info
+
+struct VideoSurface : VlcVideoSurface
 // ----------------------------------------------------------------------------
 //    Play audio and/or video using VLCVideoSurface
 // ----------------------------------------------------------------------------
 {
-    typedef VideoSurfaceInfo * data_t;
-    VideoSurfaceInfo();
-    ~VideoSurfaceInfo();
-    virtual void               Delete() { tao->deferredDelete(this); }
-    operator                   data_t() { return this; }
-    GLuint                     bind(text url);
+    typedef std::map<text, VideoSurface *>  video_map;
+    VideoSurface();
+    virtual ~VideoSurface();
+    GLuint                      bind(text url);
 
 public:
     // XL interface
-    static XL::Integer_p       movie_texture(XL::Context_p context,
-                                             XL::Tree_p self, text name);
+    static XL::Integer_p        movie_texture(XL::Context_p context,
+                                              XL::Tree_p self, text name);
 
 protected:
-    std::ostream &             debug();
+    std::ostream &              debug();
 
 public:
-    text                       unresolvedName;
-    static const
-    Tao::ModuleApi *           tao;
+    static video_map            videos;
+    static const Tao::ModuleApi*tao;
 };
 
 #endif // VLC_AUDIO_VIDEO_H

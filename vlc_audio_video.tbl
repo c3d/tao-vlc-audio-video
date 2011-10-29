@@ -23,7 +23,7 @@
 
 PREFIX(MovieTexture,  tree,  "movie_texture",
        PARM(u, text, "The URL of the movie to play"),
-       return VideoSurfaceInfo::movie_texture(context, self, u),
+       return VideoSurface::movie_texture(context, self, u),
        GROUP(widget)
        SYNOPSIS("Create a texture from a video.")
        DESCRIPTION("Create a dynamic texture from the given movie."))

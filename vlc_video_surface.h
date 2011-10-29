@@ -77,6 +77,7 @@ public:
     float          position();
     GLuint         texture();
     QString        url ()   { return playing; }
+    State          currentState()  { return state; }
 
 public:
     unsigned                w, h;
