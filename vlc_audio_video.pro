@@ -24,18 +24,23 @@
 
 isEmpty(VLC) {
   # Default location for VLC SDK
-  VLC_TOP=$$PWD/../../../vlc
+  VLC_TOP=$$PWD/../../..
   macx {
     contains(CONFIG, x86) {
-      VLC_TOP=$${VLC_TOP}_x86
+      VLC_TOP=$${VLC_TOP}/vlc_x86
     } else {
-      VLC_TOP=$${VLC_TOP}_x86_64
+      VLC_TOP=$${VLC_TOP}/vlc_x86_64
     }
-    VLC=$$VLC_TOP/VLC.app/Contents/MacOS
+    VLC=$${VLC_TOP}/VLC.app/Contents/MacOS
   }
-  win32:VLC=$$VLC_TOP/sdk
-  linux-g++*:VLC=$$VLC_TOP
-
+  win32 {
+    VLC_TOP=$${VLC_TOP}/vlc
+    VLC=$${VLC_TOP}/vlc/sdk
+  }
+  linux-g++* {
+    VLC_TOP=/usr
+    VLC=$${VLC_TOP}
+  }
   !exists($$VLC/include/vlc/libvlc.h) {
     VLC=
     !build_pass:message(VLC was not found in the default location: $$VLC_TOP)
@@ -45,18 +50,24 @@ isEmpty(VLC) {
 isEmpty(VLC) {
 
   !build_pass {
-  message()
-  message("To build the VLCAudioVideo module, I need VLC >= 1.2.0")
-  message("If you have the VLC SDK, please set the VLC variable during qmake.")
-  message(For instance:)
-  message([MacOSX] qmake <options> VLC=/Users/jerome/Desktop/vlc-1.2.0-git/VLC.app/Contents/MacOS)
-  message([Windows] qmake <options> VLC=/c/Users/Jerome/Desktop/vlc-1.2.0-git-20111024-0002/sdk)
-  message("'VLC' must point to a directory with include/, lib/, plugins/")
-  message(You may download binaries from:)
-  message(http://nightlies.videolan.org/build/macosx-intel/)
-  message(http://nightlies.videolan.org/build/win32/last/)
-  message()
-  message(*** THE VLCAudioVideo MODULE WILL NOT BE BUILT ***)
+    message()
+    message("To build the VLCAudioVideo module, I need VLC >= 1.2.0")
+
+    linux-g++* {
+      message(Please install the libvlc-dev package.)
+      message(See http://nightlies.videolan.org/)
+    } else {
+      message("If you have the VLC SDK, please set the VLC variable during qmake.")
+      message(For instance:)
+      message([MacOSX] qmake <options> VLC=/Users/jerome/Desktop/vlc-1.2.0-git/VLC.app/Contents/MacOS)
+      message([Windows] qmake <options> VLC=/c/Users/Jerome/Desktop/vlc-1.2.0-git-20111024-0002/sdk)
+      message("'VLC' must point to a directory with include/, lib/")
+      message(You may download binaries from:)
+      message(http://nightlies.videolan.org/build/macosx-intel/)
+      message(http://nightlies.videolan.org/build/win32/last/)
+    }
+    message()
+    message(*** THE VLCAudioVideo MODULE WILL NOT BE BUILT ***)
   }
 
 } else {
@@ -94,13 +105,13 @@ isEmpty(VLC) {
     vlc_lua.files = $${VLC}/share/lua
   }
   linux-g++* {
-    # Untested
+    # Install will create <module>/lib/vlc/{plugins,lua}
     vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = $${VLC}/lib/*
-    vlc_plugins.path  = $${MODINSTPATH}/plugins
-    vlc_plugins.files = $${VLC}/plugins/*
-    vlc_lua.path = $${MODINSTPATH}/lib
-    vlc_lua.files = $${VLC}/share
+    vlc_libs.files = $${VLC}/lib/libvlc*.so.*
+    vlc_plugins.path  = $${MODINSTPATH}/lib/vlc
+    vlc_plugins.files = $${VLC}/lib/vlc/plugins $${VLC}/lib/vlc/vlc-cache-gen
+    vlc_lua.path = $${MODINSTPATH}/lib/vlc
+    vlc_lua.files = $${VLC}/lib/vlc/lua
   }
   win32 {
     # Install will create <module>/lib/{plugins,lua}
