@@ -35,7 +35,7 @@ isEmpty(VLC) {
   }
   win32 {
     VLC_TOP=$${VLC_TOP}/vlc
-    VLC=$${VLC_TOP}/vlc/sdk
+    VLC=$${VLC_TOP}/sdk
   }
   linux-g++* {
     VLC_TOP=/usr
