@@ -28,12 +28,12 @@ PREFIX(MovieTexture,  tree,  "movie_texture",
        SYNOPSIS("Create a texture from a video.")
        DESCRIPTION("Create a dynamic texture from the given movie."))
 
-PREFIX(MoviePurge,  tree,  "movie_purge",
-       PARM(u, text, "The URL of the movie to purge"),
-       return VideoSurface::movie_purge(u),
+PREFIX(MovieDrop,  tree,  "movie_drop",
+       PARM(u, text, "The URL of the movie to drop"),
+       return VideoSurface::movie_drop(u),
        GROUP(video)
-       SYNOPSIS("Purge a video texture.")
-       DESCRIPTION("Purge data structures tracking a video."))
+       SYNOPSIS("Drop a video texture.")
+       DESCRIPTION("Remove all data structures tracking a video."))
 PREFIX(MovieOnly,  tree,  "movie_only",
        PARM(u, text, "The URL of the movie to preserve"),
        return VideoSurface::movie_only(u),

@@ -57,7 +57,7 @@ public:
     static XL::Integer_p        movie_texture(XL::Context_p context,
                                               XL::Tree_p self,
                                               text name);
-    static XL::Name_p           movie_purge(text name);
+    static XL::Name_p           movie_drop(text name);
     static XL::Name_p           movie_only(text name);
     static XL::Name_p           movie_play(text name);
     static XL::Name_p           movie_pause(text name);

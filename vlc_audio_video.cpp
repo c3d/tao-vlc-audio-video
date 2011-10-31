@@ -161,7 +161,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 }
 
 
-XL::Name_p VideoSurface::movie_purge(text name)
+XL::Name_p VideoSurface::movie_drop(text name)
 // ----------------------------------------------------------------------------
 //   Purge the given video surface from memory
 // ----------------------------------------------------------------------------
