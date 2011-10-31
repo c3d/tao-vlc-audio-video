@@ -38,12 +38,13 @@ isEmpty(VLC) {
 
   !exists($$VLC/include/vlc/libvlc.h) {
     VLC=
-    message(VLC was not found in the default location: $$VLC_TOP)
+    !build_pass:message(VLC was not found in the default location: $$VLC_TOP)
   }
 }
 
-!build_pass:isEmpty(VLC) {
+isEmpty(VLC) {
 
+  !build_pass {
   message()
   message("To build the VLCAudioVideo module, I need VLC >= 1.2.0")
   message("If you have the VLC SDK, please set the VLC variable during qmake.")
@@ -56,6 +57,7 @@ isEmpty(VLC) {
   message(http://nightlies.videolan.org/build/win32/last/)
   message()
   message(*** THE VLCAudioVideo MODULE WILL NOT BE BUILT ***)
+  }
 
 } else {
 
