@@ -146,10 +146,13 @@ void VlcVideoSurface::play(const QString &name)
     {
         IFTRACE2(fileload, video)
         {
+            std::string neww = +name;
             std::string prev = +mediaName;
+            if (neww == "")
+                neww = "\"\"";
             if (prev == "")
                 prev = "\"\"";
-            debug() << "Play: " << +name << "\n";
+            debug() << "Play: " << neww << "\n";
             debug() << "(previous: " << prev << ")\n";
         }
 
