@@ -23,7 +23,102 @@
 
 PREFIX(MovieTexture,  tree,  "movie_texture",
        PARM(u, text, "The URL of the movie to play"),
-       return VideoSurfaceInfo::movie_texture(context, self, u),
-       GROUP(widget)
+       return VideoSurface::movie_texture(context, self, u),
+       GROUP(video)
        SYNOPSIS("Create a texture from a video.")
        DESCRIPTION("Create a dynamic texture from the given movie."))
+
+PREFIX(MoviePurge,  tree,  "movie_purge",
+       PARM(u, text, "The URL of the movie to purge"),
+       return VideoSurface::movie_purge(u),
+       GROUP(video)
+       SYNOPSIS("Purge a video texture.")
+       DESCRIPTION("Purge data structures tracking a video."))
+PREFIX(MovieOnly,  tree,  "movie_only",
+       PARM(u, text, "The URL of the movie to preserve"),
+       return VideoSurface::movie_only(u),
+       GROUP(video)
+       SYNOPSIS("Purge all videos but one.")
+       DESCRIPTION("Purge data structures tracking videos except one."))
+
+PREFIX(MoviePlay,  tree,  "movie_play",
+       PARM(u, text, "The URL of the movie to play"),
+       return VideoSurface::movie_play(u),
+       GROUP(video)
+       SYNOPSIS("Play the video again (assuming it was paused)."))
+PREFIX(MoviePause,  tree,  "movie_pause",
+       PARM(u, text, "The URL of the movie to pause"),
+       return VideoSurface::movie_pause(u),
+       GROUP(video)
+       SYNOPSIS("Pause the video again (assuming it was playing)."))
+PREFIX(MovieStop,  tree,  "movie_stop",
+       PARM(u, text, "The URL of the movie to stop"),
+       return VideoSurface::movie_stop(u),
+       GROUP(video)
+       SYNOPSIS("Stop the video."))
+PREFIX(MovieVolume,  tree,  "movie_volume",
+       PARM(u, text, "The URL of the movie for which we want the volume"),
+       return VideoSurface::movie_volume(self, u),
+       GROUP(video)
+       SYNOPSIS("Return the volume for a given video."))
+PREFIX(MoviePosition,  tree,  "movie_position",
+       PARM(u, text, "The URL of the movie for which we want the position"),
+       return VideoSurface::movie_position(self, u),
+       GROUP(video)
+       SYNOPSIS("Return the position for a given video."))
+PREFIX(MovieTime,  tree,  "movie_time",
+       PARM(u, text, "The URL of the movie for which we want the time"),
+       return VideoSurface::movie_time(self, u),
+       GROUP(video)
+       SYNOPSIS("Return the time for a given video."))
+PREFIX(MovieLength,  tree,  "movie_length",
+       PARM(u, text, "The URL of the movie for which we want the length"),
+       return VideoSurface::movie_length(self, u),
+       GROUP(video)
+       SYNOPSIS("Return the length for a given video."))
+PREFIX(MovieRate,  tree,  "movie_rate",
+       PARM(u, text, "The URL of the movie for which we want the rate"),
+       return VideoSurface::movie_rate(self, u),
+       GROUP(video)
+       SYNOPSIS("Return the rate for a given video."))
+
+PREFIX(MoviePlaying,  tree,  "movie_playing",
+       PARM(u, text, "The URL of the movie we want to test"),
+       return VideoSurface::movie_playing(u),
+       GROUP(video)
+       SYNOPSIS("Return true if the video is currently playing."))
+PREFIX(MoviePaused,  tree,  "movie_paused",
+       PARM(u, text, "The URL of the movie we want to test"),
+       return VideoSurface::movie_paused(u),
+       GROUP(video)
+       SYNOPSIS("Return true if the video is currently paused."))
+PREFIX(MovieDone,  tree,  "movie_done",
+       PARM(u, text, "The URL of the movie we want to test"),
+       return VideoSurface::movie_done(u),
+       GROUP(video)
+       SYNOPSIS("Return true if the video is done playing."))
+
+PREFIX(MovieSetVolume,  tree,  "movie_set_volume",
+       PARM(u, text, "The URL of the movie")
+       PARM(v, real, "The desired volume (from 0 to 1)"),
+       return VideoSurface::movie_set_volume(u, v),
+       GROUP(video)
+       SYNOPSIS("Set the volume for a given video."))
+PREFIX(MovieSetPosition,  tree,  "movie_set_position",
+       PARM(u, text, "The URL of the movie")
+       PARM(v, real, "The desired position in the movie"),
+       return VideoSurface::movie_set_position(u, v),
+       GROUP(video)
+       SYNOPSIS("Set the position for a given video."))
+PREFIX(MovieSetTime,  tree,  "movie_set_time",
+       PARM(u, text, "The URL of the movie")
+       PARM(v, real, "The desired time in the movie"),
+       return VideoSurface::movie_set_time(u, v),
+       GROUP(video)
+       SYNOPSIS("Set the time for a given video."))
+PREFIX(MovieSetRate,  tree,  "movie_set_rate",
+       PARM(u, text, "The URL of the movie")
+       PARM(v, real, "The desired replay rate (1.0 = normal)"),
+       return VideoSurface::movie_set_rate(u, v),
+       GROUP(video)
+       SYNOPSIS("Set the rate for a given video."))

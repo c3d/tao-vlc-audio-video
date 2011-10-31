@@ -34,40 +34,58 @@
 // ****************************************************************************
 
 #include "tao/tao_gl.h"
-#include <QObject>
 #include "tree.h"
 #include "context.h"
 #include "tao/module_api.h"
 #include "tao/tao_info.h"
 #include "vlc_video_surface.h"
+#include <map>
 
-struct VideoSurfaceInfo : QObject, VlcVideoSurface, Tao::Info
+
+struct VideoSurface : VlcVideoSurface
 // ----------------------------------------------------------------------------
 //    Play audio and/or video using VLCVideoSurface
 // ----------------------------------------------------------------------------
 {
-    Q_OBJECT
-
-public:
-    typedef VideoSurfaceInfo * data_t;
-    VideoSurfaceInfo();
-    ~VideoSurfaceInfo();
-    virtual void               Delete() { tao->deferredDelete(this); }
-    operator                   data_t() { return this; }
-    virtual GLuint             bind(XL::Text *url);
+    typedef std::map<text, VideoSurface *>  video_map;
+    VideoSurface();
+    virtual ~VideoSurface();
+    GLuint                      bind(text url);
 
 public:
     // XL interface
-    static XL::Integer_p       movie_texture(XL::Context_p context,
-                                             XL::Tree_p self, text name);
+    static XL::Integer_p        movie_texture(XL::Context_p context,
+                                              XL::Tree_p self,
+                                              text name);
+    static XL::Name_p           movie_purge(text name);
+    static XL::Name_p           movie_only(text name);
+    static XL::Name_p           movie_play(text name);
+    static XL::Name_p           movie_pause(text name);
+    static XL::Name_p           movie_stop(text name);
 
+    static XL::Real_p           movie_volume(XL::Tree_p self, text name);
+    static XL::Real_p           movie_position(XL::Tree_p self, text name);
+    static XL::Real_p           movie_time(XL::Tree_p self, text name);
+    static XL::Real_p           movie_length(XL::Tree_p self, text name);
+    static XL::Real_p           movie_rate(XL::Tree_p self, text name);
+
+
+    static XL::Name_p           movie_playing(text name);
+    static XL::Name_p           movie_paused(text name);
+    static XL::Name_p           movie_done(text name);
+
+    static XL::Name_p           movie_set_volume(text name, float volume);
+    static XL::Name_p           movie_set_position(text name, float position);
+    static XL::Name_p           movie_set_time(text name, float position);
+    static XL::Name_p           movie_set_rate(text name, float rate);
+    
 protected:
-    std::ostream &             debug();
+    std::ostream &              debug();
+    static VideoSurface *       surface(text name);
 
 public:
-    text                       unresolvedName;
-    static const
-    Tao::ModuleApi *           tao;
+    static video_map            videos;
+    static const Tao::ModuleApi*tao;
 };
 
 #endif // VLC_AUDIO_VIDEO_H

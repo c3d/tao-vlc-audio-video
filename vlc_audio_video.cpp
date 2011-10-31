@@ -35,21 +35,32 @@
 #include "vlc_preferences.h"
 #include "errors.h"
 
+
 inline QString operator +(std::string s)
+// ----------------------------------------------------------------------------
+//   UTF-8 conversion from std::string to QString
+// ----------------------------------------------------------------------------
 {
     return QString::fromUtf8(s.data(), s.length());
 }
 
+
 inline std::string operator +(QString s)
+// ----------------------------------------------------------------------------
+//   UTF-8 conversion from QString to std::string
+// ----------------------------------------------------------------------------
 {
     return std::string(s.toUtf8().constData());
 }
 
+
 using namespace XL;
 
-const Tao::ModuleApi * VideoSurfaceInfo::tao = NULL;
+const Tao::ModuleApi * VideoSurface::tao = NULL;
+VideoSurface::video_map VideoSurface::videos;
 
-VideoSurfaceInfo::VideoSurfaceInfo()
+
+VideoSurface::VideoSurface()
 // ----------------------------------------------------------------------------
 //   Create the video player
 // ----------------------------------------------------------------------------
@@ -58,7 +69,7 @@ VideoSurfaceInfo::VideoSurfaceInfo()
 }
 
 
-VideoSurfaceInfo::~VideoSurfaceInfo()
+VideoSurface::~VideoSurface()
 // ----------------------------------------------------------------------------
 //    Stop the player and delete resources
 // ----------------------------------------------------------------------------
@@ -66,17 +77,17 @@ VideoSurfaceInfo::~VideoSurfaceInfo()
 }
 
 
-GLuint VideoSurfaceInfo::bind(XL::Text *urlTree)
+GLuint VideoSurface::bind(text url)
 // ----------------------------------------------------------------------------
 //    Start playback or refresh the surface and bind to the texture
 // ----------------------------------------------------------------------------
 {
-    play(+urlTree->value);
+    play(+url);
     return texture();
 }
 
 
-std::ostream & VideoSurfaceInfo::debug()
+std::ostream & VideoSurface::debug()
 // ----------------------------------------------------------------------------
 //   Convenience method to log with a common prefix
 // ----------------------------------------------------------------------------
@@ -87,24 +98,19 @@ std::ostream & VideoSurfaceInfo::debug()
 
 
 
-XL::Integer_p VideoSurfaceInfo::movie_texture(XL::Context_p context,
-                                              XL::Tree_p self, text name)
+XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
+                                          XL::Tree_p self, text name)
 // ----------------------------------------------------------------------------
 //   Make a video player texture
 // ----------------------------------------------------------------------------
 {
     // Get or build the current frame if we don't have one
-    VideoSurfaceInfo *surface = self->GetInfo<VideoSurfaceInfo>();
+    VideoSurface *surface = videos[name];
     if (!surface)
     {
-        surface = new VideoSurfaceInfo();
-        self->SetInfo<VideoSurfaceInfo> (surface);
-    }
+        surface = new VideoSurface();
+        videos[name] = surface;
 
-    if (name != surface->unresolvedName)
-    {
-        // name has not been converted to URL format, or has changed
-        surface->unresolvedName = name;
         if (name != "")
         {
             QRegExp re("[a-z]+://");
@@ -132,17 +138,17 @@ XL::Integer_p VideoSurfaceInfo::movie_texture(XL::Context_p context,
     else
     {
         // Raw name has not changed, no need to resolve again
-        name = +surface->playing;
+        name = +surface->mediaName;
     }
 
     // Resize to requested size, and bind texture
-    GLuint id = surface->bind(new Text(name));
+    GLuint id = surface->bind(name);
     if (surface->lastError != "")
     {
         XL::Ooops("Cannot play: $1", self);
         QString err = "Media player error: " + surface->lastError;
         XL::Ooops(+err, self);
-        QString err2 = "Path or URL: " + surface->playing;
+        QString err2 = "Path or URL: " + surface->mediaName;
         XL::Ooops(+err2, self);
         surface->lastError = "";
         return new Integer(0, self->Position());
@@ -155,6 +161,120 @@ XL::Integer_p VideoSurfaceInfo::movie_texture(XL::Context_p context,
 }
 
 
+XL::Name_p VideoSurface::movie_purge(text name)
+// ----------------------------------------------------------------------------
+//   Purge the given video surface from memory
+// ----------------------------------------------------------------------------
+{
+    video_map::iterator found = videos.find(name);
+    if (found != videos.end())
+    {
+        VideoSurface *s = (*found).second;
+        videos.erase(found);
+        delete s;
+        return XL::xl_true;
+    }
+    return XL::xl_false;
+}
+
+
+XL::Name_p VideoSurface::movie_only(text name)
+// ----------------------------------------------------------------------------
+//   Purge all other surfaces from memory
+// ----------------------------------------------------------------------------
+{
+    video_map::iterator n = videos.begin();
+    for (video_map::iterator v = videos.begin(); v != videos.end(); v = n)
+    {
+        if (name != (*v).first)
+        {
+            VideoSurface *s = (*v).second;
+            videos.erase(v);
+            delete s;
+            n = videos.begin();
+        }
+        else
+        {
+            n = ++v;
+        }
+    }
+    return XL::xl_false;
+}
+
+
+VideoSurface *VideoSurface::surface(text name)
+// ----------------------------------------------------------------------------
+//   Return the video surface associated with a given name or NULL
+// ----------------------------------------------------------------------------
+{
+    video_map::iterator found = videos.find(name);
+    if (found != videos.end())
+        return (*found).second;
+    return NULL;
+}
+
+
+#define MOVIE_ADAPTER(id)                       \
+XL::Name_p VideoSurface::movie_##id(text name)  \
+{                                               \
+    if (VideoSurface *s = surface(name))        \
+    {                                           \
+        s->id();                                \
+        return XL::xl_true;                     \
+    }                                           \
+    return XL::xl_false;                        \
+}
+
+MOVIE_ADAPTER(play)
+MOVIE_ADAPTER(pause)
+MOVIE_ADAPTER(stop)
+
+#define MOVIE_FLOAT_ADAPTER(id)                                 \
+XL::Real_p VideoSurface::movie_##id(XL::Tree_p self, text name) \
+{                                                               \
+    float result = -1.0;                                        \
+    if (VideoSurface *s = surface(name))                        \
+        result = s->id();                                       \
+    return new XL::Real(result, self->Position());              \
+}
+
+MOVIE_FLOAT_ADAPTER(volume)
+MOVIE_FLOAT_ADAPTER(position)
+MOVIE_FLOAT_ADAPTER(time)
+MOVIE_FLOAT_ADAPTER(length)
+MOVIE_FLOAT_ADAPTER(rate)
+
+#define MOVIE_BOOL_ADAPTER(id)                  \
+XL::Name_p VideoSurface::movie_##id(text name)  \
+{                                               \
+    if (VideoSurface *s = surface(name))        \
+        if (s->id())                            \
+            return XL::xl_true;                 \
+    return XL::xl_false;                        \
+}
+
+MOVIE_BOOL_ADAPTER(playing)
+MOVIE_BOOL_ADAPTER(paused)
+MOVIE_BOOL_ADAPTER(done)
+
+#define MOVIE_FLOAT_SETTER(id, mid)                             \
+XL::Name_p VideoSurface::movie_set_##id(text name, float value) \
+{                                                               \
+    if (VideoSurface *s = surface(name))                        \
+    {                                                           \
+        s->mid(value);                                          \
+        return XL::xl_true;                                     \
+    }                                                           \
+    return XL::xl_false;                                        \
+}
+
+
+MOVIE_FLOAT_SETTER(volume, setVolume)
+MOVIE_FLOAT_SETTER(position, setPosition)
+MOVIE_FLOAT_SETTER(time, setTime)
+MOVIE_FLOAT_SETTER(rate, setRate)
+
+
 XL_DEFINE_TRACES
 
 int module_init(const Tao::ModuleApi *api, const Tao::ModuleInfo *mod)
@@ -165,7 +285,7 @@ int module_init(const Tao::ModuleApi *api, const Tao::ModuleInfo *mod)
     Q_UNUSED(mod);
     glewInit();
     XL_INIT_TRACES();
-    VideoSurfaceInfo::tao = api;
+    VideoSurface::tao = api;
     return 0;
 }
 

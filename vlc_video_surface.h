@@ -71,16 +71,24 @@ public:
     void           pause();
     void           stop();
     void           mute(bool mute);
-    void           setVolume(int vol);
-    void           setPosition(float pos);
-    int            volume();
+    float          volume();
     float          position();
+    float          time();
+    float          length();
+    float          rate();
+    bool           playing();
+    bool           paused();
+    bool           done();
+    void           setVolume(float vol);
+    void           setPosition(float pos);
+    void           setTime(float pos);
+    void           setRate(float pos);
     GLuint         texture();
-    QString        url ()   { return playing; }
+    QString        url ()   { return mediaName; }
 
 public:
     unsigned                w, h;
-    QString                 playing;
+    QString                 mediaName;
     QString                 lastError;
 
 protected:
