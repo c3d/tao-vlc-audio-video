@@ -8,3 +8,5 @@ lib*.so.*
 *.dll
 moc_*.cpp
 *.o
+/debug
+/release
