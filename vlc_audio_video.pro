@@ -116,7 +116,7 @@ isEmpty(VLC) {
   win32 {
     # Install will create <module>/lib/{plugins,lua}
     vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = $${VLC}/../*.dll
+    vlc_libs.files = $${VLC}/../*.dll $${VLC}/../vlc-cache-gen.exe
     vlc_plugins.path  = $${MODINSTPATH}/lib
     vlc_plugins.files = $${VLC}/../plugins
     vlc_lua.path  = $${MODINSTPATH}/lib

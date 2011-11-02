@@ -40,10 +40,24 @@
 #endif
 #include <QStringList>
 #include <QVector>
+#ifdef Q_OS_WIN32
+#include "vlc_audio_video.h"
+#include <QProcess>
+#endif
 
 libvlc_instance_t *         VlcVideoSurface::vlc = NULL;
 VlcVideoSurface::VlcCleanup VlcVideoSurface::cleanup;
 
+
+#ifdef Q_OS_WIN32
+inline QString operator +(std::string s)
+// ----------------------------------------------------------------------------
+//   Convert std::string to QString
+// ----------------------------------------------------------------------------
+{
+    return QString::fromUtf8(s.data(), s.length());
+}
+#endif
 
 inline std::string operator +(QString s)
 // ----------------------------------------------------------------------------
@@ -596,6 +610,27 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
             for (int i = 0; i < argv.size(); i++)
                 sdebug() << "  " << argv[i] << "\n";
         }
+
+#ifdef Q_OS_WIN32
+        // #1555 Windows: crash when loading vlc_audio_video module for the
+        // first time
+        // libvlc_new() takes care of updating plugins.dat if needed, but it
+        // seems that it corrupts the current process doing so.
+        QString cg(+VideoSurface::modulePath + "/lib/vlc-cache-gen.exe");
+        QStringList args("plugins");
+        IFTRACE(video)
+            sdebug() << "Running: '" << +cg << " " << +args.join(" ")
+                     << "'...\n";
+        QProcess p;
+        p.start(cg, args);
+        bool ok = false;
+        if (p.waitForStarted() && p.waitForFinished())
+            ok = true;
+        const char *status = ok ? "done" : "error";
+        IFTRACE(video)
+            sdebug() << "...vlc-cache-gen " << status << "\n";
+#endif
+
         vlc = libvlc_new(argv.size(), argv.data());
 
         IFTRACE(video)

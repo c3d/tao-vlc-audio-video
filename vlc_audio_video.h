@@ -33,7 +33,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
-#include "tao/tao_gl.h"
 #include "tree.h"
 #include "context.h"
 #include "tao/module_api.h"
@@ -50,7 +49,7 @@ struct VideoSurface : VlcVideoSurface
     typedef std::map<text, VideoSurface *>  video_map;
     VideoSurface();
     virtual ~VideoSurface();
-    GLuint                      bind(text url);
+    unsigned int                bind(text url);
 
 public:
     // XL interface
@@ -86,6 +85,9 @@ protected:
 public:
     static video_map            videos;
     static const Tao::ModuleApi*tao;
+#ifdef Q_OS_WIN32
+    static text                 modulePath;
+#endif
 };
 
 #endif // VLC_AUDIO_VIDEO_H

@@ -31,9 +31,11 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
+#include "tao/tao_gl.h"
 #include "vlc_audio_video.h"
 #include "vlc_preferences.h"
 #include "errors.h"
+#include <QFileInfo>
 
 
 inline QString operator +(std::string s)
@@ -58,6 +60,9 @@ using namespace XL;
 
 const Tao::ModuleApi * VideoSurface::tao = NULL;
 VideoSurface::video_map VideoSurface::videos;
+#ifdef Q_OS_WIN32
+text VideoSurface::modulePath;
+#endif
 
 
 VideoSurface::VideoSurface()
@@ -77,7 +82,7 @@ VideoSurface::~VideoSurface()
 }
 
 
-GLuint VideoSurface::bind(text url)
+unsigned int VideoSurface::bind(text url)
 // ----------------------------------------------------------------------------
 //    Start playback or refresh the surface and bind to the texture
 // ----------------------------------------------------------------------------
@@ -286,6 +291,9 @@ int module_init(const Tao::ModuleApi *api, const Tao::ModuleInfo *mod)
     glewInit();
     XL_INIT_TRACES();
     VideoSurface::tao = api;
+#ifdef Q_OS_WIN32
+    VideoSurface::modulePath = mod->path;
+#endif
     return 0;
 }
 
