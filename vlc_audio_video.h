@@ -49,7 +49,7 @@ struct VideoSurface : VlcVideoSurface
     typedef std::map<text, VideoSurface *>  video_map;
     VideoSurface();
     virtual ~VideoSurface();
-    unsigned int                bind(text url);
+    unsigned int                bind(text pathOrUrl);
 
 public:
     // XL interface

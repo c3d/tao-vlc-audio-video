@@ -82,12 +82,12 @@ VideoSurface::~VideoSurface()
 }
 
 
-unsigned int VideoSurface::bind(text url)
+unsigned int VideoSurface::bind(text pathOrUrl)
 // ----------------------------------------------------------------------------
 //    Start playback or refresh the surface and bind to the texture
 // ----------------------------------------------------------------------------
 {
-    play(+url);
+    play(+pathOrUrl);
     return texture();
 }
 
@@ -122,6 +122,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
             QString qn = QString::fromUtf8(name.data(), name.length());
             if (re.indexIn(qn) == -1)
             {
+                // Not a URL: resolve file path
                 name = context->ResolvePrefixedPath(name);
                 text folder = tao->currentDocumentFolder();
                 QString qf = QString::fromUtf8(folder.data(), folder.length());
@@ -129,13 +130,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
                 QFileInfo inf(QDir(qf), qn);
                 if (inf.isReadable())
                 {
-                    name =
-#if defined(Q_OS_WIN)
-                            "file:///"
-#else
-                            "file://"
-#endif
-                            + text(inf.absoluteFilePath().toUtf8().constData());
+                    name = +QDir::toNativeSeparators(inf.absoluteFilePath());
                 }
             }
         }
