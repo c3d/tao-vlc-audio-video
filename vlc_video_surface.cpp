@@ -261,7 +261,27 @@ void VlcVideoSurface::getMediaInfo()
             const char * aud = has_audio ? "" : "no ";
             debug() << "Media has " << aud << "audio\n";
             if (has_video)
-                debug() << "Video resolution is " << w << "x" << h << "\n";
+                debug() << "Detected video resolution is "
+                        << w << "x" << h << "\n";
+        }
+        if (has_video)
+        {
+            if (w == 0 || h == 0)
+            {
+                int nw = 1280, nh = 720;
+                debug() << "WARNING: Invalid video resolution "
+                        << w << "x" << h
+                        << ". Using "
+                        << nw << "x" << nh
+                        << ".\n";
+                w = nw;
+                h = nh;
+            }
+            if (h == 0)
+            {
+                debug() << "WARNING: Video has unknown height! "
+                        << "Using " << h << "\n";
+            }
         }
         state = VS_READY_FOR_PLAYBACK;
     }
