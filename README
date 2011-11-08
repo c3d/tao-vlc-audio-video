@@ -1,0 +1,31 @@
+This is the VLCAudioVideo module for Tao Presentations 1.0.
+
+Tao Presentation is a 3D presentation software for MacOSX, Windows and Linux.
+It relies on OpenGL and on a dynamically compiled document description language
+based on XLR, an Open Source project (http://xlr.sourceforge.net/).
+The application is extensible through modules.
+
+Tao Presentations may be downloaded from http://taodyne.com/.
+
+VLCAudioVideo is a Tao Presentation module that can be used to play audio and
+video inside a 3D document. The module uses the VLC engine (libVLC) to decode
+and render the videos, which makes it quite powerful. It can read many file
+formats and even supports video streaming.
+
+VLCAudioVideo is released under the GPLv2 licence (see COPYING). Build
+instructions are in INSTALL.
+
+To see VLCAudioVideo in action, download Tao Presentations and open the
+following URL (File > Open network...):
+
+  git://git.taodyne.com/templates/YouCube
+
+We welcome feedback, suggestions, bug reports... on the tao-beta mailing
+list:
+
+  http://groups.google.com/group/tao-beta
+
+Enjoy! ;-)
+
+-- 
+The Taodyne Team
