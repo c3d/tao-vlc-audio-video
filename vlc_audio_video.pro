@@ -3,7 +3,7 @@
 # ******************************************************************************
 # File Description:
 # Qt build file for the VLC Audio Video module
-# Requires VLC >= 1.2.0
+# Requires VLC media player >= 1.1
 # ******************************************************************************
 # (C) 2011 Taodyne SAS <contact@taodyne.com>
 #
@@ -23,56 +23,35 @@
 # ******************************************************************************
 
 isEmpty(VLC) {
-  # Default location for VLC SDK
-  VLC_TOP=$$PWD/../../..
-  macx {
-    contains(CONFIG, x86) {
-      VLC_TOP=$${VLC_TOP}/vlc_x86
-    } else {
-      VLC_TOP=$${VLC_TOP}/vlc_x86_64
-    }
-    VLC=$${VLC_TOP}/VLC.app/Contents/MacOS
-  }
-  win32 {
-    VLC_TOP=$${VLC_TOP}/vlc
-    VLC=$${VLC_TOP}/sdk
-  }
-  linux-g++* {
-    VLC_TOP=/usr
-    VLC=$${VLC_TOP}
-  }
-  !exists($$VLC/include/vlc/libvlc.h) {
-    VLC=
-    !build_pass:message(VLC was not found in the default location: $$VLC_TOP)
-  }
+  # Default location for the VLC SDK
+  macx:VLC=/Applications/VLC.app/Contents/MacOS
+  win32:VLC=../../../VLC/sdk
+  linux-g++*:VLC=/usr
 }
 
-isEmpty(VLC) {
 
+!exists($$VLC/include/vlc/libvlc.h) {
   !build_pass {
+    message("$$VLC/include/vlc/libvlc.h not found")
     message()
-    message("To build the VLCAudioVideo module, I need VLC >= 1.2.0")
+    message("To build the VLCAudioVideo module, I need the VLC media player >= 1.1.x")
 
     linux-g++* {
       message(Please install the libvlc-dev package.)
       message(See http://nightlies.videolan.org/)
     } else {
-      message("If you have the VLC SDK, please set the VLC variable during qmake.")
+      message("Please install the VLC media player from:")
+      message("http://www.videolan.org/vlc/")
+      message("If you have extracted the VLC SDK somewhere else than the default")
+      message("installation directory, you may set the VLC variable.")
       message(For instance:)
-      message([MacOSX] qmake <options> VLC=/Users/jerome/Desktop/vlc-1.2.0-git/VLC.app/Contents/MacOS)
-      message([Windows] qmake <options> VLC=/c/Users/Jerome/Desktop/vlc-1.2.0-git-20111024-0002/sdk)
-      message("'VLC' must point to a directory with include/, lib/")
-      message(You may download binaries from:)
-      message(http://nightlies.videolan.org/build/macosx-intel/)
-      message(http://nightlies.videolan.org/build/win32/last/)
+      message([MacOSX] ./configure VLC=/Users/jerome/Desktop/vlc-1.1.12/VLC.app/Contents/MacOS)
+      message([Windows] ./configure VLC=/c/Users/Jerome/Desktop/vlc-1.1.11/sdk)
     }
     message()
     message(*** THE VLCAudioVideo MODULE WILL NOT BE BUILT ***)
   }
-
 } else {
-
-  !exists($$VLC/include/vlc/libvlc.h):error(VLC files not found under $$VLC)
 
   MODINSTDIR = vlc_audio_video
 

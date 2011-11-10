@@ -48,21 +48,37 @@ public:
     enum State
     {
         VS_STOPPED,
+        VS_PLAY_STARTED,
         VS_PLAYING,
         VS_PAUSED,
         VS_ERROR,
         VS_PLAY_ENDED,
-        VS_PARSING,
-        VS_PARSED,
-        VS_PLAYING_FOR_ANALYSIS,
-        VS_READY_FOR_ANALYSIS,
         VS_WAITING_FOR_SUBITEMS,
         VS_ALL_SUBITEMS_RECEIVED,
-        VS_READY_FOR_PLAYBACK
+        VS_SUBITEM_READY
     };
 
+    std::string stateName(State state)
+    {
+#define ADD_STATE(st) case st: return #st
+        switch (state)
+        {
+        ADD_STATE(VS_STOPPED);
+        ADD_STATE(VS_PLAYING);
+        ADD_STATE(VS_PLAY_STARTED);
+        ADD_STATE(VS_PAUSED);
+        ADD_STATE(VS_ERROR);
+        ADD_STATE(VS_PLAY_ENDED);
+        ADD_STATE(VS_WAITING_FOR_SUBITEMS);
+        ADD_STATE(VS_ALL_SUBITEMS_RECEIVED);
+        ADD_STATE(VS_SUBITEM_READY);
+        default: return "UNKNOWN";
+        }
+#undef ADD_STATE
+    }
+
 public:
-    VlcVideoSurface();
+    VlcVideoSurface(unsigned int w = 0, unsigned int h = 0);
     ~VlcVideoSurface();
 
 public:
@@ -101,6 +117,8 @@ protected:
     State                   state;
     libvlc_event_manager_t *pevm;
     libvlc_event_manager_t *mevm;
+    bool                    needResolution;  // REVISIT
+    bool                    descriptionMode;
 
 protected:
     struct VlcCleanup
@@ -113,15 +131,16 @@ protected:
     };
 
 protected:
+    void           setState(State state);
     void           startGetMediaInfo();
     void           getMediaInfo();
     void           startPlayback();
-    void           startPlaybackForAnalysis();
     void           getMediaSubItems();
     std::ostream & debug();
 
 protected:
     static libvlc_instance_t *  vlcInstance();
+    static bool                 isVlc1_1();
     static std::ostream &       sdebug();
 
     static void *  lockFrame(void *obj, void **plane);

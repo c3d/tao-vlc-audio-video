@@ -1,27 +1,30 @@
-This is the VLCAudioVideo module for Tao Presentations 1.0.
-Supported platforms: Windows x86 (MinGW), MacOSX x86, Linux x86.
+Build instructions for the VLCAudioVideo module for Tao Presentations 1.0.
+Supported platforms: Windows (x86) (MinGW), MacOSX (x86, x86_64),
+Linux (x86, x86_64).
 
 To build this module, you need the following:
 
-1. Tao Presentations 1.0-beta10 or later, available
-from from http://taodyne.com/.
-2. The Qt SDK, available from http://qt.nokia.com/.
-3. The VLC SDK version 1.2 (1.1.x will NOT work). Pre-release
-builds are available from http://nightlies.videolan.org/.
-Extract the tarball. 
+1. Tao Presentations 1.0-beta10 or later, available from http://taodyne.com/.
+2. The VLC media player, available from http://www.videolan.org/vlc/.
+   On Windows, you need the Zip package, because some header files are not
+   distributed with the Installer (Exe) package :(.
+3. The Qt SDK, available from http://qt.nokia.com/.
+4. On Windows, you also need the MinGW build environment.
 
 Build steps:
 
 1. Open the Tao Presentation installation folder and locate the 'sdk' folder.
-2. Copy 'sdk' to a safe place, for instance your home directory.
-3. Clone this project into sdk/modules/vlc_audio_video.
-4. cd sdk/modules
-5. ./configure  # Will tell where it expects to find the VLC SDK
-6. cd vlc_audio_video
-7. make install
+2. Copy the 'sdk' folder to a safe place, for instance your home directory.
+3. Clone this project into sdk/modules/vlc_audio_video:
+   $ cd sdk/modules
+   $ git clone git://gitorious.org/tao-presentation-modules/vlc_audio_video.git
+4. Run the configure script (from the 'modules' directory).
+   $ ./configure
+5. Build and install the VLCAudioVideo module:
+   $ make install
 
-The new module will be installed in a user-specific location and will take
-precedence on the default VLCAudioVideo module when Tao Presentation needs it.
-'make install' will not overwrite any file installed with the application.
+The new module will be copied into a user-specific location and will take
+precedence on the default VLCAudioVideo module.
+'make install' will not overwrite any file installed with Tao Presentations.
 See sdk/modules/README_SDK for details.
 
