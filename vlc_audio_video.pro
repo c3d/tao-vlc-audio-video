@@ -102,4 +102,7 @@ isEmpty(VLC) {
     vlc_lua.files = $${VLC}/../lua
   }
   INSTALLS += vlc_libs vlc_plugins vlc_lua
+
+  LICENSE_FILES = vlc_audio_video.taokey.notsigned
+  exists(../licenses.pri):include(../licenses.pri)
 }

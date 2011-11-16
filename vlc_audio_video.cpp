@@ -109,6 +109,18 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 //   Make a video player texture
 // ----------------------------------------------------------------------------
 {
+#ifdef USE_LICENSE
+    static bool licensed, tested = false;
+    if (!tested)
+    {
+        licensed = tao->hasLicense("VLCAudioVideo 1.0");
+        tested = true;
+    }
+
+    if (!licensed && !tao->blink(4.5, 0.5))
+        return new Integer(0, self->Position());
+#endif
+
     // Get or build the current frame if we don't have one
     VideoSurface *surface = videos[name];
     if (!surface)
