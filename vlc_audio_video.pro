@@ -66,8 +66,8 @@ isEmpty(VLC) {
 
   QT       += core gui opengl
 
-  INCLUDEPATH += $${VLC}/include
-  LIBS += -L$${VLC}/lib -lvlc -lvlccore
+  INCLUDEPATH += "$${VLC}/include"
+  LIBS += -L"$${VLC}/lib" -lvlc -lvlccore
   macx:LIBS += -framework AppKit
 
   # Icon: http://en.wikipedia.org/wiki/File:VLC_Icon.svg
@@ -77,29 +77,29 @@ isEmpty(VLC) {
   macx {
     # Install will create <module>/lib/{lib,plugins,share/lua}
     vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = $${VLC}/lib
+    vlc_libs.files = "$${VLC}/lib"
     vlc_plugins.path  = $${MODINSTPATH}/lib
-    vlc_plugins.files = $${VLC}/plugins
+    vlc_plugins.files = "$${VLC}/plugins"
     vlc_lua.path = $${MODINSTPATH}/lib/share
-    vlc_lua.files = $${VLC}/share/lua
+    vlc_lua.files = "$${VLC}/share/lua"
   }
   linux-g++* {
     # Install will create <module>/lib/vlc/{plugins,lua}
     vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = $${VLC}/lib/libvlc*.so.*
+    vlc_libs.files = "$${VLC}/lib/libvlc*.so.*"
     vlc_plugins.path  = $${MODINSTPATH}/lib/vlc
-    vlc_plugins.files = $${VLC}/lib/vlc/plugins $${VLC}/lib/vlc/vlc-cache-gen
+    vlc_plugins.files = "$${VLC}/lib/vlc/plugins" "$${VLC}/lib/vlc/vlc-cache-gen"
     vlc_lua.path = $${MODINSTPATH}/lib/vlc
-    vlc_lua.files = $${VLC}/lib/vlc/lua
+    vlc_lua.files = "$${VLC}/lib/vlc/lua"
   }
   win32 {
     # Install will create <module>/lib/{plugins,lua}
     vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = $${VLC}/../*.dll $${VLC}/../vlc-cache-gen.exe
+    vlc_libs.files = "$${VLC}/../*.dll" "$${VLC}/../vlc-cache-gen.exe"
     vlc_plugins.path  = $${MODINSTPATH}/lib
-    vlc_plugins.files = $${VLC}/../plugins
+    vlc_plugins.files = "$${VLC}/../plugins"
     vlc_lua.path  = $${MODINSTPATH}/lib
-    vlc_lua.files = $${VLC}/../lua
+    vlc_lua.files = "$${VLC}/../lua"
   }
   INSTALLS += vlc_libs vlc_plugins vlc_lua
 
