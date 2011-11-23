@@ -113,7 +113,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
     static bool licensed, tested = false;
     if (!tested)
     {
-        licensed = tao->hasLicense("VLCAudioVideo 1.0");
+        licensed = tao->checkLicense("VLCAudioVideo 1.0", false);
         tested = true;
     }
 
