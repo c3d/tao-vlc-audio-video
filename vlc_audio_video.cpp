@@ -241,24 +241,26 @@ MOVIE_ADAPTER(play)
 MOVIE_ADAPTER(pause)
 MOVIE_ADAPTER(stop)
 
-#define MOVIE_FLOAT_ADAPTER(id)                                 \
+#define MOVIE_FLOAT_ADAPTER(id, ev)                             \
 XL::Real_p VideoSurface::movie_##id(XL::Tree_p self, text name) \
 {                                                               \
     float result = -1.0;                                        \
+    ev;                                                         \
     if (VideoSurface *s = surface(name))                        \
         result = s->id();                                       \
     return new XL::Real(result, self->Position());              \
 }
 
-MOVIE_FLOAT_ADAPTER(volume)
-MOVIE_FLOAT_ADAPTER(position)
-MOVIE_FLOAT_ADAPTER(time)
-MOVIE_FLOAT_ADAPTER(length)
-MOVIE_FLOAT_ADAPTER(rate)
+MOVIE_FLOAT_ADAPTER(volume,   )
+MOVIE_FLOAT_ADAPTER(position, tao->refreshOn(QEvent::Timer, -1))
+MOVIE_FLOAT_ADAPTER(time,     tao->refreshOn(QEvent::Timer, -1))
+MOVIE_FLOAT_ADAPTER(length,   )
+MOVIE_FLOAT_ADAPTER(rate ,    )
 
 #define MOVIE_BOOL_ADAPTER(id)                  \
 XL::Name_p VideoSurface::movie_##id(text name)  \
 {                                               \
+    tao->refreshOn(QEvent::Timer, -1);          \
     if (VideoSurface *s = surface(name))        \
         if (s->id())                            \
             return XL::xl_true;                 \
