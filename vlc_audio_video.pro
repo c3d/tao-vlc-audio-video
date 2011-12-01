@@ -74,6 +74,12 @@ isEmpty(VLC) {
   # License: CC BY-SA 3.0
   INSTALLS += thismod_icon
 
+  # Install GPL license text
+  copying.files = COPYING
+  copying.path  = $${MODINSTPATH}
+  QMAKE_TARGETS += copying
+  INSTALLS += copying
+
   macx {
     # Install will create <module>/lib/{lib,plugins,share/lua}
     vlc_libs.path = $${MODINSTPATH}/lib
