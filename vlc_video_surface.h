@@ -119,6 +119,7 @@ protected:
     libvlc_event_manager_t *mevm;
     bool                    needResolution;  // REVISIT
     bool                    descriptionMode;
+    const QGLContext      * GLcontext;
 
 protected:
     struct VlcCleanup
@@ -137,6 +138,8 @@ protected:
     void           startPlayback();
     void           getMediaSubItems();
     std::ostream & debug();
+    void           checkGLContext();
+    void           genTexture();
 
 protected:
     static libvlc_instance_t *  vlcInstance();

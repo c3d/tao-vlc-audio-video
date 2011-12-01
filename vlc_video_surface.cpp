@@ -74,7 +74,8 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
     : w(w), h(h), player(NULL), media(NULL), updated(false), textureId(0),
       state(VS_STOPPED), pevm(NULL), mevm(NULL), needResolution(true),
-      descriptionMode((w == 0 || h == 0))
+      descriptionMode((w == 0 || h == 0)),
+      GLcontext(QGLContext::currentContext())
 {
     // If w == 0 or h == 0, we start by a query phase (play in 'description'
     // mode). Then when we know the media has at least one stream, we ask for
@@ -98,10 +99,7 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
     libvlc_event_attach(pevm,
                         libvlc_MediaPlayerEndReached, playerEndReached,
                         this);
-
-    glGenTextures(1, &textureId);
-    IFTRACE(video)
-        debug() << "Will render to texture #" << textureId << "\n";
+    genTexture();
 }
 
 
@@ -561,6 +559,7 @@ GLuint VlcVideoSurface::texture()
             mutex.lock();
             if (updated)
             {
+                checkGLContext();
                 glBindTexture(GL_TEXTURE_2D, textureId);
                 glTexImage2D(GL_TEXTURE_2D, 0, 3,
                              image.width(), image.height(), 0, GL_RGBA,
@@ -583,6 +582,33 @@ GLuint VlcVideoSurface::texture()
     }
 
     return tex;
+}
+
+
+void VlcVideoSurface::checkGLContext()
+// ----------------------------------------------------------------------------
+//   Detect change in current GL context
+// ----------------------------------------------------------------------------
+{
+    const QGLContext * current = QGLContext::currentContext();
+    if (current != GLcontext)
+    {
+        IFTRACE(video)
+            debug() << "GL context changed\n";
+        genTexture();
+        GLcontext = current;
+    }
+}
+
+
+void VlcVideoSurface::genTexture()
+// ----------------------------------------------------------------------------
+//   Create GL texture to render to
+// ----------------------------------------------------------------------------
+{
+    glGenTextures(1, &textureId);
+    IFTRACE(video)
+        debug() << "Will render to texture #" << textureId << "\n";
 }
 
 
