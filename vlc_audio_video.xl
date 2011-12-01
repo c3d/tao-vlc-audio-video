@@ -20,21 +20,22 @@ module_description
     id "8E89D4C0-57FC-4481-A1CB-A425785AAFAD"
     name "VLC Audio and Video"
     import_name "VLCAudioVideo"
-    description "Experimental. Defines commands to import audio and video " &
+    description "[Experimental] Defines commands to import audio and video " &
                 "in presentations. This module relies on the VideoLAN " &
-                "(VLC) media player, http://www.videolan.org/vlc/. " &
-                "The VLCAudioVideo module is Open Source and covered by the " &
-                "GPL licence."
+                "VLC media player (http://videolan.org/vlc) and is covered  " &
+                "by the GNU General Public License. " &
+                "See the COPYING file in the module folder. "
     author "Taodyne SAS"
-    website "http://www.taodyne.com"
+    website "http://gitorious.org/tao-presentation-modules/vlc_audio_video"
     version 1.0
 
 module_description "fr",
-    description "Expérimental. Définit des commandes pour ajouter du son et des videos " &
-                "dans des présentations. Ce module utilise le lecteur " &
-                "multimedia VideoLAN (VLC), http://www.videolan.org/vlc/. " &
-                "Le module VLCAudioVideo est Open Source et couvert par la " &
-                "license GPL."
+    description "[Expérimental] Définit des commandes pour ajouter du son " &
+                "et des vidéos dans des présentations. Ce module utilise " &
+                "le lecteur multimedia VLC media player du projet VideoLAN " &
+                "(http://videolan.org/vlc) et est couvert par la licence " &
+                "GNU General Public License; voir le fichier COPYING dans " &
+                "le répertoire du module."
 
 movie x:real, y:real, sx:real, sy:real, name:text ->
     locally
