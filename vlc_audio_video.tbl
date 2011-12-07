@@ -97,6 +97,11 @@ PREFIX(MovieDone,  tree,  "movie_done",
        return VideoSurface::movie_done(u),
        GROUP(video)
        SYNOPSIS("Return true if the video is done playing."))
+PREFIX(MovieLoop,  tree,  "movie_loop",
+       PARM(u, text, "The URL of the movie we want to test"),
+       return VideoSurface::movie_loop(u),
+       GROUP(video)
+       SYNOPSIS("Return true if the video restarts automatically when done."))
 
 PREFIX(MovieSetVolume,  tree,  "movie_set_volume",
        PARM(u, text, "The URL of the movie")
@@ -122,3 +127,9 @@ PREFIX(MovieSetRate,  tree,  "movie_set_rate",
        return VideoSurface::movie_set_rate(u, v),
        GROUP(video)
        SYNOPSIS("Set the rate for a given video."))
+PREFIX(MovieSetLoop,  tree,  "movie_set_loop",
+       PARM(u, text, "The URL of the movie")
+       PARM(b, boolean, "True to restart playback when media reaches end"),
+       return VideoSurface::movie_set_loop(u, b),
+       GROUP(video)
+       SYNOPSIS("Enable or disable loop mode for a given video."))

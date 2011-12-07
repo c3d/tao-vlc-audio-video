@@ -72,12 +72,14 @@ public:
     static XL::Name_p           movie_playing(text name);
     static XL::Name_p           movie_paused(text name);
     static XL::Name_p           movie_done(text name);
+    static XL::Name_p           movie_loop(text name);
 
     static XL::Name_p           movie_set_volume(text name, float volume);
     static XL::Name_p           movie_set_position(text name, float position);
     static XL::Name_p           movie_set_time(text name, float position);
     static XL::Name_p           movie_set_rate(text name, float rate);
-    
+    static XL::Name_p           movie_set_loop(text name, bool on);
+
 protected:
     std::ostream &              debug();
     static VideoSurface *       surface(text name);

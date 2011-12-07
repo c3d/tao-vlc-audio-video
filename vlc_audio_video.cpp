@@ -270,6 +270,7 @@ XL::Name_p VideoSurface::movie_##id(text name)  \
 MOVIE_BOOL_ADAPTER(playing)
 MOVIE_BOOL_ADAPTER(paused)
 MOVIE_BOOL_ADAPTER(done)
+MOVIE_BOOL_ADAPTER(loop)
 
 #define MOVIE_FLOAT_SETTER(id, mid)                             \
 XL::Name_p VideoSurface::movie_set_##id(text name, float value) \
@@ -288,6 +289,18 @@ MOVIE_FLOAT_SETTER(position, setPosition)
 MOVIE_FLOAT_SETTER(time, setTime)
 MOVIE_FLOAT_SETTER(rate, setRate)
 
+#define MOVIE_BOOL_SETTER(id, mid)                             \
+XL::Name_p VideoSurface::movie_set_##id(text name, bool on) \
+{                                                               \
+    if (VideoSurface *s = surface(name))                        \
+    {                                                           \
+        s->mid(on);                                          \
+        return XL::xl_true;                                     \
+    }                                                           \
+    return XL::xl_false;                                        \
+}
+
+MOVIE_BOOL_SETTER(loop, setLoop)
 
 XL_DEFINE_TRACES
 

@@ -75,7 +75,7 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
     : w(w), h(h), player(NULL), media(NULL), updated(false), textureId(0),
       state(VS_STOPPED), pevm(NULL), mevm(NULL), needResolution(true),
       descriptionMode((w == 0 || h == 0)),
-      GLcontext(QGLContext::currentContext())
+      GLcontext(QGLContext::currentContext()), loopMode(false)
 {
     // If w == 0 or h == 0, we start by a query phase (play in 'description'
     // mode). Then when we know the media has at least one stream, we ask for
@@ -501,6 +501,15 @@ bool VlcVideoSurface::done()
 }
 
 
+bool VlcVideoSurface::loop()
+// ----------------------------------------------------------------------------
+//   Return true if playback restarts automatically when media reaches end
+// ----------------------------------------------------------------------------
+{
+    return loopMode;
+}
+
+
 void VlcVideoSurface::setVolume(float vol)
 // ----------------------------------------------------------------------------
 //   Set volume (0.0 <= vol <= 1.0)
@@ -539,6 +548,15 @@ void VlcVideoSurface::setRate(float rate)
 }
 
 
+void VlcVideoSurface::setLoop(bool on)
+// ----------------------------------------------------------------------------
+//   Set loop mode for the current media
+// ----------------------------------------------------------------------------
+{
+    loopMode = on;
+}
+
+
 GLuint VlcVideoSurface::texture()
 // ----------------------------------------------------------------------------
 //   Update texture with current frame and return texture ID
@@ -569,6 +587,12 @@ GLuint VlcVideoSurface::texture()
             }
             mutex.unlock();
             tex = textureId;
+            if (state == VS_PLAY_ENDED && loopMode)
+            {
+                IFTRACE(video)
+                    debug() << "Loop mode: restarting playback\n";
+                startPlayback();
+            }
         }
         break;
 

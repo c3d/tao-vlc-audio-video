@@ -95,10 +95,12 @@ public:
     bool           playing();
     bool           paused();
     bool           done();
+    bool           loop();
     void           setVolume(float vol);
     void           setPosition(float pos);
     void           setTime(float pos);
     void           setRate(float pos);
+    void           setLoop(bool on);
     GLuint         texture();
     QString        url ()   { return mediaName; }
 
@@ -120,6 +122,7 @@ protected:
     bool                    needResolution;  // REVISIT
     bool                    descriptionMode;
     const QGLContext      * GLcontext;
+    bool                    loopMode;
 
 protected:
     struct VlcCleanup
