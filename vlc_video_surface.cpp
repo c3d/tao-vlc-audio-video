@@ -553,6 +553,7 @@ GLuint VlcVideoSurface::texture()
             getMediaInfo();
         break;
     case VS_PLAYING:
+    case VS_PAUSED:
     case VS_PLAY_ENDED:
         if (!descriptionMode)
         {
