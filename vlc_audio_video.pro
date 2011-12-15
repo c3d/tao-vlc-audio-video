@@ -102,10 +102,10 @@ isEmpty(VLC) {
     # Install will create <module>/lib/{plugins,lua}
     vlc_libs.path = $${MODINSTPATH}/lib
     vlc_libs.files = "$${VLC}/../*.dll" "$${VLC}/../vlc-cache-gen.exe"
-    vlc_plugins.path  = $${MODINSTPATH}/lib
-    vlc_plugins.files = "$${VLC}/../plugins"
-    vlc_lua.path  = $${MODINSTPATH}/lib
-    vlc_lua.files = "$${VLC}/../lua"
+    vlc_plugins.path  = $${MODINSTPATH}/lib/plugins
+    vlc_plugins.files = "$${VLC}/../plugins/*"
+    vlc_lua.path  = $${MODINSTPATH}/lib/lua
+    vlc_lua.files = "$${VLC}/../lua/*"
   }
   INSTALLS += vlc_libs vlc_plugins vlc_lua
 
