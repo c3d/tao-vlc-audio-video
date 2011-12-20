@@ -30,6 +30,7 @@ module_description
     version 1.0
 
 module_description "fr",
+    name "VLC Audio Vidéo"
     description "[Expérimental] Définit des commandes pour ajouter du son " &
                 "et des vidéos dans des présentations. Ce module utilise " &
                 "le lecteur multimedia VLC media player du projet VideoLAN " &
