@@ -22,8 +22,7 @@
  */
 
 /**
- * @addtogroup VLCAudioVideo VLC audio and video playback
- * @ingroup Modules
+ * @taomoduledescription{VLCAudioVideo, VLC audio and video playback}
  *
  * Play audio and video content. The @c VLCAudioVideo module is
  * based on the
@@ -86,6 +85,7 @@ page "The End",
  * @ref movie_set_rate. A movie can be paused with @ref movie_pause
  * and resumed with @ref movie_play.
  * 
+ * @endtaomoduledescription{VLCAudioVideo}
  * @{
  */
 
