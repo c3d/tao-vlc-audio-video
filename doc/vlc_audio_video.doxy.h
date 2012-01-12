@@ -1,9 +1,6 @@
 /*
  * Documentation for the VLCAudioVideo module.
  *
- * Note: Currently, this file is used only when building the module
- * from the (private) Tao Presentation build environment.
- *
  * (C) 2011 Taodyne SAS <contact@taodyne.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +19,7 @@
  */
 
 /**
+ * @~english
  * @taomoduledescription{VLCAudioVideo, VLC audio and video playback}
  *
  * Play audio and video content. The @c VLCAudioVideo module is
@@ -50,7 +48,7 @@ movie "http://www.youtube.com/watch?v=jNQXAC9IVRw"
  * @c play function calls @ref movie_only, so that a single video plays
  * at any given time.
  * By calling @c play with different file names at different times,
- * you can switch between videos. Passing a empty string stops the
+ * you can switch between videos. Passing an empty string stops the
  * playback.
  *
  * @code
@@ -86,10 +84,82 @@ page "The End",
  * and resumed with @ref movie_play.
  * 
  * @endtaomoduledescription{VLCAudioVideo}
+ *
+ * @~french
+ * @taomoduledescription{VLCAudioVideo, Lecteur Audio/Vidéo VLC}
+ *
+ * Lecteur multimédia (audio et vidéo) basé sur le lecteur
+ * <a href="http://www.videolan.org/vlc/">VideoLAN (VLC)</a>, un outil
+ * du logiciel libre, multi-plateforme, qui permet de jouer la plupart des
+ * fichiers mutimédia ainsi que les DVD, CD audio, VCD et même les flux
+ * réseau.
+ *
+ * Vous pouvez utiliser les commandes documentées ici pour ajouter de la
+ * musique et des vidéos à vos présentations. Vous pouvez même jouer des vidéos
+ * YouTube :
+ *
+ * @code
+import VLCAudioVideo
+movie "http://www.youtube.com/watch?v=jNQXAC9IVRw"
+ * @endcode
+ * @image html YouTube.png "Une vidéo YouTube dans un document Tao"
+ *
+ * Les flux multimédias sont identifiés par leur nom. Il est possible de
+ * faire jouer plusieurs fichiers simultanément, ou de les jouer les uns
+ * après les autres. Utilisez @ref movie_only pour ne jouer qu'une seule
+ * vidéo (et éventuellement arrêter une autre qui serait en train de jouer),
+ * ou @ref movie_drop pour arrêter la lecture d'une vidéo donnée.
+ *
+ * L'exemple qui suit vous montre comment jouer simplement une vidéo par
+ * page, en utilisant une fonction commune, @c jouer. Cette fonction appelle
+ * @ref movie_only pour s'assurer qu'aucune autre vidéo que celle spécifiée
+ * n'est en cours de lecture, puis @ref movie_texture pour lire le fichier
+ * demandé.
+ * En appelant @c play avec des noms de fichiers différents à différents
+ * moments, vous pouvez passer d'une vidéo à l'autre. C'est ce qui se produit
+ * lorsque vous changez de page dans l'exemple. Pour stopper la lecture,
+ * on passe une chaîne vide à la fonction.
+ *
+ * @code
+import VLCAudioVideo
+
+jouer T:text ->
+    color "white"
+    movie_only T
+    movie_texture T
+
+page "First video",
+    jouer "first.mpeg"
+    rounded_rectangle 0, 0, 352, 240, 20
+
+page "Second video",
+    jouer "second.mpeg"
+    rounded_rectangle mouse_x, mouse_y, 352, 240, 20
+
+page "The End",
+    text_box 0, 0, window_width, window_height,
+        vertical_align_center
+        align_center
+        font "Tangerine", 72
+        color "Black"
+        text "That's all Folks!"
+    jouer ""
+ * @endcode
+ *
+ * Pour commencer à jouer à une certaine position, utilisez
+ * @ref movie_set_time ou @ref movie_set_position. Pour régler le volume,
+ * utilisez @ref movie_set_volume. Il est possible d'accélérer ou de
+ * ralentir la lecture grâce à @ref movie_set_rate. Pour mettre en pause,
+ * appeler @ref movie_pause; @ref movie_play permet de poursuivre la
+ * lecture.
+ *
+ * @endtaomoduledescription{VLCAudioVideo}
+ * @~
  * @{
  */
 
 /**
+ * @~english
  * Plays audio and/or video.
  * This function creates a rectangular video display centered at @p x, @p y
  * in the plane z = 0. The size of the rectangle depends on the resolution
@@ -100,18 +170,35 @@ page "The End",
  * The @p name parameter specifies a local file or a URL; an empty string
  * @c "" stops playback of the current video.
  * This function is based on @ref movie_texture.
+ * @~french
+ * Lit un fichier audio et/ou vidéo.
+ * Cette fonction crée un affichage rectangulaire centré en @p x, @p y dans
+ * le plan z = 0. La taille du rectangle dépend de la résolution de la vidéo,
+ * et des facteurs multiplicatifs @p sx et @p sy. Donnez-leur la valeur 1.0
+ * pour conserver la taille d'origine de la vidéo.
+ * Si @p name ne contient pas de piste vidéo, rien n'est affiché et seule la
+ * piste son sera jouée, si elle existe.
+ * Cette fonction utilise @ref movie_texture.
+ * @~
  * @see movie_texture.
  */
 movie(x:real, y:real, sx:real, sy:real, name:text);
 
 /**
+ * @~english
  * Plays audio and/or video.
- * This function is equivalent to <tt>movie 0, 0, 1, 1, name</tt>.
+ * This function is equivalent to :
+ * @~french
+ * Lit un fichier audio et/ou vidéo.
+ * Cette fonction est équivalente à :
+ * @~
+ * @code movie 0, 0, 1, 1, name @endcode
  * @see movie_texture.
  */
 movie(name:text);
 
 /**
+ * @~english
  * Creates a video texture.
  * This primitive plays an audio and/or video file and makes the video
  * available as a texture. You can subsequently map the texture on a rectangle
@@ -124,163 +211,270 @@ movie(name:text);
  * available.
  * When the end of the media stream is reached, playback stops and the last
  * frame remains available as a texture.
+ * @~french
+ * Crée une texture vidéo.
+ * Cette primitive lit un fichier audio et/ou vidéo et rend disponible la
+ * vidéo sous forme de texture. Vous pouvez ensuite appliquer cette texture sur
+ * un rectangle ou n'importe quelle autre forme dans l'espace 3D.
+ * Le paramètre @p name spécifie un fichier local ou une URL. Un chaîne vide
+ * permet d'arrêter la lecture de la vidéo associée à cet appel.
+ * Lorsque @p name représente une vidéo, la résolution de l'image est
+ * disponible grâce aux primitives @ref texture_width et @ref texture_height.
+ * Si par contre @p name ne contient pas de vidéo, ou tant que la lecture n'est
+ * pas commencée, aucun texture n'est activée.
+ * Lorsque la fin du fichier est atteinte, la lecture s'arrête et la dernière
+ * image reste disponible dans la texture.
+ * @~
  * @see movie.
  */
 movie_texture(name:text);
 
 /**
+ * @~english
  * Drop all references to a video stream.
  * This command stops the given video and releases any resource used to play it.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Annule toute lecture d'un fichier donné.
+ * Cette commande arrête la lecture du fichier spécifié par @p name, et libère
+ * toutes les ressources associées.
+ * @~
  * @see movie_only.
  */
 movie_drop(name:text);
 
 /**
+ * @~english
  * Keep only one active movie.
  * This command stops and drops all video/audio streams but the selected one.
  * It is similar to calling @ref movie_drop for all currently active streams
  * except the current one.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Garde un seul flux multimédia actif.
+ * Cette commande arrête la lecture de tous les flux audio/vidéo en cours, sauf
+ * @p name. Elle a un effet équivalent à appeler @ref movie_drop pour tous les
+ * flux multimédias actifs sauf @p name.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_drop.
  */
 movie_only(name:text);
 
 /**
+ * @~english
  * Resume playback of a paused movie.
  * This command plays a movie that was paused by @ref movie_pause.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Reprend la lecture d'un flux multimédia.
+ * Cette commande reprend la lecture d'un flux qui a été arrêté par
+ * @ref movie_pause.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_pause, movie_stop.
  */
 movie_play(name:text);
 
 /**
+ * @~english
  * Pause movie playback.
  * This command pauses a movie at its current location. The movie playback
  * can be resumed using @ref movie_play.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Suspend la lecture d'un flux multimédia.
+ * Cette commande suspend temporairement la lecture du flux @p name. La lecture
+ * reprend au même endroit lorsque @ref movie_play est appelé.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_play, movie_pause.
  */
 movie_pause(name:text);
 
 /**
+ * @~english
  * Stop movie playback.
  * This command stops movie playback.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Arrête la lecture d'un flux multimédia.
+ * Cette commande arrête la lecture du flux @p name. Il est possible de
+ * relancer la lecture à nouveau en utilisant @ref play_movie, mais la lecture
+ * reprendra au début.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_play, movie_pause.
  */
 movie_stop(name:text);
 
 /**
+ * @~english
  * Return the playback volume for a given movie.
  * The movie volume is returned in the range 0.0 (muted) to 1.0 (maximum volume)
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie le volume audio d'un flux multimédia en cours de lecture.
+ * Le volume va de 0.0 (pas de son) à 1.0 (volume maximum).
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_set_volume.
- * Use @ref movie_set_volume to set the volume.
  */
 movie_volume(name:text);
 
 /**
+ * @~english
  * Return the position in a given movie as a percentage.
  * The movie position is returned in the range 0.0 (start of the movie)
  * to 1.0 (end of the movie)
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie la position courante dans un flux multimédia en cours de lecture.
+ * La position va de 0.0 (début) à 1.0 (fin).
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_set_position.
- * Use @ref movie_set_position to set the position.
  */
 movie_position(name:text);
 
 /**
+ * @~english
  * Return the position in a given movie in seconds from the start.
  * The movie position is returned in seconds from the start of the movie.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie la position en secondes dans un flux multimédia en cours de lecture.
+ * La position est exprimée en secondes depuis le début du fichier.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_set_time.
- * Use @ref movie_set_time to set the position in the movie by time.
  */
 movie_time(name:text);
 
 /**
+ * @~english
  * Return the length of a given movie in seconds.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie la longueur en secondes d'un flux multimédia en cours de lecture.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_time, movie_set_time.
  */
 movie_length(name:text);
 
 /**
+ * @~english
  * Return the playback rate of the given movie.
  * Return the movie playback rate, where 1.0 is normal playback rate,
  * 2.0 indicates the movie is played twice faster, and 0.5 indicates that
  * it's being played at half-speed.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie la vitesse de lecture d'un flux multimédia en cours de lecture.
+ * 1.0 est la vitesse normale, 2.0 signifie que le fichier est joué deux fois
+ * plus vite que la normale, et 0.5 correspond à un ralenti de moitié.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_set_rate.
- * Use @ref movie_set_rate to set the playback rate.
  */
 movie_rate(name:text);
 
 /**
+ * @~english
  * Returns true if the movie is currently playing.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie true si le flux multimédia est en cours de lecture.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_paused, movie_done.
  */
 movie_playing(name:text);
 
 /**
+ * @~english
  * Returns true if the movie is currently paused.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie true si le flux multimédia est en pause.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_playing, movie_done.
  */
 movie_paused(name:text);
 
 /**
+ * @~english
  * Returns true if the movie is was played until its end.
  * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie true si le flux multimédia a joué jusqu'au bout.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_paused, movie_playing.
  */
 movie_done(name:text);
 
 
 /**
+ * @~english
  * Sets the playback volume for the movie.
  * Adjust the sound playback volume for the given movie.
  * The @p name parameter specifies the name of the movie.
  * The @p volume parameter specifies the volume, in the range 0.0 (silent)
  * to 1.0 (maximum volume).
+ * @~french
+ * Contrôle le volume audio.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_volume.
- * Use @ref movie_volume to get the current volume.
  */
 movie_set_volume(name:text, volume:real);
 
 /**
+ * @~english
  * Sets the playback position for the movie.
  * Adjust the movie playback position for the given movie.
  * The @p name parameter specifies the name of the movie.
  * The @p position parameter specifies the position in the movie,
  * in the range 0.0 (beginning of the movie) to 1.0 (end of the movie).
+ * @~french
+ * Choisit la position à l'intérieur d'un flux multimédia.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_position, movie_time, movie_set_time.
- * Use @ref movie_position to get the current position.
  */
 movie_set_position(name:text, position:real);
 
 /**
+ * @~english
  * Sets the playback position in seconds.
  * Adjust the movie playback position for the given movie.
  * The @p name parameter specifies the name of the movie.
  * The @p time parameter specifies the position in the movie in seconds,
  * in the range 0.0 (beginning of the movie) to the @ref movie_length.
+ * @~french
+ * Choisit la position en secondes à l'intérieur d'un flux multimédia.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_time, movie_position, movie_set_position.
- * Use @ref movie_time to get the current position.
  */
 movie_set_time(name:text, time:real);
 
 /**
+ * @~english
  * Sets the playback rate.
  * Adjust the movie playback rate for the given movie.
  * The @p name parameter specifies the name of the movie.
  * The @p rate parameter specifies the rate of the movie, where 1.0 is
  * normal playback speed, 2.0 indicates a 2x speedup, and 0.5 indicates
  * half-speed playback.
+ * @~french
+ * Choisit la vitesse de lecture d'un flux multimédia.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
  * @see movie_rate.
- * Use @ref movie_rate to get the current playback rate.
  */
 movie_set_rate(name:text, rate:real);
 

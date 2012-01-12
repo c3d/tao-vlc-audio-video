@@ -111,4 +111,9 @@ isEmpty(VLC) {
 
   LICENSE_FILES = vlc_audio_video.taokey.notsigned
   exists(../licenses.pri):include(../licenses.pri)
+
+  QMAKE_SUBSTITUTES = doc/Doxyfile.in
+  DOXYFILE = doc/Doxyfile
+  DOXYLANG = en,fr
+  include(../modules_doc.pri)
 }
