@@ -416,6 +416,18 @@ movie_paused(name:text);
  */
 movie_done(name:text);
 
+/**
+ * @~english
+ * Returns true if loop mode is enabled for the movie.
+ * The @p name parameter specifies the name of the movie.
+ * @~french
+ * Renvoie true si le mode boucle est actif pour le flux multimédia.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * @~
+ * @see movie_set_loop.
+ */
+movie_loop(name:text);
+
 
 /**
  * @~english
@@ -478,6 +490,23 @@ movie_set_time(name:text, time:real);
  */
 movie_set_rate(name:text, rate:real);
 
+
+/**
+ * @~english
+ * Sets the loop mode.
+ * Enables or disables loop mode for the given movie.
+ * The @p name parameter specifies the name of the movie.
+ * If @p mode is true, the movie will automatically be restarted when done
+ * playing.
+ * @~french
+ * Active ou désactive la lecture en boucle d'un flux multimédia.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * Si @p mode est @a true, la lecture reprend automatiquement dès que la fin
+ * de la lecture est atteinte.
+ * @~
+ * @see movie_loop.
+ */
+movie_set_loop(name:text, mode:boolean);
 
 /**
  * @}
