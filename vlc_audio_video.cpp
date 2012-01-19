@@ -117,7 +117,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
         tested = true;
     }
 
-    if (!licensed && !tao->blink(4.5, 0.5))
+    if (!licensed && !tao->blink(4.5, 0.5, 300.0))
         return new Integer(0, self->Position());
 #endif
 
