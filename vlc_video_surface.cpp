@@ -796,7 +796,7 @@ void VlcVideoSurface::displayFrame(void *obj, void *picture)
     }
     else
     {
-        if (v->state != VS_PLAYING)
+        if (v->state != VS_PLAYING && v->state != VS_PAUSED)
             v->setState(VS_PLAYING);
     }
     v->mutex.lock();
