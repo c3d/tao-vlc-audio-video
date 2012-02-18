@@ -138,12 +138,13 @@ void VlcVideoSurface::pause()
 
 void VlcVideoSurface::play()
 // ----------------------------------------------------------------------------
-//   Resume playback
+//   Resume playback after pause or stop
 // ----------------------------------------------------------------------------
 {
-    if (state != VS_PAUSED)
-        return;
-    libvlc_media_player_set_pause(player, false);
+    if (state == VS_PAUSED)
+        libvlc_media_player_set_pause(player, false);
+    else if (state == VS_STOPPED)
+        libvlc_media_player_play(player);
 }
 
 
@@ -154,9 +155,7 @@ void VlcVideoSurface::stop()
 {
     if (state == VS_STOPPED || state == VS_ERROR)
         return;
-    libvlc_media_release(media);
     libvlc_media_player_stop(player);
-    media = NULL;
     setState(VS_STOPPED);
 }
 
@@ -178,6 +177,8 @@ void VlcVideoSurface::play(const QString &name)
 
         mediaName = name;
         stop();
+        libvlc_media_release(media);
+        media = NULL;
         if (name != "")
         {
             // Open file or URL
@@ -299,6 +300,8 @@ void VlcVideoSurface::getMediaInfo()
 
         needResolution = false;
         stop();
+        libvlc_media_release(media);
+        media = NULL;
         // TODO factor
         if (mediaName.contains("://"))
             media = libvlc_media_new_location(vlc, mediaName.toUtf8().constData());
