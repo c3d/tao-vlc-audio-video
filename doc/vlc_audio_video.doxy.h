@@ -82,6 +82,10 @@ page "The End",
  * use @ref movie_set_volume.  To set the movie playback rate, use
  * @ref movie_set_rate. A movie can be paused with @ref movie_pause
  * and resumed with @ref movie_play.
+ *
+ * In compliance with the GNU General Public Licence for the VLC code used
+ * by this module, the source code for the module is available here:
+ * http://gitorious.org/tao-presentation-modules
  * 
  * @endtaomoduledescription{VLCAudioVideo}
  *
@@ -153,6 +157,10 @@ page "The End",
  * appeler @ref movie_pause; @ref movie_play permet de poursuivre la
  * lecture.
  *
+ * En accord avec la licence GNU General Public Licence du code VLC utilisé
+ * par ce module, le code source du module est disponible ici:
+ * http://gitorious.org/tao-presentation-modules
+ * 
  * @endtaomoduledescription{VLCAudioVideo}
  * @~
  * @{
