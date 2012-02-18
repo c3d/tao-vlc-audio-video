@@ -73,8 +73,8 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
 //   Initialize a VLC media player to render a video
 // ----------------------------------------------------------------------------
     : w(w), h(h), player(NULL), media(NULL), updated(false), textureId(0),
-      state(VS_STOPPED), pevm(NULL), mevm(NULL), needResolution(true),
-      descriptionMode((w == 0 || h == 0)),
+      state(VS_STOPPED), pevm(NULL), mevm(NULL),
+      needResolution(w == 0 || h == 0),
       GLcontext(QGLContext::currentContext()), loopMode(false)
 {
     // If w == 0 or h == 0, we start by a query phase (play in 'description'
@@ -85,8 +85,8 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
     IFTRACE(video)
     {
         debug() << "Creating media player\n";
-        debug() << "Description mode is "
-                << (char*)(descriptionMode ? "true" : "false") << "\n";
+        debug() << "'Need resolution' is "
+                << (char*)(needResolution ? "true" : "false") << "\n";
     }
     player = libvlc_media_player_new(vlcInstance());
     pevm = libvlc_media_player_event_manager(player);
@@ -195,7 +195,7 @@ void VlcVideoSurface::play(const QString &name)
                 return;
             }
 
-            if (descriptionMode)
+            if (needResolution)
             {
                 w = h = 1;
                 if (isVlc1_1())
@@ -291,30 +291,24 @@ void VlcVideoSurface::getMediaInfo()
             debug() << "Found no audio and no video\n";
         setState(VS_ERROR);
     }
-    if (descriptionMode)
-    {
-        // We have determined a video resolution. Restart playback with the
-        // new values.
-        IFTRACE(video)
+
+    // We have determined a video resolution. Restart playback with the
+    // new values.
+    IFTRACE(video)
             debug() << "Restarting playback with new resolution\n";
 
-        needResolution = false;
-        stop();
-        libvlc_media_release(media);
-        media = NULL;
-        // TODO factor
-        if (mediaName.contains("://"))
-            media = libvlc_media_new_location(vlc, mediaName.toUtf8().constData());
-        else
-            media = libvlc_media_new_path(vlc, mediaName.toUtf8().constData());
-        this->w = w;
-        this->h = h;
-        startPlayback();
-        IFTRACE(video)
-            debug() << "Leaving description mode\n";
-        descriptionMode = false;
+    stop();
+    libvlc_media_release(media);
+    media = NULL;
+    // TODO factor
+    if (mediaName.contains("://"))
+        media = libvlc_media_new_location(vlc, mediaName.toUtf8().constData());
+    else
+        media = libvlc_media_new_path(vlc, mediaName.toUtf8().constData());
+    this->w = w;
+    this->h = h;
+    startPlayback();
 
-    }
     free(ti);
 }
 
@@ -354,7 +348,7 @@ void VlcVideoSurface::playerPlaying(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
 {
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
-    v->setState(VS_PLAY_STARTED);
+    v->setState(VS_PLAYING);
 }
 
 
@@ -367,7 +361,6 @@ void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
     switch (v->state)
     {
     case VS_PLAYING:
-    case VS_PLAY_STARTED:
         v->setState(VS_PLAY_ENDED);
         break;
     case VS_WAITING_FOR_SUBITEMS:
@@ -480,7 +473,8 @@ bool VlcVideoSurface::playing()
 //   Return true if media is currently playing
 // ----------------------------------------------------------------------------
 {
-    return state == VS_PLAYING && libvlc_media_player_is_playing(player);
+    return state == VS_PLAYING && libvlc_media_player_is_playing(player)
+                               && !needResolution;
 }
 
 
@@ -569,14 +563,14 @@ GLuint VlcVideoSurface::texture()
 
     switch (state)
     {
-    case VS_PLAY_STARTED:
-        if (needResolution)
-            getMediaInfo();
-        break;
     case VS_PLAYING:
     case VS_PAUSED:
     case VS_PLAY_ENDED:
-        if (!descriptionMode)
+        if (needResolution)
+        {
+            getMediaInfo();
+        }
+        else
         {
             mutex.lock();
             if (updated)
@@ -792,16 +786,9 @@ void VlcVideoSurface::displayFrame(void *obj, void *picture)
 
     QImage image((const uchar *)picture, v->w, v->h, QImage::Format_RGB32);
     QImage converted = QGLWidget::convertToGLFormat(image);
-    // REVISIT
-    if (v->descriptionMode)
-    {
-        v->setState(VS_PLAY_STARTED);
-    }
-    else
-    {
-        if (v->state != VS_PLAYING && v->state != VS_PAUSED)
-            v->setState(VS_PLAYING);
-    }
+    if (v->state != VS_PLAYING && v->state != VS_PAUSED &&
+        v->state != VS_STOPPED)
+        v->setState(VS_PLAYING);
     v->mutex.lock();
     v->image = converted;
     v->updated = true;

@@ -48,7 +48,6 @@ public:
     enum State
     {
         VS_STOPPED,
-        VS_PLAY_STARTED,
         VS_PLAYING,
         VS_PAUSED,
         VS_ERROR,
@@ -65,7 +64,6 @@ public:
         {
         ADD_STATE(VS_STOPPED);
         ADD_STATE(VS_PLAYING);
-        ADD_STATE(VS_PLAY_STARTED);
         ADD_STATE(VS_PAUSED);
         ADD_STATE(VS_ERROR);
         ADD_STATE(VS_PLAY_ENDED);
