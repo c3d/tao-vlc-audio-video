@@ -325,6 +325,7 @@ int module_exit()
 //   Uninitialize the Tao module
 // ----------------------------------------------------------------------------
 {
+    VideoSurface::movie_only("");
     return 0;
 }
 
