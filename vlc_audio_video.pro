@@ -32,6 +32,13 @@ isEmpty(VLC) {
 
 !exists($$VLC/include/vlc/libvlc.h) {
   !build_pass {
+    macx:exists($$VLC/include/libvlc.h) {
+      message("*** Broken MacOSX VLC package warning:")
+      message("VLC include files found under $$VLC/include/")
+      message("They should be under $$VLC/include/vlc/")
+      message("Please do: \(cd \"$$VLC/include\" ; ln -s . vlc\)")
+      message("...and try again.")
+    } else {
     message("$$VLC/include/vlc/libvlc.h not found")
     message()
     message("To build the VLCAudioVideo module, I need the VLC media player >= 1.1.x")
@@ -47,6 +54,7 @@ isEmpty(VLC) {
       message(For instance:)
       message([MacOSX] ./configure VLC=/Users/jerome/Desktop/vlc-1.1.12/VLC.app/Contents/MacOS)
       message([Windows] ./configure VLC=/c/Users/Jerome/Desktop/vlc-1.1.11/sdk)
+    }
     }
     message()
     message(*** THE VLCAudioVideo MODULE WILL NOT BE BUILT ***)
