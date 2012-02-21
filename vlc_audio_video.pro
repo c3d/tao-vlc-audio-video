@@ -97,15 +97,6 @@ isEmpty(VLC) {
     vlc_lua.path = $${MODINSTPATH}/lib/share
     vlc_lua.files = "$${VLC}/share/lua"
   }
-  linux-g++* {
-    # Install will create <module>/lib/vlc/{plugins,lua}
-    vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = "$${VLC}/lib/libvlc*.so.*"
-    vlc_plugins.path  = $${MODINSTPATH}/lib/vlc
-    vlc_plugins.files = "$${VLC}/lib/vlc/plugins" "$${VLC}/lib/vlc/vlc-cache-gen"
-    vlc_lua.path = $${MODINSTPATH}/lib/vlc
-    vlc_lua.files = "$${VLC}/lib/vlc/lua"
-  }
   win32 {
     # Install will create <module>/lib/{plugins,lua}
     vlc_libs.path = $${MODINSTPATH}/lib
@@ -115,7 +106,7 @@ isEmpty(VLC) {
     vlc_lua.path  = $${MODINSTPATH}/lib/lua
     vlc_lua.files = "$${VLC}/../lua/*"
   }
-  INSTALLS += vlc_libs vlc_plugins vlc_lua
+  macx|win32:INSTALLS += vlc_libs vlc_plugins vlc_lua
 
   LICENSE_FILES = vlc_audio_video.taokey.notsigned
   exists(../licenses.pri):include(../licenses.pri)
