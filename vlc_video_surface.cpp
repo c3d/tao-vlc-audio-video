@@ -74,7 +74,7 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
     : w(w), h(h), player(NULL), media(NULL), updated(false), textureId(0),
       state(VS_STOPPED), pevm(NULL), mevm(NULL),
-      needResolution(w == 0 || h == 0),
+      needResolution(w == 0 || h == 0), videoAvailable(false),
       GLcontext(QGLContext::currentContext()), loopMode(false)
 {
     // If w == 0 or h == 0, we start by a query phase (play in 'description'
@@ -157,6 +157,7 @@ void VlcVideoSurface::stop()
         return;
     libvlc_media_player_stop(player);
     setState(VS_STOPPED);
+    videoAvailable = false;
 }
 
 
@@ -570,7 +571,7 @@ GLuint VlcVideoSurface::texture()
         {
             getMediaInfo();
         }
-        else
+        else if (videoAvailable)
         {
             mutex.lock();
             if (updated)
@@ -793,4 +794,5 @@ void VlcVideoSurface::displayFrame(void *obj, void *picture)
     v->image = converted;
     v->updated = true;
     v->mutex.unlock();
+    v->videoAvailable = true;
 }

@@ -118,6 +118,7 @@ protected:
     libvlc_event_manager_t *pevm;
     libvlc_event_manager_t *mevm;
     bool                    needResolution;  // REVISIT
+    bool                    videoAvailable;
     bool                    descriptionMode;
     const QGLContext      * GLcontext;
     bool                    loopMode;
