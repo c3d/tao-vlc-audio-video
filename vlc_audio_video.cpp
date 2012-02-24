@@ -140,9 +140,14 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
                 QString qf = QString::fromUtf8(folder.data(), folder.length());
                 QString qn = QString::fromUtf8(name.data(), name.length());
                 QFileInfo inf(QDir(qf), qn);
-                if (inf.isReadable())
+                name = +QDir::toNativeSeparators(inf.absoluteFilePath());
+                if (!inf.isReadable())
                 {
-                    name = +QDir::toNativeSeparators(inf.absoluteFilePath());
+                    QString err;
+                    err = QString("File not found or unreadable: $1\n"
+                                  "File path: %1").arg(+name);
+                    Ooops(+err, self);
+                    return 0;
                 }
             }
         }
