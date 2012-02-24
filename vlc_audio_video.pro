@@ -96,6 +96,12 @@ isEmpty(VLC) {
     vlc_plugins.files = "$${VLC}/plugins"
     vlc_lua.path = $${MODINSTPATH}/lib/share
     vlc_lua.files = "$${VLC}/share/lua"
+
+    # Bug #1944
+    vlc_rm_freetype.commands = rm \"$${MODINSTPATH}/lib/plugins/libfreetype_plugin.dylib\"
+    vlc_rm_freetype.depends = install_vlc_plugins
+    vlc_rm_freetype.path = $${MODINSTPATH}/lib/plugins
+    INSTALLS += vlc_rm_freetype
   }
   win32 {
     # Install will create <module>/lib/{plugins,lua}
