@@ -231,6 +231,35 @@ movie_texture(name:text);
 
 /**
  * @~english
+ * Creates a video texture of a specific size.
+ * This function is similar to @ref movie_texture(name:text), except that
+ * instead of creating a texture of the same size as the video, it uses a
+ * specific size.
+ * Note that the @p width and @p height parameters are
+ * ignored if the video has already been started, even after @ref movie_stop.
+ * You need to delete the movie player instance
+ * (@ref movie_drop, @ref movie_only) to play the video again with a different
+ * resolution.
+ * This function will start playback faster than the version without
+ * @p width and @p height, especially when playing a network stream.
+ * @~french
+ * Crée une texture vidéo de la taille spécifiée.
+ * Cette fonction est similaire à @ref movie_texture(name:text), mais au lieu
+ * de créer une texture de la même taille que la vidéo, elle permet de préciser
+ * une taille. Notez que @p width et @p height ne sont pas utilisés si la
+ * vidéo a déjà été démarrée, et même après @ref movie_stop. Il faut détruire
+ * l'instance du lecteur multimédia (@ref movie_drop, @ref movie_only) pour
+ * pouvoir redémarrer la lecture avec une résolution différente.
+ * Cette fonction démarre la lecture plus rapidement que la version sans
+ * @p width et @p height, surtout lorsque @p name représente un flux réseau.
+ * @~
+ * @see movie_texture(name:text), movie_drop, movie_only
+ */
+movie_texture(name:text, width:integer, height:integer);
+
+
+/**
+ * @~english
  * Drop all references to a video stream.
  * This command stops the given video and releases any resource used to play it.
  * The @p name parameter specifies the name of the movie.

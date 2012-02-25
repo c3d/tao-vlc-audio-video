@@ -65,11 +65,11 @@ text VideoSurface::modulePath;
 #endif
 
 
-VideoSurface::VideoSurface()
+VideoSurface::VideoSurface(unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
 //   Create the video player
 // ----------------------------------------------------------------------------
-    : VlcVideoSurface()
+    : VlcVideoSurface(w, h)
 {
 }
 
@@ -104,16 +104,18 @@ std::ostream & VideoSurface::debug()
 
 
 XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
-                                          XL::Tree_p self, text name)
+                                          XL::Tree_p self, text name,
+                                          XL::Integer_p width,
+                                          XL::Integer_p height)
 // ----------------------------------------------------------------------------
-//   Make a video player texture
+//   Make a video player texture of given size
 // ----------------------------------------------------------------------------
 {
 #ifdef USE_LICENSE
     static bool licensed, tested = false;
     if (!tested)
     {
-        licensed = tao->checkLicense("VLCAudioVideo 1.001", false);
+        licensed = tao->checkLicense("VLCAudioVideo 1.01", false);
         tested = true;
     }
 
@@ -125,7 +127,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
     VideoSurface *surface = videos[name];
     if (!surface)
     {
-        surface = new VideoSurface();
+        surface = new VideoSurface(width->value, height->value);
         videos[name] = surface;
 
         if (name != "")
@@ -158,7 +160,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
         name = +surface->mediaName;
     }
 
-    // Resize to requested size, and bind texture
+    // Bind texture
     GLuint id = surface->bind(name);
     if (surface->lastError != "")
     {
@@ -175,6 +177,18 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 
     tao->refreshOn(QEvent::Timer, -1.0);
     return new Integer(id, self->Position());
+}
+
+
+XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
+                                          XL::Tree_p self, text name)
+// ----------------------------------------------------------------------------
+//   Make a video player texture]
+// ----------------------------------------------------------------------------
+{
+    return movie_texture(context, self, name,
+                         new XL::Integer(0, self->Position()),
+                         new XL::Integer(0, self->Position()));
 }
 
 

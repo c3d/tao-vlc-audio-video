@@ -27,7 +27,14 @@ PREFIX(MovieTexture,  tree,  "movie_texture",
        GROUP(video)
        SYNOPSIS("Create a texture from a video.")
        DESCRIPTION("Create a dynamic texture from the given movie."))
-
+PREFIX(MovieTextureWH,  tree,  "movie_texture",
+       PARM(u, text, "The URL of the movie to play")
+       PARM(w, integer, "The texture width")
+       PARM(h, integer, "The texture height"),
+       return VideoSurface::movie_texture(context, self, u, w, h),
+       GROUP(video)
+       SYNOPSIS("Create a fixed sized texture from a video.")
+       DESCRIPTION("Create a dynamic texture from the given movie."))
 PREFIX(MovieDrop,  tree,  "movie_drop",
        PARM(u, text, "The URL of the movie to drop"),
        return VideoSurface::movie_drop(u),
