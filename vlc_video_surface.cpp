@@ -35,10 +35,10 @@
 #include "base.h"  // IFTRACE()
 #include <vlc/libvlc_events.h>
 #include <vlc/libvlc_media_list.h>
+#include <string.h>
 #ifdef Q_OS_WIN32
 #include <malloc.h>
 #endif
-#include <QStringList>
 #include <QVector>
 #ifdef Q_OS_WIN32
 #include "vlc_audio_video.h"
@@ -46,6 +46,8 @@
 #endif
 
 libvlc_instance_t *         VlcVideoSurface::vlc = NULL;
+QStringList                 VlcVideoSurface::userOptions;
+bool                        VlcVideoSurface::initFailed = false;
 VlcVideoSurface::VlcCleanup VlcVideoSurface::cleanup;
 
 
@@ -81,6 +83,17 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
     // mode). Then when we know the media has at least one stream, we ask for
     // the video resolution and update w and h accordingly (to default values
     // if we can't determine the native resolution)
+
+    if (initFailed)
+        return;
+
+    if (!vlcInstance())
+    {
+        IFTRACE(video)
+            debug() << "VLC initialization failed\n";
+        lastError = "Failed to initialize libVLC.";
+        return;
+    }
 
     IFTRACE(video)
     {
@@ -120,7 +133,8 @@ VlcVideoSurface::~VlcVideoSurface()
     }
     if (media)
         libvlc_media_release(media);
-    glDeleteTextures(1, &textureId);
+    if (textureId)
+        glDeleteTextures(1, &textureId);
 }
 
 
@@ -166,6 +180,9 @@ void VlcVideoSurface::play(const QString &name)
 //   Play a file or URL. No-op if 'name' is already playing. "" to stop.
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return;
+
     if (name != mediaName)
     {
         IFTRACE2(fileload, video)
@@ -420,6 +437,8 @@ void VlcVideoSurface::mute(bool mute)
 //   Mute/unmute
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return;
     libvlc_audio_set_mute(player, mute);
 }
 
@@ -429,6 +448,8 @@ float VlcVideoSurface::volume()
 //   Return current volume level (0.0 <= volume <= 1.0)
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return 0.0;
     return libvlc_audio_get_volume(player) * 0.01;
 }
 
@@ -438,6 +459,8 @@ float VlcVideoSurface::position()
 //   Return current position
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return 0.0;
     return libvlc_media_player_get_position(player);
 }
 
@@ -447,6 +470,8 @@ float VlcVideoSurface::time()
 //   Return current time in seconds
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return 0.0;
     return libvlc_media_player_get_time(player) * 0.001;
 }
 
@@ -456,6 +481,8 @@ float VlcVideoSurface::length()
 //   Return length for current media
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return 0.0;
     return libvlc_media_player_get_length(player) * 0.001;
 }
 
@@ -465,6 +492,8 @@ float VlcVideoSurface::rate()
 //   Return play rate for current media
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return 1.0;
     return libvlc_media_player_get_rate(player);
 }
 
@@ -474,6 +503,8 @@ bool VlcVideoSurface::playing()
 //   Return true if media is currently playing
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return false;
     return state == VS_PLAYING && libvlc_media_player_is_playing(player)
                                && !needResolution;
 }
@@ -484,6 +515,8 @@ bool VlcVideoSurface::paused()
 //   Return true if the surface is paused
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return false;
     return state == VS_PAUSED;
 }
 
@@ -493,6 +526,8 @@ bool VlcVideoSurface::done()
 //   Return true if the surface is done playing its contents
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return true;
     if (state == VS_PLAYING && !libvlc_media_player_is_playing(player))
         setState(VS_PLAY_ENDED);
     return state==VS_PLAY_ENDED || state==VS_ERROR;
@@ -513,6 +548,8 @@ void VlcVideoSurface::setVolume(float vol)
 //   Set volume (0.0 <= vol <= 1.0)
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return;
     if (vol < 0) vol = 0;
     if (vol > 1) vol = 1;
     libvlc_audio_set_volume(player, int(vol * 100));
@@ -524,6 +561,8 @@ void VlcVideoSurface::setPosition(float pos)
 //   Skip to position pos (0.0 <= pos <= 1.0)
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return;
     libvlc_media_player_set_position(player, pos);
 }
 
@@ -533,6 +572,8 @@ void VlcVideoSurface::setTime(float t)
 //   Skip to the given time
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return;
     libvlc_media_player_set_time(player, libvlc_time_t(t * 1000));
 }
 
@@ -542,6 +583,8 @@ void VlcVideoSurface::setRate(float rate)
 //   Set play rate for the current media
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return;
     libvlc_media_player_set_rate(player, rate);
 }
 
@@ -560,6 +603,9 @@ GLuint VlcVideoSurface::texture()
 //   Update texture with current frame and return texture ID
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return 0;
+
     GLuint tex = 0;
 
     switch (state)
@@ -644,6 +690,8 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
     {
         QVector<const char *> argv;
         argv.append("--no-video-title-show");
+
+        // Tracing options
         IFTRACE(vlc)
         {
             argv.append("--extraintf=logger");
@@ -652,6 +700,15 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
         else
         {
             argv.append("-q");
+        }
+
+        // User options
+        QVector<const char *> user_opts;
+        foreach (QString opt, userOptions)
+        {
+            const char * copt = strdup(opt.toUtf8().constData());
+            user_opts.append(copt);
+            argv.append(copt);
         }
 
         IFTRACE(video)
@@ -682,6 +739,13 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
 #endif
 
         vlc = libvlc_new(argv.size(), argv.data());
+        foreach (const char *opt, user_opts)
+            free((void*)opt);
+        if (!vlc)
+        {
+            initFailed = true;
+            return NULL;
+        }
 
         IFTRACE(video)
         {
@@ -693,6 +757,32 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
         (void)isVlc1_1();
     }
     return vlc;
+}
+
+
+bool VlcVideoSurface::vlcInit(QStringList options)
+// ----------------------------------------------------------------------------
+//   Initialize VLC, possibly with additional options
+// ----------------------------------------------------------------------------
+{
+    userOptions = options;
+    return (vlcInstance() != NULL);
+}
+
+
+void VlcVideoSurface::deleteVlcInstance()
+// ----------------------------------------------------------------------------
+//   Destroy VLC instance and any static stuff, ready for new creation
+// ----------------------------------------------------------------------------
+{
+    initFailed = false;
+    userOptions.clear();
+    if (!vlc)
+        return;
+    IFTRACE(video)
+        sdebug() << "Deleting VLC instance\n";
+    libvlc_release(vlc);
+    vlc = NULL;
 }
 
 

@@ -53,6 +53,9 @@ struct VideoSurface : VlcVideoSurface
 
 public:
     // XL interface
+    static XL::Name_p           vlc_init(XL::Tree_p self,
+                                         XL::Tree_p opts);
+
     static XL::Integer_p        movie_texture(XL::Context_p context,
                                               XL::Tree_p self,
                                               text name);

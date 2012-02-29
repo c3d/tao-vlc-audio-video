@@ -35,6 +35,7 @@
 
 #include <qgl.h>
 #include <QString>
+#include <QStringList>
 #include <QMutex>
 #include <QImage>
 #include <vlc/libvlc.h>
@@ -103,9 +104,16 @@ public:
     QString        url ()   { return mediaName; }
 
 public:
+    static bool             vlcInit(QStringList options);
+    static void             deleteVlcInstance();
+
+public:
     unsigned                w, h;
     QString                 mediaName;
     QString                 lastError;
+
+public:
+    static bool             initFailed;
 
 protected:
     libvlc_media_player_t * player;
@@ -160,6 +168,7 @@ protected:
 
 protected:
     static libvlc_instance_t *  vlc;
+    static QStringList          userOptions;
     static VlcCleanup           cleanup;
 };
 

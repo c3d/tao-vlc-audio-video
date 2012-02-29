@@ -254,6 +254,7 @@ movie_texture(name:text);
  * @p width et @p height, surtout lorsque @p name représente un flux réseau.
  * @~
  * @see movie_texture(name:text), movie_drop, movie_only
+ * @since 1.01
  */
 movie_texture(name:text, width:integer, height:integer);
 
@@ -536,6 +537,26 @@ movie_set_rate(name:text, rate:real);
  * @see movie_loop.
  */
 movie_set_loop(name:text, mode:boolean);
+
+
+/**
+ * @~english
+ * Initializes the VLC library.
+ * With this function you can pass specific command-line options to VLC.
+ * For example:
+ * @~french
+ * Initialise la bibliothèque VLC.
+ * Cette fonction permet de passer des options spécifiques.
+ * Par exemple :
+ * @~
+ * @code
+import VLCAudioVideo 1.02
+vlc_init "--http-proxy", "http://proxy.example.com:8080"
+movie "http://youtube.com/watch?v=bKpPTq3-Qic"
+ * @endcode
+ * @since 1.02
+ */
+vlc_init(options:tree);
 
 /**
  * @}

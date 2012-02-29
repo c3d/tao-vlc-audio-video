@@ -21,6 +21,13 @@
 
 #include "vlc_audio_video.h"
 
+PREFIX(VlcInit,  tree,  "vlc_init",
+       PARM(t, tree, "The VLC options as a comma-separated list of text."),
+       return VideoSurface::vlc_init(self, t),
+       GROUP(video)
+       SYNOPSIS("Initialize the VLC library with specific options.")
+       DESCRIPTION("Append the specified options to the default ones, and "
+                   "initialize the VLC library."))
 PREFIX(MovieTexture,  tree,  "movie_texture",
        PARM(u, text, "The URL of the movie to play"),
        return VideoSurface::movie_texture(context, self, u),
