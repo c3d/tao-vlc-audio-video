@@ -135,6 +135,8 @@ VlcVideoSurface::~VlcVideoSurface()
         libvlc_media_release(media);
     if (textureId)
         glDeleteTextures(1, &textureId);
+    foreach (char *opt, mediaOptions)
+        free(opt);
 }
 
 
@@ -175,6 +177,60 @@ void VlcVideoSurface::stop()
 }
 
 
+QString VlcVideoSurface::stripOptions(QString &name)
+// ----------------------------------------------------------------------------
+//   Strip and return <options> when name is "<path or URL>##<options>"
+// ----------------------------------------------------------------------------
+{
+    QString opt;
+    int pos = name.indexOf("##");
+    if (pos > 0)
+    {
+        opt = name.mid(pos + 2);
+        name = name.left(pos);
+    }
+    return opt;
+}
+
+
+void VlcVideoSurface::addMediaOptions()
+// ----------------------------------------------------------------------------
+//   Add mediaOptions to current media
+// ----------------------------------------------------------------------------
+{
+    foreach (char *opt, mediaOptions)
+    {
+        IFTRACE(video)
+            debug() << "Adding media option: '" << opt << "'\n";
+        libvlc_media_add_option(media, opt);
+    }
+}
+
+
+libvlc_media_t *VlcVideoSurface::newMediaFromPathOrUrl(QString name)
+// ----------------------------------------------------------------------------
+//   Create media instance from path or URL.
+// ----------------------------------------------------------------------------
+{
+    libvlc_media_t *media = NULL;
+
+    if (name.contains("://"))
+        media = libvlc_media_new_location(vlc, name.toUtf8().constData());
+    else
+        media = libvlc_media_new_path(vlc, name.toUtf8().constData());
+
+    if (!media)
+    {
+        lastError = "Can't open " + name;
+        IFTRACE(video)
+            debug() << "Can't open media\n";
+        setState(VS_ERROR);
+    }
+
+    return media;
+}
+
+
 void VlcVideoSurface::play(const QString &name)
 // ----------------------------------------------------------------------------
 //   Play a file or URL. No-op if 'name' is already playing. "" to stop.
@@ -199,19 +255,14 @@ void VlcVideoSurface::play(const QString &name)
         media = NULL;
         if (name != "")
         {
+            // Split file path/URL and options
+            QString name2 = name;
+            QString opts = stripOptions(name2);
+
             // Open file or URL
-            if (name.contains("://"))
-                media = libvlc_media_new_location(vlc, name.toUtf8().constData());
-            else
-                media = libvlc_media_new_path(vlc, name.toUtf8().constData());
+            media = newMediaFromPathOrUrl(name2);
             if (!media)
-            {
-                lastError = "Can't open " + name;
-                IFTRACE(video)
-                    debug() << "Can't open media\n";
-                setState(VS_ERROR);
                 return;
-            }
 
             if (needResolution)
             {
@@ -219,6 +270,20 @@ void VlcVideoSurface::play(const QString &name)
                 if (isVlc1_1())
                     libvlc_media_add_option(media, "sout=#description:dummy");
             }
+
+            // Save options
+            QStringList options;
+            if (!opts.isEmpty())
+            {
+                options = opts.split(" ");
+                foreach (QString opt, options)
+                {
+                    char *o = strdup((+opt).c_str());
+                    mediaOptions.append(o);
+                }
+            }
+
+            addMediaOptions();
             startPlayback();
         }
     }
@@ -317,14 +382,10 @@ void VlcVideoSurface::getMediaInfo()
 
     stop();
     libvlc_media_release(media);
-    media = NULL;
-    // TODO factor
-    if (mediaName.contains("://"))
-        media = libvlc_media_new_location(vlc, mediaName.toUtf8().constData());
-    else
-        media = libvlc_media_new_path(vlc, mediaName.toUtf8().constData());
+    media = newMediaFromPathOrUrl(mediaName);
     this->w = w;
     this->h = h;
+    addMediaOptions();
     startPlayback();
 
     free(ti);

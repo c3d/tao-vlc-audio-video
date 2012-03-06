@@ -106,6 +106,7 @@ public:
 public:
     static bool             vlcInit(QStringList options);
     static void             deleteVlcInstance();
+    static QString          stripOptions(QString &name);
 
 public:
     unsigned                w, h;
@@ -130,6 +131,7 @@ protected:
     bool                    descriptionMode;
     const QGLContext      * GLcontext;
     bool                    loopMode;
+    QVector<char *>         mediaOptions;
 
 protected:
     struct VlcCleanup
@@ -150,6 +152,8 @@ protected:
     std::ostream & debug();
     void           checkGLContext();
     void           genTexture();
+    void           addMediaOptions();
+    libvlc_media_t * newMediaFromPathOrUrl(QString name);
 
 protected:
     static libvlc_instance_t *  vlcInstance();

@@ -203,14 +203,22 @@ movie(name:text);
  * This primitive plays an audio and/or video file and makes the video
  * available as a texture. You can subsequently map the texture on a rectangle
  * or any other shape in the 3D space.
- * The @p name parameter specifies a local file or a URL; an empty string
- * @c "" stops playback of the current video.
+ * The @p name parameter specifies a local file or a URL.
  * If @p name refers to a video, the resolution is made available through
  * the @ref texture_width and @ref texture_height primitives. No texture
  * is bound when @p name contains no video, or until the first frame is
  * available.
  * When the end of the media stream is reached, playback stops and the last
  * frame remains available as a texture.
+ * Since version 1.03, it is possible to append media-specific VLC options to
+ * the @p name. The separator is <tt>##</tt>. Several options may be specified,
+ * separated with spaces. For instance:
+ * @code
+movie_texture "video.mp4##no-audio"
+ * @endcode
+ * Refer to the VLC documentation for information on media-specific options.
+ * @note Some VLC options have no effect, such as video filters which are
+ * currently not useable within Tao Presentations.
  * @~french
  * Crée une texture vidéo.
  * Cette primitive lit un fichier audio et/ou vidéo et rend disponible la
@@ -221,9 +229,20 @@ movie(name:text);
  * Lorsque @p name représente une vidéo, la résolution de l'image est
  * disponible grâce aux primitives @ref texture_width et @ref texture_height.
  * Si par contre @p name ne contient pas de vidéo, ou tant que la lecture n'est
- * pas commencée, aucun texture n'est activée.
+ * pas commencée, aucune texture n'est activée.
  * Lorsque la fin du fichier est atteinte, la lecture s'arrête et la dernière
  * image reste disponible dans la texture.
+ * Depuis la version 1.03, il est possible d'ajouter des options VLC spécifiques
+ * au média grâce au paramètre @p name. Le séparateur est <tt>##</tt>. Plusieurs
+ * options peuvent être séparées par des espaces.
+ * Par exemple :
+ * @code
+movie_texture "video.mp4##no-audio"
+ * @endcode
+ * Voyez la documentation VLC pour plus d'informations sur les options média
+ * de VLC.
+ * @note Certaines options n'ont aucun effet, comme par exemple les filtres
+ * vidéo qui ne sont pas actuellement utilisables dans Tao Presentations.
  * @~
  * @see movie.
  */

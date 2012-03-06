@@ -205,6 +205,13 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
             if (re.indexIn(qn) == -1)
             {
                 // Not a URL: resolve file path
+
+                // 1. Remove options, if any
+                QString nam = +name;
+                QString opt = VlcVideoSurface::stripOptions(nam);
+                name = +nam;
+
+                // 2. Resolve path
                 name = context->ResolvePrefixedPath(name);
                 text folder = tao->currentDocumentFolder();
                 QString qf = QString::fromUtf8(folder.data(), folder.length());
@@ -218,6 +225,13 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
                                   "File path: %1").arg(+name);
                     Ooops(+err, self);
                     return 0;
+                }
+
+                // 3. Restore options
+                if (!opt.isEmpty())
+                {
+                    name.append("##");
+                    name.append(+opt);
                 }
             }
         }
