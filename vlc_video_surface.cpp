@@ -382,7 +382,9 @@ void VlcVideoSurface::getMediaInfo()
 
     stop();
     libvlc_media_release(media);
-    media = newMediaFromPathOrUrl(mediaName);
+    QString name(mediaName);
+    stripOptions(name);
+    media = newMediaFromPathOrUrl(name);
     this->w = w;
     this->h = h;
     addMediaOptions();

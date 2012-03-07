@@ -214,7 +214,7 @@ movie(name:text);
  * the @p name. The separator is <tt>##</tt>. Several options may be specified,
  * separated with spaces. For instance:
  * @code
-movie_texture "video.mp4##no-audio"
+movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
  * @endcode
  * Refer to the VLC documentation for information on media-specific options.
  * @note Some VLC options have no effect, such as video filters which are
@@ -237,7 +237,7 @@ movie_texture "video.mp4##no-audio"
  * options peuvent être séparées par des espaces.
  * Par exemple :
  * @code
-movie_texture "video.mp4##no-audio"
+movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
  * @endcode
  * Voyez la documentation VLC pour plus d'informations sur les options média
  * de VLC.
