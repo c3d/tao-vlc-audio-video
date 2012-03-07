@@ -117,16 +117,29 @@ public:
     static bool             initFailed;
 
 protected:
+    enum Chroma { INVALID, RV32, cyuv, UYVY };
+
+    struct ImageBuf
+    {
+        ImageBuf() : ptr(NULL), size(0), chroma(INVALID) {}
+
+        void     * ptr;
+        unsigned   size;      // bytes
+        Chroma     chroma;
+        QImage     converted; // RV32 -> GL_RGBA
+    };
+
+protected:
     libvlc_media_player_t * player;
     libvlc_media_t *        media;
     QMutex                  mutex;  // Protect 'image' and 'updated'
-    QImage                  image;
+    ImageBuf                image;
     bool                    updated;
+    QImage                  converted;
     GLuint                  textureId;
     State                   state;
     libvlc_event_manager_t *pevm;
     libvlc_event_manager_t *mevm;
-    bool                    needResolution;  // REVISIT
     bool                    videoAvailable;
     bool                    descriptionMode;
     const QGLContext      * GLcontext;
@@ -146,7 +159,6 @@ protected:
 protected:
     void           setState(State state);
     void           startGetMediaInfo();
-    void           getMediaInfo();
     void           startPlayback();
     void           getMediaSubItems();
     std::ostream & debug();
@@ -159,8 +171,11 @@ protected:
     static libvlc_instance_t *  vlcInstance();
     static std::ostream &       sdebug();
 
+    static unsigned videoFormat(void **opaque, char *chroma,
+                                unsigned *width, unsigned *height,
+                                unsigned *pitches,
+                                unsigned *lines);
     static void *  lockFrame(void *obj, void **plane);
-    static void    unlockFrame(void *obj, void *picture, void *const *plane);
     static void    displayFrame(void *obj, void *picture);
 
     static void    mediaParsed(const struct libvlc_event_t *, void *obj);
