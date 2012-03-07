@@ -157,7 +157,6 @@ protected:
 
 protected:
     static libvlc_instance_t *  vlcInstance();
-    static bool                 isVlc1_1();
     static std::ostream &       sdebug();
 
     static void *  lockFrame(void *obj, void **plane);

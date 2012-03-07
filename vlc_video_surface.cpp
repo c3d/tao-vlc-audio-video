@@ -265,11 +265,7 @@ void VlcVideoSurface::play(const QString &name)
                 return;
 
             if (needResolution)
-            {
                 w = h = 1;
-                if (isVlc1_1())
-                    libvlc_media_add_option(media, "sout=#description:dummy");
-            }
 
             // Save options
             QStringList options;
@@ -816,8 +812,6 @@ libvlc_instance_t * VlcVideoSurface::vlcInstance()
             sdebug() << "libLVC changeset: " << libvlc_get_changeset() << "\n";
             sdebug() << "libLVC compiler: " << libvlc_get_compiler() << "\n";
         }
-
-        (void)isVlc1_1();
     }
     return vlc;
 }
@@ -846,26 +840,6 @@ void VlcVideoSurface::deleteVlcInstance()
         sdebug() << "Deleting VLC instance\n";
     libvlc_release(vlc);
     vlc = NULL;
-}
-
-
-bool VlcVideoSurface::isVlc1_1()
-// ----------------------------------------------------------------------------
-//   Return true if libvlc is version 1.1.x
-// ----------------------------------------------------------------------------
-{
-    static bool is_1_1 = false, done = false;
-    if (!done)
-    {
-        QString version = QString(libvlc_get_version());
-        if (version.startsWith("1.1"))
-            is_1_1 = true;
-        IFTRACE(video)
-            sdebug() << "VLC 1.1.x " << (char *)(is_1_1 ? "" : "NOT ")
-                     << "detected\n";
-        done = true;
-    }
-    return is_1_1;
 }
 
 
