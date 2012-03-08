@@ -211,14 +211,22 @@ movie(name:text);
  * This primitive plays an audio and/or video file and makes the video
  * available as a texture. You can subsequently map the texture on a rectangle
  * or any other shape in the 3D space.
- * The @p name parameter specifies a local file or a URL; an empty string
- * @c "" stops playback of the current video.
+ * The @p name parameter specifies a local file or a URL.
  * If @p name refers to a video, the resolution is made available through
  * the @ref texture_width and @ref texture_height primitives. No texture
  * is bound when @p name contains no video, or until the first frame is
  * available.
  * When the end of the media stream is reached, playback stops and the last
  * frame remains available as a texture.
+ * Since version 1.03, it is possible to append media-specific VLC options to
+ * the @p name. The separator is <tt>##</tt>. Several options may be specified,
+ * separated with spaces. For instance:
+ * @code
+movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
+ * @endcode
+ * Refer to the VLC documentation for information on media-specific options.
+ * @note Some VLC options have no effect, such as video filters which are
+ * currently not useable within Tao Presentations.
  * @~french
  * Crée une texture vidéo.
  * Cette primitive lit un fichier audio et/ou vidéo et rend disponible la
@@ -229,13 +237,54 @@ movie(name:text);
  * Lorsque @p name représente une vidéo, la résolution de l'image est
  * disponible grâce aux primitives @ref texture_width et @ref texture_height.
  * Si par contre @p name ne contient pas de vidéo, ou tant que la lecture n'est
- * pas commencée, aucun texture n'est activée.
+ * pas commencée, aucune texture n'est activée.
  * Lorsque la fin du fichier est atteinte, la lecture s'arrête et la dernière
  * image reste disponible dans la texture.
+ * Depuis la version 1.03, il est possible d'ajouter des options VLC spécifiques
+ * au média grâce au paramètre @p name. Le séparateur est <tt>##</tt>. Plusieurs
+ * options peuvent être séparées par des espaces.
+ * Par exemple :
+ * @code
+movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
+ * @endcode
+ * Voyez la documentation VLC pour plus d'informations sur les options média
+ * de VLC.
+ * @note Certaines options n'ont aucun effet, comme par exemple les filtres
+ * vidéo qui ne sont pas actuellement utilisables dans Tao Presentations.
  * @~
  * @see movie.
  */
 movie_texture(name:text);
+
+/**
+ * @~english
+ * Creates a video texture of a specific size.
+ * This function is similar to @ref movie_texture(name:text), except that
+ * instead of creating a texture of the same size as the video, it uses a
+ * specific size.
+ * Note that the @p width and @p height parameters are
+ * ignored if the video has already been started, even after @ref movie_stop.
+ * You need to delete the movie player instance
+ * (@ref movie_drop, @ref movie_only) to play the video again with a different
+ * resolution.
+ * This function will start playback faster than the version without
+ * @p width and @p height, especially when playing a network stream.
+ * @~french
+ * Crée une texture vidéo de la taille spécifiée.
+ * Cette fonction est similaire à @ref movie_texture(name:text), mais au lieu
+ * de créer une texture de la même taille que la vidéo, elle permet de préciser
+ * une taille. Notez que @p width et @p height ne sont pas utilisés si la
+ * vidéo a déjà été démarrée, et même après @ref movie_stop. Il faut détruire
+ * l'instance du lecteur multimédia (@ref movie_drop, @ref movie_only) pour
+ * pouvoir redémarrer la lecture avec une résolution différente.
+ * Cette fonction démarre la lecture plus rapidement que la version sans
+ * @p width et @p height, surtout lorsque @p name représente un flux réseau.
+ * @~
+ * @see movie_texture(name:text), movie_drop, movie_only
+ * @since 1.01
+ */
+movie_texture(name:text, width:integer, height:integer);
+
 
 /**
  * @~english
@@ -515,6 +564,26 @@ movie_set_rate(name:text, rate:real);
  * @see movie_loop.
  */
 movie_set_loop(name:text, mode:boolean);
+
+
+/**
+ * @~english
+ * Initializes the VLC library.
+ * With this function you can pass specific command-line options to VLC.
+ * For example:
+ * @~french
+ * Initialise la bibliothèque VLC.
+ * Cette fonction permet de passer des options spécifiques.
+ * Par exemple :
+ * @~
+ * @code
+import VLCAudioVideo 1.02
+vlc_init "--http-proxy", "http://proxy.example.com:8080"
+movie "http://youtube.com/watch?v=bKpPTq3-Qic"
+ * @endcode
+ * @since 1.02
+ */
+vlc_init(options:tree);
 
 /**
  * @}

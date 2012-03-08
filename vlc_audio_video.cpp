@@ -34,8 +34,10 @@
 #include "tao/tao_gl.h"
 #include "vlc_audio_video.h"
 #include "vlc_preferences.h"
+#include "action.h"
 #include "errors.h"
 #include <QFileInfo>
+#include <QStringList>
 
 
 inline QString operator +(std::string s)
@@ -65,11 +67,11 @@ text VideoSurface::modulePath;
 #endif
 
 
-VideoSurface::VideoSurface()
+VideoSurface::VideoSurface(unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
 //   Create the video player
 // ----------------------------------------------------------------------------
-    : VlcVideoSurface()
+    : VlcVideoSurface(w, h)
 {
 }
 
@@ -87,6 +89,8 @@ unsigned int VideoSurface::bind(text pathOrUrl)
 //    Start playback or refresh the surface and bind to the texture
 // ----------------------------------------------------------------------------
 {
+    if (!vlc)
+        return 0;
     play(+pathOrUrl);
     return texture();
 }
@@ -102,18 +106,84 @@ std::ostream & VideoSurface::debug()
 }
 
 
-
-XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
-                                          XL::Tree_p self, text name)
+struct ParseTextTree : XL::Action
 // ----------------------------------------------------------------------------
-//   Make a video player texture
+//   Extract text from a tree of blocks and infixes, into a QStringList
 // ----------------------------------------------------------------------------
 {
+    ParseTextTree(QStringList &list) : list(list) {}
+
+    Tree *DoBlock(Block *what)
+    {
+        return what->child->Do(this);
+    }
+    Tree *DoInfix(Infix *what)
+    {
+        if (Tree * t = what->left->Do(this))
+            return t;
+        return what->right->Do(this);
+    }
+    Tree *DoText(Text *what)
+    {
+        list << +what->value;
+        return NULL;
+    }
+    Tree *Do(Tree *what)
+    {
+        Q_UNUSED(what); return NULL;
+    }
+
+    QStringList &list;
+};
+
+
+XL::Name_p VideoSurface::vlc_init(XL::Tree_p self, XL::Tree_p opts)
+// ----------------------------------------------------------------------------
+//   Add option to the list of VLC initialization options
+// ----------------------------------------------------------------------------
+{
+    bool ok = (vlc != NULL);
+
+    if (!vlc && !initFailed)
+    {
+        QStringList options;
+        ParseTextTree parse(options);
+        opts->Do(parse);
+        ok = VlcVideoSurface::vlcInit(options);
+        if (!ok)
+        {
+            QString err = "Failed to initialize libVLC: $1";
+            if (options.size())
+            {
+                err += "\nCheck user-supplied options: ";
+                foreach (QString opt, options)
+                    err += "'" + opt + "' ";
+                err += "\nNOTE: You must CLOSE the document before trying "
+                             "new options.";
+            }
+            Ooops(+err, self);
+        }
+    }
+    return ok ? XL::xl_true : XL::xl_false;
+}
+
+
+XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
+                                          XL::Tree_p self, text name,
+                                          XL::Integer_p width,
+                                          XL::Integer_p height)
+// ----------------------------------------------------------------------------
+//   Make a video player texture of given size
+// ----------------------------------------------------------------------------
+{
+    if (name == "")
+        return new Integer(0, self->Position());
+
 #ifdef USE_LICENSE
     static bool licensed, tested = false;
     if (!tested)
     {
-        licensed = tao->checkLicense("VLCAudioVideo 1.0", false);
+        licensed = tao->checkLicense("VLCAudioVideo 1.02", false);
         tested = true;
     }
 
@@ -125,7 +195,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
     VideoSurface *surface = videos[name];
     if (!surface)
     {
-        surface = new VideoSurface();
+        surface = new VideoSurface(width->value, height->value);
         videos[name] = surface;
 
         if (name != "")
@@ -135,14 +205,33 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
             if (re.indexIn(qn) == -1)
             {
                 // Not a URL: resolve file path
+
+                // 1. Remove options, if any
+                QString nam = +name;
+                QString opt = VlcVideoSurface::stripOptions(nam);
+                name = +nam;
+
+                // 2. Resolve path
                 name = context->ResolvePrefixedPath(name);
                 text folder = tao->currentDocumentFolder();
                 QString qf = QString::fromUtf8(folder.data(), folder.length());
                 QString qn = QString::fromUtf8(name.data(), name.length());
                 QFileInfo inf(QDir(qf), qn);
-                if (inf.isReadable())
+                name = +QDir::toNativeSeparators(inf.absoluteFilePath());
+                if (!inf.isReadable())
                 {
-                    name = +QDir::toNativeSeparators(inf.absoluteFilePath());
+                    QString err;
+                    err = QString("File not found or unreadable: $1\n"
+                                  "File path: %1").arg(+name);
+                    Ooops(+err, self);
+                    return 0;
+                }
+
+                // 3. Restore options
+                if (!opt.isEmpty())
+                {
+                    name.append("##");
+                    name.append(+opt);
                 }
             }
         }
@@ -153,15 +242,18 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
         name = +surface->mediaName;
     }
 
-    // Resize to requested size, and bind texture
+    // Bind texture
     GLuint id = surface->bind(name);
     if (surface->lastError != "")
     {
         XL::Ooops("Cannot play: $1", self);
         QString err = "Media player error: " + surface->lastError;
         XL::Ooops(+err, self);
-        QString err2 = "Path or URL: " + surface->mediaName;
-        XL::Ooops(+err2, self);
+        if (surface->mediaName != "")
+        {
+            QString err2 = "Path or URL: " + surface->mediaName;
+            XL::Ooops(+err2, self);
+        }
         surface->lastError = "";
         return new Integer(0, self->Position());
     }
@@ -170,6 +262,18 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 
     tao->refreshOn(QEvent::Timer, -1.0);
     return new Integer(id, self->Position());
+}
+
+
+XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
+                                          XL::Tree_p self, text name)
+// ----------------------------------------------------------------------------
+//   Make a video player texture]
+// ----------------------------------------------------------------------------
+{
+    return movie_texture(context, self, name,
+                         new XL::Integer(0, self->Position()),
+                         new XL::Integer(0, self->Position()));
 }
 
 
@@ -325,6 +429,8 @@ int module_exit()
 //   Uninitialize the Tao module
 // ----------------------------------------------------------------------------
 {
+    VideoSurface::movie_only("");
+    VlcVideoSurface::deleteVlcInstance();
     return 0;
 }
 

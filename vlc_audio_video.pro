@@ -32,6 +32,13 @@ isEmpty(VLC) {
 
 !exists($$VLC/include/vlc/libvlc.h) {
   !build_pass {
+    macx:exists($$VLC/include/libvlc.h) {
+      message("*** Broken MacOSX VLC package warning:")
+      message("VLC include files found under $$VLC/include/")
+      message("They should be under $$VLC/include/vlc/")
+      message("Please do: \(cd \"$$VLC/include\" ; ln -s . vlc\)")
+      message("...and try again.")
+    } else {
     message("$$VLC/include/vlc/libvlc.h not found")
     message()
     message("To build the VLCAudioVideo module, I need the VLC media player >= 1.1.x")
@@ -47,6 +54,7 @@ isEmpty(VLC) {
       message(For instance:)
       message([MacOSX] ./configure VLC=/Users/jerome/Desktop/vlc-1.1.12/VLC.app/Contents/MacOS)
       message([Windows] ./configure VLC=/c/Users/Jerome/Desktop/vlc-1.1.11/sdk)
+    }
     }
     message()
     message(*** THE VLCAudioVideo MODULE WILL NOT BE BUILT ***)
@@ -88,15 +96,12 @@ isEmpty(VLC) {
     vlc_plugins.files = "$${VLC}/plugins"
     vlc_lua.path = $${MODINSTPATH}/lib/share
     vlc_lua.files = "$${VLC}/share/lua"
-  }
-  linux-g++* {
-    # Install will create <module>/lib/vlc/{plugins,lua}
-    vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = "$${VLC}/lib/libvlc*.so.*"
-    vlc_plugins.path  = $${MODINSTPATH}/lib/vlc
-    vlc_plugins.files = "$${VLC}/lib/vlc/plugins" "$${VLC}/lib/vlc/vlc-cache-gen"
-    vlc_lua.path = $${MODINSTPATH}/lib/vlc
-    vlc_lua.files = "$${VLC}/lib/vlc/lua"
+
+    # Bug #1944
+    vlc_rm_freetype.commands = rm \"$${MODINSTPATH}/lib/plugins/libfreetype_plugin.dylib\"
+    vlc_rm_freetype.depends = install_vlc_plugins
+    vlc_rm_freetype.path = $${MODINSTPATH}/lib/plugins
+    INSTALLS += vlc_rm_freetype
   }
   win32 {
     # Install will create <module>/lib/{plugins,lua}
@@ -107,7 +112,7 @@ isEmpty(VLC) {
     vlc_lua.path  = $${MODINSTPATH}/lib/lua
     vlc_lua.files = "$${VLC}/../lua/*"
   }
-  INSTALLS += vlc_libs vlc_plugins vlc_lua
+  macx|win32:INSTALLS += vlc_libs vlc_plugins vlc_lua
 
   LICENSE_FILES = vlc_audio_video.taokey.notsigned
   exists(../licenses.pri):include(../licenses.pri)

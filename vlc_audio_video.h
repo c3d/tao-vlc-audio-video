@@ -47,15 +47,23 @@ struct VideoSurface : VlcVideoSurface
 // ----------------------------------------------------------------------------
 {
     typedef std::map<text, VideoSurface *>  video_map;
-    VideoSurface();
+    VideoSurface(unsigned int w = 0, unsigned int h = 0);
     virtual ~VideoSurface();
     unsigned int                bind(text pathOrUrl);
 
 public:
     // XL interface
+    static XL::Name_p           vlc_init(XL::Tree_p self,
+                                         XL::Tree_p opts);
+
     static XL::Integer_p        movie_texture(XL::Context_p context,
                                               XL::Tree_p self,
                                               text name);
+    static XL::Integer_p        movie_texture(XL::Context_p context,
+                                              XL::Tree_p self,
+                                              text name,
+                                              XL::Integer_p width,
+                                              XL::Integer_p height);
     static XL::Name_p           movie_drop(text name);
     static XL::Name_p           movie_only(text name);
     static XL::Name_p           movie_play(text name);
