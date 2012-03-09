@@ -29,20 +29,24 @@ isEmpty(VLC) {
   linux-g++*:VLC=/usr
 }
 
-
-!exists($$VLC/include/vlc/libvlc.h) {
-  !build_pass {
-    macx:exists($$VLC/include/libvlc.h) {
+HEADER=$$VLC/include/vlc/libvlc_media_player.h
+exists($$HEADER) {
+  VLC_FOUND=1
+  system(bash -c \"grep libvlc_video_set_format_callbacks $$HEADER >/dev/null 2>&1\"):VLC_VERSION_OK=1
+} else {
+  !build_pass:macx:exists($$VLC/include/libvlc.h) {
       message("*** Broken MacOSX VLC package warning:")
       message("VLC include files found under $$VLC/include/")
       message("They should be under $$VLC/include/vlc/")
-      message("Please do: \(cd \"$$VLC/include\" ; ln -s . vlc\)")
+      message("Please upgrade VLC or do: \(cd \"$$VLC/include\" ; ln -s . vlc\)")
       message("...and try again.")
-    } else {
-    message("$$VLC/include/vlc/libvlc.h not found")
+  }
+}
+
+isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
+    !isEmpty(VLC_FOUND):isEmpty(VLC_VERSION_OK):message("*** VLC is too old! \($$VLC\)")
     message()
     message("To build the VLCAudioVideo module, I need the VLC media player >= 2.0")
-
     linux-g++* {
       message(Please install the libvlc-dev package.)
       message(See http://nightlies.videolan.org/)
@@ -52,13 +56,12 @@ isEmpty(VLC) {
       message("If you have extracted the VLC SDK somewhere else than the default")
       message("installation directory, you may set the VLC variable.")
       message(For instance:)
-      message([MacOSX] ./configure VLC=/Users/jerome/Desktop/vlc-1.1.12/VLC.app/Contents/MacOS)
-      message([Windows] ./configure VLC=/c/Users/Jerome/Desktop/vlc-1.1.11/sdk)
-    }
+      message([MacOSX] ./configure VLC=/Users/jerome/Desktop/vlc-2.0.1/VLC.app/Contents/MacOS)
+      message([Windows] ./configure VLC=/c/Users/Jerome/Desktop/vlc-2.0.0/sdk)
     }
     message()
     message(*** THE VLCAudioVideo MODULE WILL NOT BE BUILT ***)
-  }
+
 } else {
 
   MODINSTDIR = vlc_audio_video
