@@ -3,7 +3,7 @@
 # ******************************************************************************
 # File Description:
 # Qt build file for the VLC Audio Video module
-# Requires VLC media player >= 1.1
+# Requires VLC media player >= 2.0
 # ******************************************************************************
 # (C) 2011 Taodyne SAS <contact@taodyne.com>
 #
@@ -41,7 +41,7 @@ isEmpty(VLC) {
     } else {
     message("$$VLC/include/vlc/libvlc.h not found")
     message()
-    message("To build the VLCAudioVideo module, I need the VLC media player >= 1.1.x")
+    message("To build the VLCAudioVideo module, I need the VLC media player >= 2.0")
 
     linux-g++* {
       message(Please install the libvlc-dev package.)
