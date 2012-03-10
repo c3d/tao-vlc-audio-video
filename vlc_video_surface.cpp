@@ -576,8 +576,7 @@ GLuint VlcVideoSurface::texture()
 
                 GLenum format = GL_RGBA, type = GL_UNSIGNED_BYTE;
 #ifdef Q_OS_MACX
-                if (image.chroma == cyuv ||
-                    image.chroma == UYVY /* mirrored */)
+                if (image.chroma == UYVY /* mirrored */)
                 {
                     format = GL_YCBCR_422_APPLE;
                     type = GL_UNSIGNED_SHORT_8_8_APPLE;
@@ -798,9 +797,6 @@ unsigned VlcVideoSurface::videoFormat(void **opaque, char *chroma,
     const char * newchroma;
 
 #if defined(Q_OS_MACX)
-    // FIXME: Ideally we want "cyuv" so that there would be no need to mirror
-    // the picture vertically. Unfortunately "cyuv" gives no picture with
-    // VLC 2.0.0-2-geeb7783.
     newchroma = "UYVY";
     v->image.chroma = UYVY;
     pitches[0] = pitches[1] = pitches[2] = v->w * 2;
@@ -880,14 +876,6 @@ void VlcVideoSurface::displayFrame(void *obj, void *picture)
         v->mutex.lock();
         v->image.converted = converted;
         v->image.ptr = v->image.converted.bits();
-    }
-    else
-    if (v->image.chroma == cyuv)
-    {
-        if (v->image.ptr)
-            freeFrame(v->image.ptr);
-        v->mutex.lock();
-        v->image.ptr = picture;
     }
     else
 #endif
