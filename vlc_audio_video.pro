@@ -32,7 +32,7 @@ isEmpty(VLC) {
 HEADER=$$VLC/include/vlc/libvlc_media_player.h
 exists($$HEADER) {
   VLC_FOUND=1
-  system(bash -c \"grep libvlc_video_set_format_callbacks $$HEADER >/dev/null 2>&1\"):VLC_VERSION_OK=1
+  system(bash -c \"grep libvlc_video_set_format_callbacks \\\"$$HEADER\\\" >/dev/null 2>&1 \"):VLC_VERSION_OK=1
 } else {
   !build_pass:macx:exists($$VLC/include/libvlc.h) {
       message("*** Broken MacOSX VLC package warning:")
