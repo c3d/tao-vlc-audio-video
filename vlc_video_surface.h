@@ -117,7 +117,7 @@ public:
     static bool             initFailed;
 
 protected:
-    enum Chroma { INVALID, RV32, cyuv, UYVY };
+    enum Chroma { INVALID, RV32, UYVY };
 
     struct ImageBuf
     {
@@ -126,7 +126,7 @@ protected:
         void     * ptr;
         unsigned   size;      // bytes
         Chroma     chroma;
-        QImage     converted; // RV32 -> GL_RGBA
+        QImage     converted; // RV32 -> GL_RGBA or flip YUVY
     };
 
 protected:
