@@ -224,7 +224,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
                     err = QString("File not found or unreadable: $1\n"
                                   "File path: %1").arg(+name);
                     Ooops(+err, self);
-                    return 0;
+                    return new Integer(0, self->Position());
                 }
 
                 // 3. Restore options
