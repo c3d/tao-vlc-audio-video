@@ -111,9 +111,9 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
     vlc_libs.path = $${MODINSTPATH}/lib
     vlc_libs.files = "$${VLC}/../*.dll" "$${VLC}/../vlc-cache-gen.exe"
     vlc_plugins.path  = $${MODINSTPATH}/lib/plugins
-    vlc_plugins.files = "$${VLC}/../plugins/*"
+    vlc_plugins.commands = mkdir -p $${MODINSTPATH}/lib/plugins ; cp -R "$${VLC}/../plugins/*" $${MODINSTPATH}/lib/plugins
     vlc_lua.path  = $${MODINSTPATH}/lib/lua
-    vlc_lua.files = "$${VLC}/../lua/*"
+    vlc_lua.commands = mkdir -p $${MODINSTPATH}/lib/lua ; cp -R "$${VLC}/../lua/*" $${MODINSTPATH}/lib/lua
   }
   macx|win32:INSTALLS += vlc_libs vlc_plugins vlc_lua
 
