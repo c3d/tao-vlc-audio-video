@@ -232,7 +232,7 @@ movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
  * Cette primitive lit un fichier audio et/ou vidéo et rend disponible la
  * vidéo sous forme de texture. Vous pouvez ensuite appliquer cette texture sur
  * un rectangle ou n'importe quelle autre forme dans l'espace 3D.
- * Le paramètre @p name spécifie un fichier local ou une URL. Un chaîne vide
+ * Le paramètre @p name spécifie un fichier local ou une URL. Une chaîne vide
  * permet d'arrêter la lecture de la vidéo associée à cet appel.
  * Lorsque @p name représente une vidéo, la résolution de l'image est
  * disponible grâce aux primitives @ref texture_width et @ref texture_height.
