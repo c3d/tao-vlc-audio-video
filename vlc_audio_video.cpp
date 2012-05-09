@@ -33,11 +33,16 @@
 
 #include "tao/tao_gl.h"
 #include "vlc_audio_video.h"
+#include "vlc_video_surface.h"
 #include "vlc_preferences.h"
 #include "action.h"
 #include "errors.h"
 #include <QFileInfo>
 #include <QStringList>
+#include <QVector>
+#ifdef Q_OS_WIN32
+#include <QProcess>
+#endif
 
 
 inline QString operator +(std::string s)
@@ -60,38 +65,16 @@ inline std::string operator +(QString s)
 
 using namespace XL;
 
-const Tao::ModuleApi * VideoSurface::tao = NULL;
-VideoSurface::video_map VideoSurface::videos;
+const Tao::ModuleApi * VlcAudioVideo::tao = NULL;
+VlcAudioVideo::video_map VlcAudioVideo::videos;
 #ifdef Q_OS_WIN32
-text VideoSurface::modulePath;
+text VlcAudioVideo::modulePath;
 #endif
+libvlc_instance_t *         VlcAudioVideo::vlc = NULL;
+QStringList                 VlcAudioVideo::userOptions;
+bool                        VlcAudioVideo::initFailed = false;
+VlcAudioVideo::VlcCleanup   VlcAudioVideo::cleanup;
 
-
-VideoSurface::VideoSurface(text pathOrUrl, unsigned int w, unsigned int h)
-// ----------------------------------------------------------------------------
-//   Create the video player
-// ----------------------------------------------------------------------------
-    : VlcVideoSurface(+pathOrUrl, w, h)
-{
-}
-
-
-VideoSurface::~VideoSurface()
-// ----------------------------------------------------------------------------
-//    Stop the player and delete resources
-// ----------------------------------------------------------------------------
-{
-}
-
-
-std::ostream & VideoSurface::debug()
-// ----------------------------------------------------------------------------
-//   Convenience method to log with a common prefix
-// ----------------------------------------------------------------------------
-{
-    std::cerr << "[AudioVideo] " << (void*)this << " ";
-    return std::cerr;
-}
 
 
 struct ParseTextTree : XL::Action
@@ -125,7 +108,108 @@ struct ParseTextTree : XL::Action
 };
 
 
-XL::Name_p VideoSurface::vlc_init(XL::Tree_p self, XL::Tree_p opts)
+
+
+std::ostream & VlcAudioVideo::sdebug()
+// ----------------------------------------------------------------------------
+//   Convenience method to log with a common prefix
+// ----------------------------------------------------------------------------
+{
+    std::cerr << "[VlcAudioVideo] ";
+    return std::cerr;
+}
+
+
+VlcVideoSurface *VlcAudioVideo::surface(text name)
+// ----------------------------------------------------------------------------
+//   Return the video surface associated with a given name or NULL
+// ----------------------------------------------------------------------------
+{
+    video_map::iterator found = videos.find(name);
+    if (found != videos.end())
+        return (*found).second;
+    return NULL;
+}
+
+
+libvlc_instance_t * VlcAudioVideo::vlcInstance()
+// ----------------------------------------------------------------------------
+//   Return/create the VLC instance
+// ----------------------------------------------------------------------------
+{
+    if (!vlc)
+    {
+        QVector<const char *> argv;
+        argv.append("--no-video-title-show");
+
+        // Tracing options
+        IFTRACE(vlc)
+        {
+            argv.append("--extraintf=logger");
+            argv.append("--verbose=2");
+        }
+        else
+        {
+            argv.append("-q");
+        }
+
+        // User options
+        QVector<const char *> user_opts;
+        foreach (QString opt, userOptions)
+        {
+            const char * copt = strdup(opt.toUtf8().constData());
+            user_opts.append(copt);
+            argv.append(copt);
+        }
+
+        IFTRACE(video)
+        {
+            sdebug() << "Initializing VLC instance with parameters:\n";
+            for (int i = 0; i < argv.size(); i++)
+                sdebug() << "  " << argv[i] << "\n";
+        }
+
+#ifdef Q_OS_WIN32
+        // #1555 Windows: crash when loading vlc_audio_video module for the
+        // first time
+        // libvlc_new() takes care of updating plugins.dat if needed, but it
+        // seems that it corrupts the current process doing so.
+        QString cg(+modulePath + "/lib/vlc-cache-gen.exe");
+        QStringList args("plugins");
+        IFTRACE(video)
+            sdebug() << "Running: '" << +cg << " " << +args.join(" ")
+                     << "'...\n";
+        QProcess p;
+        p.start(cg, args);
+        bool ok = false;
+        if (p.waitForStarted() && p.waitForFinished())
+            ok = true;
+        const char *status = ok ? "done" : "error";
+        IFTRACE(video)
+            sdebug() << "...vlc-cache-gen " << status << "\n";
+#endif
+
+        vlc = libvlc_new(argv.size(), argv.data());
+        foreach (const char *opt, user_opts)
+            free((void*)opt);
+        if (!vlc)
+        {
+            initFailed = true;
+            return NULL;
+        }
+
+        IFTRACE(video)
+        {
+            sdebug() << "libLVC version: " << libvlc_get_version() << "\n";
+            sdebug() << "libLVC changeset: " << libvlc_get_changeset() << "\n";
+            sdebug() << "libLVC compiler: " << libvlc_get_compiler() << "\n";
+        }
+    }
+    return vlc;
+}
+
+
+XL::Name_p VlcAudioVideo::vlc_init(XL::Tree_p self, XL::Tree_p opts)
 // ----------------------------------------------------------------------------
 //   Add option to the list of VLC initialization options
 // ----------------------------------------------------------------------------
@@ -137,7 +221,7 @@ XL::Name_p VideoSurface::vlc_init(XL::Tree_p self, XL::Tree_p opts)
         QStringList options;
         ParseTextTree parse(options);
         opts->Do(parse);
-        ok = VlcVideoSurface::vlcInit(options);
+        ok = vlcInit(options);
         if (!ok)
         {
             QString err = "Failed to initialize libVLC: $1";
@@ -156,7 +240,49 @@ XL::Name_p VideoSurface::vlc_init(XL::Tree_p self, XL::Tree_p opts)
 }
 
 
-XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
+bool VlcAudioVideo::vlcInit(QStringList options)
+// ----------------------------------------------------------------------------
+//   Initialize VLC, possibly with additional options
+// ----------------------------------------------------------------------------
+{
+    userOptions = options;
+    return (vlcInstance() != NULL);
+}
+
+
+void VlcAudioVideo::deleteVlcInstance()
+// ----------------------------------------------------------------------------
+//   Destroy VLC instance and any static stuff, ready for new creation
+// ----------------------------------------------------------------------------
+{
+    initFailed = false;
+    userOptions.clear();
+    if (!vlc)
+        return;
+    IFTRACE(video)
+        sdebug() << "Deleting VLC instance\n";
+    libvlc_release(vlc);
+    vlc = NULL;
+}
+
+
+QString VlcAudioVideo::stripOptions(QString &name)
+// ----------------------------------------------------------------------------
+//   Strip and return <options> when name is "<path or URL>##<options>"
+// ----------------------------------------------------------------------------
+{
+    QString opt;
+    int pos = name.indexOf("##");
+    if (pos > 0)
+    {
+        opt = name.mid(pos + 2);
+        name = name.left(pos);
+    }
+    return opt;
+}
+
+
+XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                                           XL::Tree_p self, text name,
                                           XL::Integer_p width,
                                           XL::Integer_p height)
@@ -180,7 +306,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 #endif
 
     // Get or build the current frame if we don't have one
-    VideoSurface *surface = VideoSurface::surface(name);
+    VlcVideoSurface *surface = VlcAudioVideo::surface(name);
     if (!surface)
     {
         text saveName(name);
@@ -192,7 +318,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 
             // 1. Remove options, if any
             QString nam = +name;
-            QString opt = VlcVideoSurface::stripOptions(nam);
+            QString opt = stripOptions(nam);
             name = +nam;
 
             // 2. Resolve path
@@ -211,7 +337,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
             }
 
             // 4. Create and keep video player
-            surface = new VideoSurface(name, width->value, height->value);
+            surface = new VlcVideoSurface(+name, width->value, height->value);
             videos[saveName] = surface;
 
             // 5. Ouput error if file does not exist
@@ -227,7 +353,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
         else
         {
             // name is a URL. Create and keep video player
-            surface = new VideoSurface(name, width->value, height->value);
+            surface = new VlcVideoSurface(+name, width->value, height->value);
             videos[saveName] = surface;
         }
 
@@ -254,7 +380,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 }
 
 
-XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
+XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                                           XL::Tree_p self, text name)
 // ----------------------------------------------------------------------------
 //   Make a video player texture]
@@ -266,7 +392,7 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 }
 
 
-XL::Name_p VideoSurface::movie_drop(text name)
+XL::Name_p VlcAudioVideo::movie_drop(text name)
 // ----------------------------------------------------------------------------
 //   Purge the given video surface from memory
 // ----------------------------------------------------------------------------
@@ -274,7 +400,7 @@ XL::Name_p VideoSurface::movie_drop(text name)
     video_map::iterator found = videos.find(name);
     if (found != videos.end())
     {
-        VideoSurface *s = (*found).second;
+        VlcVideoSurface *s = (*found).second;
         videos.erase(found);
         delete s;
         return XL::xl_true;
@@ -283,7 +409,7 @@ XL::Name_p VideoSurface::movie_drop(text name)
 }
 
 
-XL::Name_p VideoSurface::movie_only(text name)
+XL::Name_p VlcAudioVideo::movie_only(text name)
 // ----------------------------------------------------------------------------
 //   Purge all other surfaces from memory
 // ----------------------------------------------------------------------------
@@ -293,7 +419,7 @@ XL::Name_p VideoSurface::movie_only(text name)
     {
         if (name != (*v).first)
         {
-            VideoSurface *s = (*v).second;
+            VlcVideoSurface *s = (*v).second;
             videos.erase(v);
             delete s;
             n = videos.begin();
@@ -307,22 +433,10 @@ XL::Name_p VideoSurface::movie_only(text name)
 }
 
 
-VideoSurface *VideoSurface::surface(text name)
-// ----------------------------------------------------------------------------
-//   Return the video surface associated with a given name or NULL
-// ----------------------------------------------------------------------------
-{
-    video_map::iterator found = videos.find(name);
-    if (found != videos.end())
-        return (*found).second;
-    return NULL;
-}
-
-
 #define MOVIE_ADAPTER(id)                       \
-XL::Name_p VideoSurface::movie_##id(text name)  \
+XL::Name_p VlcAudioVideo::movie_##id(text name)  \
 {                                               \
-    if (VideoSurface *s = surface(name))        \
+    if (VlcVideoSurface *s = surface(name))     \
     {                                           \
         s->id();                                \
         return XL::xl_true;                     \
@@ -335,11 +449,11 @@ MOVIE_ADAPTER(pause)
 MOVIE_ADAPTER(stop)
 
 #define MOVIE_FLOAT_ADAPTER(id, ev)                             \
-XL::Real_p VideoSurface::movie_##id(XL::Tree_p self, text name) \
+XL::Real_p VlcAudioVideo::movie_##id(XL::Tree_p self, text name) \
 {                                                               \
     float result = -1.0;                                        \
     ev;                                                         \
-    if (VideoSurface *s = surface(name))                        \
+    if (VlcVideoSurface *s = surface(name))                     \
         result = s->id();                                       \
     return new XL::Real(result, self->Position());              \
 }
@@ -351,10 +465,10 @@ MOVIE_FLOAT_ADAPTER(length,   )
 MOVIE_FLOAT_ADAPTER(rate ,    )
 
 #define MOVIE_BOOL_ADAPTER(id)                  \
-XL::Name_p VideoSurface::movie_##id(text name)  \
+XL::Name_p VlcAudioVideo::movie_##id(text name)  \
 {                                               \
     tao->refreshOn(QEvent::Timer, -1);          \
-    if (VideoSurface *s = surface(name))        \
+    if (VlcVideoSurface *s = surface(name))     \
         if (s->id())                            \
             return XL::xl_true;                 \
     return XL::xl_false;                        \
@@ -366,9 +480,9 @@ MOVIE_BOOL_ADAPTER(done)
 MOVIE_BOOL_ADAPTER(loop)
 
 #define MOVIE_FLOAT_SETTER(id, mid)                             \
-XL::Name_p VideoSurface::movie_set_##id(text name, float value) \
+XL::Name_p VlcAudioVideo::movie_set_##id(text name, float value) \
 {                                                               \
-    if (VideoSurface *s = surface(name))                        \
+    if (VlcVideoSurface *s = surface(name))                     \
     {                                                           \
         s->mid(value);                                          \
         return XL::xl_true;                                     \
@@ -382,12 +496,12 @@ MOVIE_FLOAT_SETTER(position, setPosition)
 MOVIE_FLOAT_SETTER(time, setTime)
 MOVIE_FLOAT_SETTER(rate, setRate)
 
-#define MOVIE_BOOL_SETTER(id, mid)                             \
-XL::Name_p VideoSurface::movie_set_##id(text name, bool on) \
+#define MOVIE_BOOL_SETTER(id, mid)                              \
+XL::Name_p VlcAudioVideo::movie_set_##id(text name, bool on)    \
 {                                                               \
-    if (VideoSurface *s = surface(name))                        \
+    if (VlcVideoSurface *s = surface(name))                     \
     {                                                           \
-        s->mid(on);                                          \
+        s->mid(on);                                             \
         return XL::xl_true;                                     \
     }                                                           \
     return XL::xl_false;                                        \
@@ -405,9 +519,9 @@ int module_init(const Tao::ModuleApi *api, const Tao::ModuleInfo *mod)
     Q_UNUSED(mod);
     glewInit();
     XL_INIT_TRACES();
-    VideoSurface::tao = api;
+    VlcAudioVideo::tao = api;
 #ifdef Q_OS_WIN32
-    VideoSurface::modulePath = mod->path;
+    VlcAudioVideo::modulePath = mod->path;
 #endif
     return 0;
 }
@@ -418,8 +532,8 @@ int module_exit()
 //   Uninitialize the Tao module
 // ----------------------------------------------------------------------------
 {
-    VideoSurface::movie_only("");
-    VlcVideoSurface::deleteVlcInstance();
+    VlcAudioVideo::movie_only("");
+    VlcAudioVideo::deleteVlcInstance();
     return 0;
 }
 

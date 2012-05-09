@@ -106,16 +106,8 @@ public:
     QString        url ()   { return mediaName; }
 
 public:
-    static bool             vlcInit(QStringList options);
-    static void             deleteVlcInstance();
-    static QString          stripOptions(QString &name);
-
-public:
     unsigned                w, h;
     QString                 lastError;
-
-public:
-    static bool             initFailed;
 
 protected:
     enum Chroma { INVALID, RV32, UYVY };
@@ -132,6 +124,7 @@ protected:
 
 protected:
     QString                 mediaName;
+    libvlc_instance_t *     vlc;
     libvlc_media_player_t * player;
     libvlc_media_t *        media;
     QMutex                  mutex;  // Protect 'image' and 'updated'
@@ -149,16 +142,6 @@ protected:
     QVector<char *>         mediaOptions;
 
 protected:
-    struct VlcCleanup
-    {
-        ~VlcCleanup()
-        {
-            if (VlcVideoSurface::vlc)
-                libvlc_release(VlcVideoSurface::vlc);
-        }
-    };
-
-protected:
     void           setState(State state);
     void           startGetMediaInfo();
     void           startPlayback();
@@ -169,9 +152,6 @@ protected:
     libvlc_media_t * newMediaFromPathOrUrl(QString name);
 
 protected:
-    static libvlc_instance_t *  vlcInstance();
-    static std::ostream &       sdebug();
-
     static unsigned videoFormat(void **opaque, char *chroma,
                                 unsigned *width, unsigned *height,
                                 unsigned *pitches,
@@ -184,11 +164,6 @@ protected:
     static void    mediaSubItemAdded(const struct libvlc_event_t *, void *obj);
     static void    playerEndReached(const struct libvlc_event_t *, void *obj);
     static void    playerError(const struct libvlc_event_t *, void *obj);
-
-protected:
-    static libvlc_instance_t *  vlc;
-    static QStringList          userOptions;
-    static VlcCleanup           cleanup;
 };
 
 #endif // VLC_VIDEO_SURFACE_H

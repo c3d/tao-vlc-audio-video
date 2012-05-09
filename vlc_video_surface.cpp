@@ -31,6 +31,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
+#include "vlc_audio_video.h"
 #include "vlc_video_surface.h"
 #include "base.h"  // IFTRACE()
 #include <vlc/libvlc_events.h>
@@ -39,16 +40,7 @@
 #ifdef Q_OS_WIN32
 #include <malloc.h>
 #endif
-#include <QVector>
-#ifdef Q_OS_WIN32
-#include "vlc_audio_video.h"
-#include <QProcess>
-#endif
 
-libvlc_instance_t *         VlcVideoSurface::vlc = NULL;
-QStringList                 VlcVideoSurface::userOptions;
-bool                        VlcVideoSurface::initFailed = false;
-VlcVideoSurface::VlcCleanup VlcVideoSurface::cleanup;
 
 
 #ifdef Q_OS_WIN32
@@ -75,15 +67,14 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
 // ----------------------------------------------------------------------------
 //   Initialize a VLC media player to render a video
 // ----------------------------------------------------------------------------
-    : w(w), h(h), player(NULL), media(NULL), updated(false), textureId(0),
+    : w(w), h(h),
+      vlc(VlcAudioVideo::vlcInstance()), player(NULL), media(NULL),
+      updated(false), textureId(0),
       state(VS_STOPPED), pevm(NULL), mevm(NULL),
       videoAvailable(false),
       GLcontext(QGLContext::currentContext()), loopMode(false)
 {
-    if (initFailed)
-        return;
-
-    if (!vlcInstance())
+    if (!vlc)
     {
         IFTRACE(video)
             debug() << "VLC initialization failed\n";
@@ -94,7 +85,7 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
     IFTRACE(video)
         debug() << "Creating media player to play " << +mediaNameAndOptions << "\n";
 
-    player = libvlc_media_player_new(vlcInstance());
+    player = libvlc_media_player_new(vlc);
     pevm = libvlc_media_player_event_manager(player);
     libvlc_event_attach(pevm,
                         libvlc_MediaPlayerEncounteredError, playerError,
@@ -109,7 +100,7 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
 
     // Save path/URL and options
     this->mediaName = mediaNameAndOptions;
-    QString opts = stripOptions(this->mediaName);
+    QString opts = VlcAudioVideo::stripOptions(this->mediaName);
     QStringList options;
     if (!opts.isEmpty())
     {
@@ -170,22 +161,6 @@ void VlcVideoSurface::stop()
     libvlc_media_player_stop(player);
     setState(VS_STOPPED);
     videoAvailable = false;
-}
-
-
-QString VlcVideoSurface::stripOptions(QString &name)
-// ----------------------------------------------------------------------------
-//   Strip and return <options> when name is "<path or URL>##<options>"
-// ----------------------------------------------------------------------------
-{
-    QString opt;
-    int pos = name.indexOf("##");
-    if (pos > 0)
-    {
-        opt = name.mid(pos + 2);
-        name = name.left(pos);
-    }
-    return opt;
 }
 
 
@@ -613,107 +588,6 @@ void VlcVideoSurface::genTexture()
 }
 
 
-libvlc_instance_t * VlcVideoSurface::vlcInstance()
-// ----------------------------------------------------------------------------
-//   Return/create the VLC instance
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-    {
-        QVector<const char *> argv;
-        argv.append("--no-video-title-show");
-
-        // Tracing options
-        IFTRACE(vlc)
-        {
-            argv.append("--extraintf=logger");
-            argv.append("--verbose=2");
-        }
-        else
-        {
-            argv.append("-q");
-        }
-
-        // User options
-        QVector<const char *> user_opts;
-        foreach (QString opt, userOptions)
-        {
-            const char * copt = strdup(opt.toUtf8().constData());
-            user_opts.append(copt);
-            argv.append(copt);
-        }
-
-        IFTRACE(video)
-        {
-            sdebug() << "Initializing VLC instance with parameters:\n";
-            for (int i = 0; i < argv.size(); i++)
-                sdebug() << "  " << argv[i] << "\n";
-        }
-
-#ifdef Q_OS_WIN32
-        // #1555 Windows: crash when loading vlc_audio_video module for the
-        // first time
-        // libvlc_new() takes care of updating plugins.dat if needed, but it
-        // seems that it corrupts the current process doing so.
-        QString cg(+VideoSurface::modulePath + "/lib/vlc-cache-gen.exe");
-        QStringList args("plugins");
-        IFTRACE(video)
-            sdebug() << "Running: '" << +cg << " " << +args.join(" ")
-                     << "'...\n";
-        QProcess p;
-        p.start(cg, args);
-        bool ok = false;
-        if (p.waitForStarted() && p.waitForFinished())
-            ok = true;
-        const char *status = ok ? "done" : "error";
-        IFTRACE(video)
-            sdebug() << "...vlc-cache-gen " << status << "\n";
-#endif
-
-        vlc = libvlc_new(argv.size(), argv.data());
-        foreach (const char *opt, user_opts)
-            free((void*)opt);
-        if (!vlc)
-        {
-            initFailed = true;
-            return NULL;
-        }
-
-        IFTRACE(video)
-        {
-            sdebug() << "libLVC version: " << libvlc_get_version() << "\n";
-            sdebug() << "libLVC changeset: " << libvlc_get_changeset() << "\n";
-            sdebug() << "libLVC compiler: " << libvlc_get_compiler() << "\n";
-        }
-    }
-    return vlc;
-}
-
-
-bool VlcVideoSurface::vlcInit(QStringList options)
-// ----------------------------------------------------------------------------
-//   Initialize VLC, possibly with additional options
-// ----------------------------------------------------------------------------
-{
-    userOptions = options;
-    return (vlcInstance() != NULL);
-}
-
-
-void VlcVideoSurface::deleteVlcInstance()
-// ----------------------------------------------------------------------------
-//   Destroy VLC instance and any static stuff, ready for new creation
-// ----------------------------------------------------------------------------
-{
-    initFailed = false;
-    userOptions.clear();
-    if (!vlc)
-        return;
-    IFTRACE(video)
-        sdebug() << "Deleting VLC instance\n";
-    libvlc_release(vlc);
-    vlc = NULL;
-}
 
 
 std::ostream & VlcVideoSurface::debug()
@@ -722,16 +596,6 @@ std::ostream & VlcVideoSurface::debug()
 // ----------------------------------------------------------------------------
 {
     std::cerr << "[VlcVideoSurface " << (void*)this << "] ";
-    return std::cerr;
-}
-
-
-std::ostream & VlcVideoSurface::sdebug()
-// ----------------------------------------------------------------------------
-//   Convenience method to log with a common prefix
-// ----------------------------------------------------------------------------
-{
-    std::cerr << "[VlcVideoSurface] ";
     return std::cerr;
 }
 

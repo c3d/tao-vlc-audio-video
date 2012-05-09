@@ -37,18 +37,25 @@
 #include "context.h"
 #include "tao/module_api.h"
 #include "tao/tao_info.h"
-#include "vlc_video_surface.h"
+#include <vlc/libvlc.h>
 #include <map>
+#include <QStringList>
 
 
-struct VideoSurface : VlcVideoSurface
+class VlcVideoSurface;
+
+
+struct VlcAudioVideo
 // ----------------------------------------------------------------------------
 //    Play audio and/or video using VLCVideoSurface
 // ----------------------------------------------------------------------------
 {
-    typedef std::map<text, VideoSurface *>  video_map;
-    VideoSurface(text pathOrUrl, unsigned int w = 0, unsigned int h = 0);
-    virtual ~VideoSurface();
+    typedef std::map<text, VlcVideoSurface *>  video_map;
+
+public:
+    static libvlc_instance_t *  vlcInstance();
+    static void                 deleteVlcInstance();
+    static QString              stripOptions(QString &name);
 
 public:
     // XL interface
@@ -88,8 +95,25 @@ public:
     static XL::Name_p           movie_set_loop(text name, bool on);
 
 protected:
-    std::ostream &              debug();
-    static VideoSurface *       surface(text name);
+    struct VlcCleanup
+    {
+        ~VlcCleanup()
+        {
+            if (VlcAudioVideo::vlc)
+                libvlc_release(VlcAudioVideo::vlc);
+        }
+    };
+
+protected:
+    static VlcVideoSurface *    surface(text name);
+    static bool                 vlcInit(QStringList options);
+    static std::ostream &       sdebug();
+
+protected:
+    static bool                 initFailed;
+    static libvlc_instance_t *  vlc;
+    static QStringList          userOptions;
+    static VlcCleanup           cleanup;
 
 public:
     static video_map            videos;
