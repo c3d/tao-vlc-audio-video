@@ -67,11 +67,11 @@ text VideoSurface::modulePath;
 #endif
 
 
-VideoSurface::VideoSurface(unsigned int w, unsigned int h)
+VideoSurface::VideoSurface(text pathOrUrl, unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
 //   Create the video player
 // ----------------------------------------------------------------------------
-    : VlcVideoSurface(w, h)
+    : VlcVideoSurface(+pathOrUrl, w, h)
 {
 }
 
@@ -81,18 +81,6 @@ VideoSurface::~VideoSurface()
 //    Stop the player and delete resources
 // ----------------------------------------------------------------------------
 {
-}
-
-
-unsigned int VideoSurface::bind(text pathOrUrl)
-// ----------------------------------------------------------------------------
-//    Start playback or refresh the surface and bind to the texture
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return 0;
-    play(+pathOrUrl);
-    return texture();
 }
 
 
@@ -192,68 +180,69 @@ XL::Integer_p VideoSurface::movie_texture(XL::Context_p context,
 #endif
 
     // Get or build the current frame if we don't have one
-    VideoSurface *surface = videos[name];
+    VideoSurface *surface = VideoSurface::surface(name);
     if (!surface)
     {
-        surface = new VideoSurface(width->value, height->value);
-        videos[name] = surface;
-
-        if (name != "")
+        text saveName(name);
+        QRegExp re("[a-z]+://");
+        QString qn = QString::fromUtf8(name.data(), name.length());
+        if (re.indexIn(qn) == -1)
         {
-            QRegExp re("[a-z]+://");
+            // Not a URL: resolve file path
+
+            // 1. Remove options, if any
+            QString nam = +name;
+            QString opt = VlcVideoSurface::stripOptions(nam);
+            name = +nam;
+
+            // 2. Resolve path
+            name = context->ResolvePrefixedPath(name);
+            text folder = tao->currentDocumentFolder();
+            QString qf = QString::fromUtf8(folder.data(), folder.length());
             QString qn = QString::fromUtf8(name.data(), name.length());
-            if (re.indexIn(qn) == -1)
+            QFileInfo inf(QDir(qf), qn);
+            name = +QDir::toNativeSeparators(inf.absoluteFilePath());
+
+            // 3. Restore options
+            if (!opt.isEmpty())
             {
-                // Not a URL: resolve file path
+                name.append("##");
+                name.append(+opt);
+            }
 
-                // 1. Remove options, if any
-                QString nam = +name;
-                QString opt = VlcVideoSurface::stripOptions(nam);
-                name = +nam;
+            // 4. Create and keep video player
+            surface = new VideoSurface(name, width->value, height->value);
+            videos[saveName] = surface;
 
-                // 2. Resolve path
-                name = context->ResolvePrefixedPath(name);
-                text folder = tao->currentDocumentFolder();
-                QString qf = QString::fromUtf8(folder.data(), folder.length());
-                QString qn = QString::fromUtf8(name.data(), name.length());
-                QFileInfo inf(QDir(qf), qn);
-                name = +QDir::toNativeSeparators(inf.absoluteFilePath());
-                if (!inf.isReadable())
-                {
-                    QString err;
-                    err = QString("File not found or unreadable: $1\n"
-                                  "File path: %1").arg(+name);
-                    Ooops(+err, self);
-                    return new Integer(0, self->Position());
-                }
-
-                // 3. Restore options
-                if (!opt.isEmpty())
-                {
-                    name.append("##");
-                    name.append(+opt);
-                }
+            // 5. Ouput error if file does not exist
+            if (!inf.isReadable())
+            {
+                QString err;
+                err = QString("File not found or unreadable: $1\n"
+                              "File path: %1").arg(+name);
+                Ooops(+err, self);
+                return new Integer(0, self->Position());
             }
         }
-    }
-    else
-    {
-        // Raw name has not changed, no need to resolve again
-        name = +surface->mediaName;
+        else
+        {
+            // name is a URL. Create and keep video player
+            surface = new VideoSurface(name, width->value, height->value);
+            videos[saveName] = surface;
+        }
+
+        surface->play();
     }
 
     // Bind texture
-    GLuint id = surface->bind(name);
+    GLuint id = surface->texture();
     if (surface->lastError != "")
     {
         XL::Ooops("Cannot play: $1", self);
         QString err = "Media player error: " + surface->lastError;
         XL::Ooops(+err, self);
-        if (surface->mediaName != "")
-        {
-            QString err2 = "Path or URL: " + surface->mediaName;
-            XL::Ooops(+err2, self);
-        }
+        QString err2 = "Path or URL: " + surface->url();
+        XL::Ooops(+err2, self);
         surface->lastError = "";
         return new Integer(0, self->Position());
     }

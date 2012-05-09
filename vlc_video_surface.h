@@ -55,7 +55,8 @@ public:
         VS_PLAY_ENDED,
         VS_WAITING_FOR_SUBITEMS,
         VS_ALL_SUBITEMS_RECEIVED,
-        VS_SUBITEM_READY
+        VS_SUBITEM_READY,
+        VS_STARTING
     };
 
     std::string stateName(State state)
@@ -71,17 +72,18 @@ public:
         ADD_STATE(VS_WAITING_FOR_SUBITEMS);
         ADD_STATE(VS_ALL_SUBITEMS_RECEIVED);
         ADD_STATE(VS_SUBITEM_READY);
+        ADD_STATE(VS_STARTING);
         default: return "UNKNOWN";
         }
 #undef ADD_STATE
     }
 
 public:
-    VlcVideoSurface(unsigned int w = 0, unsigned int h = 0);
+    VlcVideoSurface(QString mediaNameAndOptions,
+                    unsigned int w = 0, unsigned int h = 0);
     ~VlcVideoSurface();
 
 public:
-    void           play(const QString & name);
     void           play();
     void           pause();
     void           stop();
@@ -110,7 +112,6 @@ public:
 
 public:
     unsigned                w, h;
-    QString                 mediaName;
     QString                 lastError;
 
 public:
@@ -130,6 +131,7 @@ protected:
     };
 
 protected:
+    QString                 mediaName;
     libvlc_media_player_t * player;
     libvlc_media_t *        media;
     QMutex                  mutex;  // Protect 'image' and 'updated'
@@ -164,7 +166,6 @@ protected:
     std::ostream & debug();
     void           checkGLContext();
     void           genTexture();
-    void           addMediaOptions();
     libvlc_media_t * newMediaFromPathOrUrl(QString name);
 
 protected:

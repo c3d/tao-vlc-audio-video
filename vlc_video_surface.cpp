@@ -70,7 +70,8 @@ inline std::string operator +(QString s)
 }
 
 
-VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
+VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
+                                 unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
 //   Initialize a VLC media player to render a video
 // ----------------------------------------------------------------------------
@@ -91,7 +92,7 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
     }
 
     IFTRACE(video)
-        debug() << "Creating media player\n";
+        debug() << "Creating media player to play " << +mediaNameAndOptions << "\n";
 
     player = libvlc_media_player_new(vlcInstance());
     pevm = libvlc_media_player_event_manager(player);
@@ -105,6 +106,21 @@ VlcVideoSurface::VlcVideoSurface(unsigned int w, unsigned int h)
                         libvlc_MediaPlayerEndReached, playerEndReached,
                         this);
     genTexture();
+
+    // Save path/URL and options
+    this->mediaName = mediaNameAndOptions;
+    QString opts = stripOptions(this->mediaName);
+    QStringList options;
+    if (!opts.isEmpty())
+    {
+        options = opts.split(" ");
+        foreach (QString opt, options)
+        {
+            char *o = strdup((+opt).c_str());
+            mediaOptions.append(o);
+        }
+    }
+
 }
 
 
@@ -144,18 +160,6 @@ void VlcVideoSurface::pause()
 }
 
 
-void VlcVideoSurface::play()
-// ----------------------------------------------------------------------------
-//   Resume playback after pause or stop
-// ----------------------------------------------------------------------------
-{
-    if (state == VS_PAUSED)
-        libvlc_media_player_set_pause(player, false);
-    else if (state == VS_STOPPED)
-        libvlc_media_player_play(player);
-}
-
-
 void VlcVideoSurface::stop()
 // ----------------------------------------------------------------------------
 //   Stop playback
@@ -185,20 +189,6 @@ QString VlcVideoSurface::stripOptions(QString &name)
 }
 
 
-void VlcVideoSurface::addMediaOptions()
-// ----------------------------------------------------------------------------
-//   Add mediaOptions to current media
-// ----------------------------------------------------------------------------
-{
-    foreach (char *opt, mediaOptions)
-    {
-        IFTRACE(video)
-            debug() << "Adding media option: '" << opt << "'\n";
-        libvlc_media_add_option(media, opt);
-    }
-}
-
-
 libvlc_media_t *VlcVideoSurface::newMediaFromPathOrUrl(QString name)
 // ----------------------------------------------------------------------------
 //   Create media instance from path or URL.
@@ -223,55 +213,40 @@ libvlc_media_t *VlcVideoSurface::newMediaFromPathOrUrl(QString name)
 }
 
 
-void VlcVideoSurface::play(const QString &name)
+void VlcVideoSurface::play()
 // ----------------------------------------------------------------------------
-//   Play a file or URL. No-op if 'name' is already playing. "" to stop.
+//   Start playback, or resume playback if paused
 // ----------------------------------------------------------------------------
 {
     if (!vlc)
         return;
 
-    if (name != mediaName)
+    if (state == VS_PAUSED)
     {
-        IFTRACE2(fileload, video)
-        {
-            std::string neww = +name;
-            if (neww == "")
-                neww = "\"\"";
-            debug() << "Play: " << neww << "\n";
-        }
-
-        mediaName = name;
-        stop();
-        libvlc_media_release(media);
-        media = NULL;
-        if (name != "")
-        {
-            // Split file path/URL and options
-            QString name2 = name;
-            QString opts = stripOptions(name2);
-
-            // Open file or URL
-            media = newMediaFromPathOrUrl(name2);
-            if (!media)
-                return;
-
-            // Save options
-            QStringList options;
-            if (!opts.isEmpty())
-            {
-                options = opts.split(" ");
-                foreach (QString opt, options)
-                {
-                    char *o = strdup((+opt).c_str());
-                    mediaOptions.append(o);
-                }
-            }
-
-            addMediaOptions();
-            startPlayback();
-        }
+        libvlc_media_player_set_pause(player, false);
+        return;
     }
+    if (state != VS_STOPPED)
+        return;
+
+    IFTRACE2(fileload, video)
+        debug() << "Play: " << +mediaName << "\n";
+    setState(VS_STARTING);
+
+    // Open file or URL
+    media = newMediaFromPathOrUrl(mediaName);
+    if (!media)
+        return;
+
+    // Add options if any
+    foreach (char *opt, mediaOptions)
+    {
+        IFTRACE(video)
+            debug() << "Adding media option: '" << opt << "'\n";
+        libvlc_media_add_option(media, opt);
+    }
+
+    startPlayback();
 }
 
 
