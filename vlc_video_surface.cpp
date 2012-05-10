@@ -49,7 +49,7 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
 //   Initialize a VLC media player to render a video into a texture
 // ----------------------------------------------------------------------------
     : VlcVideoBase(mediaNameAndOptions),
-      w(w), h(h), mevm(NULL), updated(false), textureId(0),
+      w(w), h(h), updated(false), textureId(0),
       videoAvailable(false), GLcontext(QGLContext::currentContext())
 {
     genTexture();
@@ -81,73 +81,11 @@ void VlcVideoSurface::stop()
 }
 
 
-void VlcVideoSurface::getMediaSubItems()
+void VlcVideoSurface::exec()
 // ----------------------------------------------------------------------------
-//   After playback when media is a playlist: get subitem(s)
-// ----------------------------------------------------------------------------
-{
-    IFTRACE(video)
-        debug() << "Getting media subitems\n";
-   libvlc_media_list_t *mlist = libvlc_media_subitems(media);
-   if (!mlist)
-   {
-       setState(VS_ERROR);
-       return;
-   }
-
-   libvlc_media_list_lock(mlist);
-   IFTRACE(video)
-   {
-       int count = libvlc_media_list_count(mlist);
-       debug() << count << " subitem(s) found, selecting first one\n";
-   }
-   libvlc_media_release(media);
-   media = libvlc_media_list_item_at_index(mlist, 0);
-   libvlc_media_list_unlock(mlist);
-   libvlc_media_list_release(mlist);
-
-   setState(VS_SUBITEM_READY);
-}
-
-
-void VlcVideoSurface::mediaSubItemAdded(const struct libvlc_event_t *,
-                                        void *obj)
-// ----------------------------------------------------------------------------
-//   Change state when a media sub-item is found
+//   Run state machine in main thread
 // ----------------------------------------------------------------------------
 {
-    VlcVideoSurface *v = (VlcVideoSurface *)obj;
-    if (v->state != VS_WAITING_FOR_SUBITEMS)
-        v->setState(VS_WAITING_FOR_SUBITEMS);
-}
-
-
-void VlcVideoSurface::startPlayback()
-// ----------------------------------------------------------------------------
-//   Configure output format and start playback
-// ----------------------------------------------------------------------------
-{
-    mevm = libvlc_media_event_manager(media);
-    libvlc_event_attach(mevm, libvlc_MediaSubItemAdded, mediaSubItemAdded, this);
-
-    libvlc_media_player_stop(player);
-    libvlc_video_set_callbacks(player, lockFrame, NULL, displayFrame, this);
-    libvlc_video_set_format_callbacks(player, videoFormat, NULL);
-    libvlc_media_player_set_media(player, media);
-    libvlc_media_player_play(player);
-}
-
-
-GLuint VlcVideoSurface::texture()
-// ----------------------------------------------------------------------------
-//   Update texture with current frame and return texture ID
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return 0;
-
-    GLuint tex = 0;
-
     switch (state)
     {
     case VS_PLAYING:
@@ -174,27 +112,38 @@ GLuint VlcVideoSurface::texture()
                 updated = false;
             }
             mutex.unlock();
-            tex = textureId;
-            if (state == VS_PLAY_ENDED && loopMode)
-            {
-                IFTRACE(video)
-                    debug() << "Loop mode: restarting playback\n";
-                startPlayback();
-            }
         }
-        break;
-
-    case VS_ALL_SUBITEMS_RECEIVED:
-        getMediaSubItems();
-        if (state == VS_SUBITEM_READY)
-            startPlayback();
         break;
 
     default:
         break;
     }
 
-    return tex;
+    VlcVideoBase::exec();
+}
+
+
+void VlcVideoSurface::startPlayback()
+// ----------------------------------------------------------------------------
+//   Bind vmem callbacks to player and start playback
+// ----------------------------------------------------------------------------
+{
+    libvlc_media_player_stop(player);
+    libvlc_video_set_callbacks(player, lockFrame, NULL, displayFrame, this);
+    libvlc_video_set_format_callbacks(player, videoFormat, NULL);
+
+    VlcVideoBase::startPlayback();
+}
+
+
+GLuint VlcVideoSurface::texture()
+// ----------------------------------------------------------------------------
+//   Update texture with current frame and return texture ID
+// ----------------------------------------------------------------------------
+{
+    if (!vlc) // CHECK this
+        return 0;
+    return videoAvailable ? textureId : 0;
 }
 
 

@@ -68,7 +68,7 @@ VlcVideoBase::VlcVideoBase(QString mediaNameAndOptions)
 //   Initialize a VLC media player to render a video
 // ----------------------------------------------------------------------------
     : vlc(VlcAudioVideo::vlcInstance()), player(NULL), media(NULL),
-      state(VS_STOPPED), pevm(NULL), loopMode(false)
+      state(VS_STOPPED), mevm(NULL), pevm(NULL), loopMode(false)
 {
     if (!vlc)
     {
@@ -196,7 +196,6 @@ void VlcVideoBase::play()
 
     IFTRACE2(fileload, video)
         debug() << "Play: " << +mediaName << "\n";
-    setState(VS_STARTING);
 
     // Open file or URL
     media = newMediaFromPathOrUrl(mediaName);
@@ -226,9 +225,81 @@ void VlcVideoBase::setState(State state)
 }
 
 
+void VlcVideoBase::getMediaSubItems()
+// ----------------------------------------------------------------------------
+//   After playback when media is a playlist: get subitem(s)
+// ----------------------------------------------------------------------------
+{
+    IFTRACE(video)
+        debug() << "Getting media subitems\n";
+   libvlc_media_list_t *mlist = libvlc_media_subitems(media);
+   if (!mlist)
+   {
+       setState(VS_ERROR);
+       return;
+   }
+
+   libvlc_media_list_lock(mlist);
+   IFTRACE(video)
+   {
+       int count = libvlc_media_list_count(mlist);
+       debug() << count << " subitem(s) found, selecting first one\n";
+   }
+   libvlc_media_release(media);
+   media = libvlc_media_list_item_at_index(mlist, 0);
+   libvlc_media_list_unlock(mlist);
+   libvlc_media_list_release(mlist);
+
+   setState(VS_SUBITEM_READY);
+}
+
+
+void VlcVideoBase::startPlayback()
+// ----------------------------------------------------------------------------
+//   Configure output format and start playback
+// ----------------------------------------------------------------------------
+{
+    mevm = libvlc_media_event_manager(media);
+    libvlc_event_attach(mevm, libvlc_MediaSubItemAdded, mediaSubItemAdded, this);
+
+    libvlc_media_player_set_media(player, media);
+    libvlc_media_player_play(player);
+
+    setState(VS_STARTING);
+}
+
+
+void VlcVideoBase::exec()
+// ----------------------------------------------------------------------------
+//   Run state machine in main thread
+// ----------------------------------------------------------------------------
+{
+    switch (state)
+    {
+    case VS_ALL_SUBITEMS_RECEIVED:
+        getMediaSubItems();
+        if (state == VS_SUBITEM_READY)
+            startPlayback();
+        break;
+
+    case VS_PLAY_ENDED:
+        if (loopMode)
+        {
+            IFTRACE(video)
+                debug() << "Loop mode: restarting playback\n";
+            startPlayback();
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
+
 void VlcVideoBase::playerPlaying(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
-//   Change state to notify that media started playing and info may be read
+//   Forward 'playing' event to object
 // ----------------------------------------------------------------------------
 {
     VlcVideoBase *v = (VlcVideoBase *)obj;
@@ -238,7 +309,7 @@ void VlcVideoBase::playerPlaying(const struct libvlc_event_t *, void *obj)
 
 void VlcVideoBase::playerEndReached(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
-//   Change state when player reaches end of media
+//   Forward 'end reached' event to object
 // ----------------------------------------------------------------------------
 {
     VlcVideoBase *v = (VlcVideoBase *)obj;
@@ -258,7 +329,7 @@ void VlcVideoBase::playerEndReached(const struct libvlc_event_t *, void *obj)
 
 void VlcVideoBase::playerError(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
-//   Save error
+//   Forward 'error' event to object
 // ----------------------------------------------------------------------------
 {
     VlcVideoBase *v = (VlcVideoBase *)obj;
@@ -266,6 +337,18 @@ void VlcVideoBase::playerError(const struct libvlc_event_t *, void *obj)
     if (v->lastError != "")
         v->lastError += "\n";
     v->lastError += QString(err);
+}
+
+
+void VlcVideoBase::mediaSubItemAdded(const struct libvlc_event_t *,
+                                     void *obj)
+// ----------------------------------------------------------------------------
+//   Forward 'media sub-item added' event to object
+// ----------------------------------------------------------------------------
+{
+    VlcVideoBase *v = (VlcVideoBase *)obj;
+    if (v->state != VS_WAITING_FOR_SUBITEMS)
+        v->setState(VS_WAITING_FOR_SUBITEMS);
 }
 
 
@@ -430,7 +513,12 @@ void VlcVideoBase::setLoop(bool on)
 //   Set loop mode for the current media
 // ----------------------------------------------------------------------------
 {
-    loopMode = on;
+    if (loopMode != on)
+    {
+        IFTRACE(video)
+            debug() << "Setting loop mode: " << on << "\n";
+        loopMode = on;
+    }
 }
 
 

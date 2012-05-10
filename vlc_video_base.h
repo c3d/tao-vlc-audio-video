@@ -99,6 +99,7 @@ public:
     void           setRate(float pos);
     void           setLoop(bool on);
     QString        url ()   { return mediaName; }
+    virtual void   exec();
 
 public:
     QString                 lastError;
@@ -109,21 +110,25 @@ protected:
     libvlc_media_player_t * player;
     libvlc_media_t *        media;
     State                   state;
+    libvlc_event_manager_t *mevm;
     libvlc_event_manager_t *pevm;
     bool                    loopMode;
     QVector<char *>         mediaOptions;
 
 protected:
     void           setState(State state);
-    virtual void   startPlayback() = 0;
     std::ostream & debug();
+    void             getMediaSubItems();
     libvlc_media_t * newMediaFromPathOrUrl(QString name);
 
 protected:
+    virtual void   startPlayback();
 
+protected:
     static void    playerPlaying(const struct libvlc_event_t *, void *obj);
     static void    playerEndReached(const struct libvlc_event_t *, void *obj);
     static void    playerError(const struct libvlc_event_t *, void *obj);
+    static void    mediaSubItemAdded(const struct libvlc_event_t *, void *obj);
 };
 
 #endif // VLC_VIDEO_BASE_H

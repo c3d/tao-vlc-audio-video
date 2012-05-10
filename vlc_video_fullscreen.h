@@ -34,13 +34,7 @@
 // ****************************************************************************
 
 #include "vlc_video_base.h"
-//#include <QString>
-//#include <QStringList>
-//#include <QMutex>
-//#include <QImage>
-//#include <vlc/libvlc.h>
-//#include <vlc/libvlc_media.h>
-//#include <vlc/libvlc_media_player.h>
+#include <QPointer>
 #include <iostream>
 
 QT_BEGIN_NAMESPACE
@@ -55,21 +49,24 @@ class VlcVideoFullscreen : public VlcVideoBase
 // ----------------------------------------------------------------------------
 {
 public:
-    VlcVideoFullscreen(QString mediaNameAndOptions);
+    VlcVideoFullscreen(QString mediaNameAndOptions,
+                       unsigned int w = 0, unsigned int h = 0);
     ~VlcVideoFullscreen();
 
 public:
     virtual void   stop();
+    virtual void   exec();
 
 protected:
     virtual void   startPlayback();
+
     std::ostream & debug();
     bool           createVideoWindow();
     void           deleteVideoWindow();
 
 protected:
-    QMainWindow *  videoWindow;
-    QWidget *      videoWidget;
+    QPointer<QMainWindow>  videoWindow;
+    QWidget *              videoWidget;
 };
 
 #endif // VLC_VIDEO_FULLSCREEN_H

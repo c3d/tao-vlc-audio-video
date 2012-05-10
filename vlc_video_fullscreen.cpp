@@ -37,17 +37,44 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QMainWindow>
+#include <QKeyEvent>
 #include <vlc/libvlc_media_player.h>
 #include <string.h>
 
 
 
-VlcVideoFullscreen::VlcVideoFullscreen(QString mediaNameAndOptions)
+class VideoWindow : public QMainWindow
+// ----------------------------------------------------------------------------
+//   Container for the fullscreen video widget. Esc dismisses the window.
+// ----------------------------------------------------------------------------
+{
+public:
+    VideoWindow(VlcVideoFullscreen *vobj)
+      : QMainWindow(), vobj(vobj) {}
+
+protected:
+    virtual void keyPressEvent(QKeyEvent *e)
+    {
+        if (e->key() == Qt::Key_Escape)
+            vobj->stop();
+        else
+            QMainWindow::keyPressEvent(e);
+    }
+
+    VlcVideoFullscreen *vobj;
+};
+
+
+
+VlcVideoFullscreen::VlcVideoFullscreen(QString mediaNameAndOptions,
+                                       unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
 //   Initialize a VLC media player to render into a fullscreen window
 // ----------------------------------------------------------------------------
     : VlcVideoBase(mediaNameAndOptions), videoWindow(0), videoWidget(0)
 {
+    Q_UNUSED(w);
+    Q_UNUSED(h);
 }
 
 
@@ -62,12 +89,16 @@ VlcVideoFullscreen::~VlcVideoFullscreen()
 
 void VlcVideoFullscreen::stop()
 // ----------------------------------------------------------------------------
-//   Stop playback
+//   Stop playback and close video window
 // ----------------------------------------------------------------------------
 {
     VlcVideoBase::stop();
     if (videoWindow)
-        deleteVideoWindow();
+    {
+        IFTRACE(video)
+            debug() << "Closing video window\n";
+        videoWindow->close();
+    }
 }
 
 
@@ -76,31 +107,43 @@ void VlcVideoFullscreen::startPlayback()
 //   Configure output format and start playback
 // ----------------------------------------------------------------------------
 {
-    if (!videoWindow)
-        createVideoWindow();
-
     libvlc_media_player_stop(player); // CHECK THIS
 
-    // Show video window full-screen
-    videoWindow->setWindowState(videoWindow->windowState() |
-                                Qt::WindowFullScreen);
-    videoWindow->show();
+    if (!videoWindow)
+    {
+        createVideoWindow();
 
+        // Show video window full-screen
+        videoWindow->setWindowState(videoWindow->windowState() |
+                                    Qt::WindowFullScreen);
+        videoWindow->show();
 
-    // Connect the player to the window
+        // Connect the player to the window
 #if   defined (Q_OS_MACX)
-    libvlc_media_player_set_nsobject(player, (void*)videoWidget->winId());
+        libvlc_media_player_set_nsobject(player, (void*)videoWidget->winId());
 #elif defined (Q_OS_UNIX)
-    libvlc_media_player_set_xwindow(player, videoWidget->winId());
+        libvlc_media_player_set_xwindow(player, videoWidget->winId());
 #elif defined (Q_OS_WIN)
-    libvlc_media_player_set_hwnd(player, videoWidget->winId());
+        libvlc_media_player_set_hwnd(player, videoWidget->winId());
 #else
 #error Don't know how to play fullscreen video with VLC.
 #endif
+    }
 
     // Play!
-    libvlc_media_player_set_media(player, media);
-    libvlc_media_player_play(player);
+    VlcVideoBase::startPlayback();
+}
+
+
+void VlcVideoFullscreen::exec()
+// ----------------------------------------------------------------------------
+//   Run state machine in main thread
+// ----------------------------------------------------------------------------
+{
+    VlcVideoBase::exec();
+
+    if (state == VS_PLAY_ENDED)
+        stop();
 }
 
 
@@ -118,29 +161,14 @@ bool VlcVideoFullscreen::createVideoWindow()
 
     QDesktopWidget * desktop = qApp->desktop();
     QRect geom = desktop->availableGeometry(s);
-    videoWindow = new QMainWindow;
+    videoWindow = new VideoWindow(this);//QMainWindow;
+    videoWindow->setAttribute(Qt::WA_DeleteOnClose);
     videoWidget = new QWidget;
     videoWindow->setCentralWidget(videoWidget);
     videoWindow->setGeometry(geom);
+    qApp->setActiveWindow(videoWindow);
 
     return true;
-}
-
-
-void VlcVideoFullscreen::deleteVideoWindow()
-// ----------------------------------------------------------------------------
-//   Delete fullscreen window
-// ----------------------------------------------------------------------------
-{
-    Q_ASSERT(videoWindow);
-
-    IFTRACE(video)
-        debug() << "Deleting fullscreen video window\n";
-
-    // Will also delete videoWidget
-    delete videoWindow;
-    videoWindow = NULL;
-    videoWidget = NULL;
 }
 
 

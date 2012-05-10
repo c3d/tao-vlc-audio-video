@@ -42,6 +42,12 @@ PREFIX(MovieTextureWH,  tree,  "movie_texture",
        GROUP(video)
        SYNOPSIS("Create a fixed sized texture from a video.")
        DESCRIPTION("Create a dynamic texture from the given movie."))
+PREFIX(MovieFullscreen,  tree,  "movie_fullscreen",
+       PARM(u, text, "The URL of the movie to play"),
+       return VlcAudioVideo::movie_fullscreen(context, self, u),
+       GROUP(video)
+       SYNOPSIS("Play a video in a fullscreen window.")
+       DESCRIPTION("Play a video in a fullscreen window."))
 PREFIX(MovieDrop,  tree,  "movie_drop",
        PARM(u, text, "The URL of the movie to drop"),
        return VlcAudioVideo::movie_drop(u),

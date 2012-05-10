@@ -34,6 +34,7 @@
 #include "tao/tao_gl.h"
 #include "vlc_audio_video.h"
 #include "vlc_video_surface.h"
+#include <vlc_video_fullscreen.h>
 #include "vlc_preferences.h"
 #include "action.h"
 #include "errors.h"
@@ -120,7 +121,7 @@ std::ostream & VlcAudioVideo::sdebug()
 }
 
 
-VlcVideoSurface *VlcAudioVideo::surface(text name)
+VlcVideoBase *VlcAudioVideo::surface(text name)
 // ----------------------------------------------------------------------------
 //   Return the video surface associated with a given name or NULL
 // ----------------------------------------------------------------------------
@@ -290,18 +291,12 @@ QString VlcAudioVideo::stripOptions(QString &name)
 }
 
 
-XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
-                                          XL::Tree_p self, text name,
-                                          XL::Integer_p width,
-                                          XL::Integer_p height)
+#ifdef USE_LICENSE
+bool VlcAudioVideo::licenseOk()
 // ----------------------------------------------------------------------------
-//   Make a video player texture of given size
+//   License checking code
 // ----------------------------------------------------------------------------
 {
-    if (name == "")
-        return new Integer(0, self->Position());
-
-#ifdef USE_LICENSE
     static bool licensed, tested = false;
     if (!tested)
     {
@@ -310,13 +305,34 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
     }
 
     if (!licensed && !tao->blink(4.5, 0.5, 300.0))
-        return new Integer(0, self->Position());
+        return false;
+
+    return true;
+}
 #endif
 
-    // Get or build the current frame if we don't have one
-    VlcVideoSurface *surface = VlcAudioVideo::surface(name);
-    if (!surface)
+
+template <class T>
+T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
+                                          XL::Tree_p self,
+                                          text name,
+                                          unsigned width,
+                                          unsigned height)
+// ----------------------------------------------------------------------------
+//   Find object derived from VlcVideoBase by name, or create it and start it
+// ----------------------------------------------------------------------------
+{
+    VlcVideoBase *base = surface(name);
+    T *vobj = dynamic_cast<T *>(base);
+    if (!vobj)
     {
+        if (base)
+        {
+            // Another type of video object with the same name already exists.
+            // Do nothing.
+            return NULL;
+        }
+
         text saveName(name);
         QRegExp re("[a-z]+://");
         QString qn = QString::fromUtf8(name.data(), name.length());
@@ -345,8 +361,8 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
             }
 
             // 4. Create and keep video player
-            surface = new VlcVideoSurface(+name, width->value, height->value);
-            videos[saveName] = surface;
+            vobj = new T(+name, width, height);
+            videos[saveName] = (VlcVideoBase *)vobj;
 
             // 5. Ouput error if file does not exist
             if (!inf.isReadable())
@@ -355,21 +371,48 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                 err = QString("File not found or unreadable: $1\n"
                               "File path: %1").arg(+name);
                 Ooops(+err, self);
-                return new Integer(0, self->Position());
+                return NULL;
             }
         }
         else
         {
             // name is a URL. Create and keep video player
-            surface = new VlcVideoSurface(+name, width->value, height->value);
-            videos[saveName] = surface;
+            vobj = new T(+name, width, height);
+            videos[saveName] = (VlcVideoBase *)vobj;
         }
 
-        surface->play();
+        vobj->play();
     }
 
-    // Bind texture
-    GLuint id = surface->texture();
+    return vobj;
+}
+
+
+XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
+                                          XL::Tree_p self, text name,
+                                          XL::Integer_p width,
+                                          XL::Integer_p height)
+// ----------------------------------------------------------------------------
+//   Make a video player texture of given size
+// ----------------------------------------------------------------------------
+{
+    if (name == "")
+        return new Integer(0, self->Position());
+
+#ifdef USE_LICENSE
+    if (!licenseOk())
+        return new Integer(0, self->Position());
+#endif
+
+    VlcVideoSurface *surface =
+            getOrCreateVideoObject<VlcVideoSurface>(context, self, name,
+                                                    width->value,
+                                                    height->value);
+    if (!surface)
+        return new Integer(0, self->Position());
+
+    surface->exec();
+
     if (surface->lastError != "")
     {
         XL::Ooops("Cannot play: $1", self);
@@ -380,6 +423,9 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
         surface->lastError = "";
         return new Integer(0, self->Position());
     }
+
+    // Bind texture
+    GLuint id = surface->texture();
     if (id != 0)
         tao->BindTexture2D(id, surface->w, surface->h);
 
@@ -391,12 +437,60 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
 XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                                           XL::Tree_p self, text name)
 // ----------------------------------------------------------------------------
-//   Make a video player texture]
+//   Make a video player texture
 // ----------------------------------------------------------------------------
 {
     return movie_texture(context, self, name,
                          new XL::Integer(0, self->Position()),
                          new XL::Integer(0, self->Position()));
+}
+
+
+XL::Name_p VlcAudioVideo::movie_fullscreen(XL::Context_p context,
+                                           XL::Tree_p self, text name)
+// ----------------------------------------------------------------------------
+//   Play a movie
+// ----------------------------------------------------------------------------
+{
+    if (name == "")
+        return  XL::xl_false;
+
+#ifdef USE_LICENSE
+    if (!licenseOk())
+        return  XL::xl_false;
+#endif
+
+    VlcVideoFullscreen *video =
+            getOrCreateVideoObject<VlcVideoFullscreen>(context, self, name,
+                                                       0, 0);
+    if (!video)
+        return XL::xl_false;
+
+    video->exec();
+
+    // REVISIT refactor
+    if (video->lastError != "")
+    {
+        XL::Ooops("Cannot play: $1", self);
+        QString err = "Media player error: " + video->lastError;
+        XL::Ooops(+err, self);
+        QString err2 = "Path or URL: " + video->url();
+        XL::Ooops(+err2, self);
+        video->lastError = "";
+        return XL::xl_false;
+    }
+
+    // Refresh every 500 ms only for reduced CPU usage
+    // Video runs at its own pace, so this rate only impacts the state machine
+    // in VlcVideobase (for instance, the fullscreen window may close as much
+    // as 500 ms after the video has ended).
+    //
+    // TODO: check why the default (-1.0) makes such a difference
+    // (MacOSX: 40% CPU v. 115% CPU for the same H264 1080p video)
+    //tao->refreshOn(QEvent::Timer, -1.0);
+    tao->refreshOn(QEvent::Timer, tao->currentTime() + .5);
+
+    return XL::xl_true;
 }
 
 
@@ -408,7 +502,7 @@ XL::Name_p VlcAudioVideo::movie_drop(text name)
     video_map::iterator found = videos.find(name);
     if (found != videos.end())
     {
-        VlcVideoSurface *s = (*found).second;
+        VlcVideoBase *s = (*found).second;
         videos.erase(found);
         delete s;
         return XL::xl_true;
@@ -427,7 +521,7 @@ XL::Name_p VlcAudioVideo::movie_only(text name)
     {
         if (name != (*v).first)
         {
-            VlcVideoSurface *s = (*v).second;
+            VlcVideoBase *s = (*v).second;
             videos.erase(v);
             delete s;
             n = videos.begin();
@@ -444,7 +538,7 @@ XL::Name_p VlcAudioVideo::movie_only(text name)
 #define MOVIE_ADAPTER(id)                       \
 XL::Name_p VlcAudioVideo::movie_##id(text name)  \
 {                                               \
-    if (VlcVideoSurface *s = surface(name))     \
+    if (VlcVideoBase *s = surface(name))        \
     {                                           \
         s->id();                                \
         return XL::xl_true;                     \
@@ -461,7 +555,7 @@ XL::Real_p VlcAudioVideo::movie_##id(XL::Tree_p self, text name) \
 {                                                               \
     float result = -1.0;                                        \
     ev;                                                         \
-    if (VlcVideoSurface *s = surface(name))                     \
+    if (VlcVideoBase *s = surface(name))                        \
         result = s->id();                                       \
     return new XL::Real(result, self->Position());              \
 }
@@ -476,7 +570,7 @@ MOVIE_FLOAT_ADAPTER(rate ,    )
 XL::Name_p VlcAudioVideo::movie_##id(text name)  \
 {                                               \
     tao->refreshOn(QEvent::Timer, -1);          \
-    if (VlcVideoSurface *s = surface(name))     \
+    if (VlcVideoBase *s = surface(name))        \
         if (s->id())                            \
             return XL::xl_true;                 \
     return XL::xl_false;                        \
@@ -490,7 +584,7 @@ MOVIE_BOOL_ADAPTER(loop)
 #define MOVIE_FLOAT_SETTER(id, mid)                             \
 XL::Name_p VlcAudioVideo::movie_set_##id(text name, float value) \
 {                                                               \
-    if (VlcVideoSurface *s = surface(name))                     \
+    if (VlcVideoBase *s = surface(name))                        \
     {                                                           \
         s->mid(value);                                          \
         return XL::xl_true;                                     \
@@ -507,7 +601,7 @@ MOVIE_FLOAT_SETTER(rate, setRate)
 #define MOVIE_BOOL_SETTER(id, mid)                              \
 XL::Name_p VlcAudioVideo::movie_set_##id(text name, bool on)    \
 {                                                               \
-    if (VlcVideoSurface *s = surface(name))                     \
+    if (VlcVideoBase *s = surface(name))                        \
     {                                                           \
         s->mid(on);                                             \
         return XL::xl_true;                                     \

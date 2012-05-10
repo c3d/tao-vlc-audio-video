@@ -42,7 +42,7 @@
 #include <QStringList>
 
 
-class VlcVideoSurface;
+class VlcVideoBase;
 
 
 struct VlcAudioVideo
@@ -50,7 +50,7 @@ struct VlcAudioVideo
 //    Play audio and/or video using VLCVideoSurface
 // ----------------------------------------------------------------------------
 {
-    typedef std::map<text, VlcVideoSurface *>  video_map;
+    typedef std::map<text, VlcVideoBase *>  video_map;
 
 public:
     static libvlc_instance_t *  vlcInstance();
@@ -70,6 +70,9 @@ public:
                                               text name,
                                               XL::Integer_p width,
                                               XL::Integer_p height);
+    static XL::Name_p           movie_fullscreen(XL::Context_p context,
+                                                 XL::Tree_p self,
+                                                 text name);
     static XL::Name_p           movie_drop(text name);
     static XL::Name_p           movie_only(text name);
     static XL::Name_p           movie_play(text name);
@@ -105,9 +108,20 @@ protected:
     };
 
 protected:
-    static VlcVideoSurface *    surface(text name);
+    static VlcVideoBase *       surface(text name);
     static bool                 vlcInit(QStringList options);
     static std::ostream &       sdebug();
+#ifdef USE_LICENSE
+    static bool                 licenseOk();
+#endif
+
+protected:
+    template <class T>
+    static T *                  getOrCreateVideoObject(XL::Context_p context,
+                                                       XL::Tree_p self,
+                                                       text name,
+                                                       unsigned width,
+                                                       unsigned height);
 
 protected:
     static bool                 initFailed;

@@ -53,6 +53,7 @@ public:
 
 public:
     virtual void   stop();
+    virtual void   exec();
     GLuint         texture();
 
 public:
@@ -72,7 +73,6 @@ protected:
     };
 
 protected:
-    libvlc_event_manager_t *mevm;
     QMutex                  mutex;  // Protect 'image' and 'updated'
     ImageBuf                image;
     bool                    updated;
@@ -84,6 +84,7 @@ protected:
 
 protected:
     virtual void   startPlayback();
+
     void           startGetMediaInfo();
     void           getMediaSubItems();
     std::ostream & debug();
@@ -97,9 +98,6 @@ protected:
                                 unsigned *lines);
     static void *  lockFrame(void *obj, void **plane);
     static void    displayFrame(void *obj, void *picture);
-
-    static void    mediaParsed(const struct libvlc_event_t *, void *obj);
-    static void    mediaSubItemAdded(const struct libvlc_event_t *, void *obj);
 };
 
 #endif // VLC_VIDEO_SURFACE_H
