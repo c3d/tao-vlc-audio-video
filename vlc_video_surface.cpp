@@ -43,75 +43,16 @@
 
 
 
-#ifdef Q_OS_WIN32
-inline QString operator +(std::string s)
-// ----------------------------------------------------------------------------
-//   Convert std::string to QString
-// ----------------------------------------------------------------------------
-{
-    return QString::fromUtf8(s.data(), s.length());
-}
-#endif
-
-inline std::string operator +(QString s)
-// ----------------------------------------------------------------------------
-//   Convert QString to std::string
-// ----------------------------------------------------------------------------
-{
-    return std::string(s.toUtf8().constData());
-}
-
-
 VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
                                  unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
-//   Initialize a VLC media player to render a video
+//   Initialize a VLC media player to render a video into a texture
 // ----------------------------------------------------------------------------
-    : w(w), h(h),
-      vlc(VlcAudioVideo::vlcInstance()), player(NULL), media(NULL),
-      updated(false), textureId(0),
-      state(VS_STOPPED), pevm(NULL), mevm(NULL),
-      videoAvailable(false),
-      GLcontext(QGLContext::currentContext()), loopMode(false)
+    : VlcVideoBase(mediaNameAndOptions),
+      w(w), h(h), mevm(NULL), updated(false), textureId(0),
+      videoAvailable(false), GLcontext(QGLContext::currentContext())
 {
-    if (!vlc)
-    {
-        IFTRACE(video)
-            debug() << "VLC initialization failed\n";
-        lastError = "Failed to initialize libVLC.";
-        return;
-    }
-
-    IFTRACE(video)
-        debug() << "Creating media player to play " << +mediaNameAndOptions << "\n";
-
-    player = libvlc_media_player_new(vlc);
-    pevm = libvlc_media_player_event_manager(player);
-    libvlc_event_attach(pevm,
-                        libvlc_MediaPlayerEncounteredError, playerError,
-                        this);
-    libvlc_event_attach(pevm,
-                        libvlc_MediaPlayerPlaying, playerPlaying,
-                        this);
-    libvlc_event_attach(pevm,
-                        libvlc_MediaPlayerEndReached, playerEndReached,
-                        this);
     genTexture();
-
-    // Save path/URL and options
-    this->mediaName = mediaNameAndOptions;
-    QString opts = VlcAudioVideo::stripOptions(this->mediaName);
-    QStringList options;
-    if (!opts.isEmpty())
-    {
-        options = opts.split(" ");
-        foreach (QString opt, options)
-        {
-            char *o = strdup((+opt).c_str());
-            mediaOptions.append(o);
-        }
-    }
-
 }
 
 
@@ -120,34 +61,13 @@ VlcVideoSurface::~VlcVideoSurface()
 //   Delete video player
 // ----------------------------------------------------------------------------
 {
-    setState(VS_STOPPED);
+    stop();
 
     IFTRACE(video)
-        debug() << "Deleting media player, media and texture\n";
+        debug() << "Deleting texture\n";
 
-    if (player)
-    {
-        libvlc_media_player_stop(player);
-        libvlc_media_player_release(player);
-    }
-    if (media)
-        libvlc_media_release(media);
     if (textureId)
         glDeleteTextures(1, &textureId);
-    foreach (char *opt, mediaOptions)
-        free(opt);
-}
-
-
-void VlcVideoSurface::pause()
-// ----------------------------------------------------------------------------
-//   Pause playback
-// ----------------------------------------------------------------------------
-{
-    if (state == VS_STOPPED || state == VS_PAUSED || state == VS_ERROR)
-        return;
-    libvlc_media_player_set_pause(player, true);
-    setState(VS_PAUSED);
 }
 
 
@@ -156,83 +76,8 @@ void VlcVideoSurface::stop()
 //   Stop playback
 // ----------------------------------------------------------------------------
 {
-    if (state == VS_STOPPED || state == VS_ERROR)
-        return;
-    libvlc_media_player_stop(player);
-    setState(VS_STOPPED);
+    VlcVideoBase::stop();
     videoAvailable = false;
-}
-
-
-libvlc_media_t *VlcVideoSurface::newMediaFromPathOrUrl(QString name)
-// ----------------------------------------------------------------------------
-//   Create media instance from path or URL.
-// ----------------------------------------------------------------------------
-{
-    libvlc_media_t *media = NULL;
-
-    if (name.contains("://"))
-        media = libvlc_media_new_location(vlc, name.toUtf8().constData());
-    else
-        media = libvlc_media_new_path(vlc, name.toUtf8().constData());
-
-    if (!media)
-    {
-        lastError = "Can't open " + name;
-        IFTRACE(video)
-            debug() << "Can't open media\n";
-        setState(VS_ERROR);
-    }
-
-    return media;
-}
-
-
-void VlcVideoSurface::play()
-// ----------------------------------------------------------------------------
-//   Start playback, or resume playback if paused
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return;
-
-    if (state == VS_PAUSED)
-    {
-        libvlc_media_player_set_pause(player, false);
-        return;
-    }
-    if (state != VS_STOPPED)
-        return;
-
-    IFTRACE2(fileload, video)
-        debug() << "Play: " << +mediaName << "\n";
-    setState(VS_STARTING);
-
-    // Open file or URL
-    media = newMediaFromPathOrUrl(mediaName);
-    if (!media)
-        return;
-
-    // Add options if any
-    foreach (char *opt, mediaOptions)
-    {
-        IFTRACE(video)
-            debug() << "Adding media option: '" << opt << "'\n";
-        libvlc_media_add_option(media, opt);
-    }
-
-    startPlayback();
-}
-
-
-void VlcVideoSurface::setState(State state)
-// ----------------------------------------------------------------------------
-//   Set FSM state
-// ----------------------------------------------------------------------------
-{
-    IFTRACE(video)
-        debug() << "New state: " << stateName(state) << "\n";
-    this->state = state;
 }
 
 
@@ -265,49 +110,6 @@ void VlcVideoSurface::getMediaSubItems()
 }
 
 
-void VlcVideoSurface::playerPlaying(const struct libvlc_event_t *, void *obj)
-// ----------------------------------------------------------------------------
-//   Change state to notify that media started playing and info may be read
-// ----------------------------------------------------------------------------
-{
-    VlcVideoSurface *v = (VlcVideoSurface *)obj;
-    v->setState(VS_PLAYING);
-}
-
-
-void VlcVideoSurface::playerEndReached(const struct libvlc_event_t *, void *obj)
-// ----------------------------------------------------------------------------
-//   Change state when player reaches end of media
-// ----------------------------------------------------------------------------
-{
-    VlcVideoSurface *v = (VlcVideoSurface *)obj;
-    switch (v->state)
-    {
-    case VS_PLAYING:
-        v->setState(VS_PLAY_ENDED);
-        break;
-    case VS_WAITING_FOR_SUBITEMS:
-        v->setState(VS_ALL_SUBITEMS_RECEIVED);
-        break;
-    default:
-        break;
-    }
-}
-
-
-void VlcVideoSurface::playerError(const struct libvlc_event_t *, void *obj)
-// ----------------------------------------------------------------------------
-//   Save error
-// ----------------------------------------------------------------------------
-{
-    VlcVideoSurface *v = (VlcVideoSurface *)obj;
-    const char *err = libvlc_errmsg();
-    if (v->lastError != "")
-        v->lastError += "\n";
-    v->lastError += QString(err);
-}
-
-
 void VlcVideoSurface::mediaSubItemAdded(const struct libvlc_event_t *,
                                         void *obj)
 // ----------------------------------------------------------------------------
@@ -333,171 +135,6 @@ void VlcVideoSurface::startPlayback()
     libvlc_video_set_format_callbacks(player, videoFormat, NULL);
     libvlc_media_player_set_media(player, media);
     libvlc_media_player_play(player);
-}
-
-
-void VlcVideoSurface::mute(bool mute)
-// ----------------------------------------------------------------------------
-//   Mute/unmute
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return;
-    libvlc_audio_set_mute(player, mute);
-}
-
-
-float VlcVideoSurface::volume()
-// ----------------------------------------------------------------------------
-//   Return current volume level (0.0 <= volume <= 1.0)
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return 0.0;
-    return libvlc_audio_get_volume(player) * 0.01;
-}
-
-
-float VlcVideoSurface::position()
-// ----------------------------------------------------------------------------
-//   Return current position
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return 0.0;
-    return libvlc_media_player_get_position(player);
-}
-
-
-float VlcVideoSurface::time()
-// ----------------------------------------------------------------------------
-//   Return current time in seconds
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return 0.0;
-    return libvlc_media_player_get_time(player) * 0.001;
-}
-
-
-float VlcVideoSurface::length()
-// ----------------------------------------------------------------------------
-//   Return length for current media
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return 0.0;
-    return libvlc_media_player_get_length(player) * 0.001;
-}
-
-
-float VlcVideoSurface::rate()
-// ----------------------------------------------------------------------------
-//   Return play rate for current media
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return 1.0;
-    return libvlc_media_player_get_rate(player);
-}
-
-
-bool VlcVideoSurface::playing()
-// ----------------------------------------------------------------------------
-//   Return true if media is currently playing
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return false;
-    return state == VS_PLAYING && libvlc_media_player_is_playing(player);
-}
-
-
-bool VlcVideoSurface::paused()
-// ----------------------------------------------------------------------------
-//   Return true if the surface is paused
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return false;
-    return state == VS_PAUSED;
-}
-
-
-bool VlcVideoSurface::done()
-// ----------------------------------------------------------------------------
-//   Return true if the surface is done playing its contents
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return true;
-    if (state == VS_PLAYING && !libvlc_media_player_is_playing(player))
-        setState(VS_PLAY_ENDED);
-    return state==VS_PLAY_ENDED || state==VS_ERROR;
-}
-
-
-bool VlcVideoSurface::loop()
-// ----------------------------------------------------------------------------
-//   Return true if playback restarts automatically when media reaches end
-// ----------------------------------------------------------------------------
-{
-    return loopMode;
-}
-
-
-void VlcVideoSurface::setVolume(float vol)
-// ----------------------------------------------------------------------------
-//   Set volume (0.0 <= vol <= 1.0)
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return;
-    if (vol < 0) vol = 0;
-    if (vol > 1) vol = 1;
-    libvlc_audio_set_volume(player, int(vol * 100));
-}
-
-
-void VlcVideoSurface::setPosition(float pos)
-// ----------------------------------------------------------------------------
-//   Skip to position pos (0.0 <= pos <= 1.0)
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return;
-    libvlc_media_player_set_position(player, pos);
-}
-
-
-void VlcVideoSurface::setTime(float t)
-// ----------------------------------------------------------------------------
-//   Skip to the given time
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return;
-    libvlc_media_player_set_time(player, libvlc_time_t(t * 1000));
-}
-
-
-void VlcVideoSurface::setRate(float rate)
-// ----------------------------------------------------------------------------
-//   Set play rate for the current media
-// ----------------------------------------------------------------------------
-{
-    if (!vlc)
-        return;
-    libvlc_media_player_set_rate(player, rate);
-}
-
-
-void VlcVideoSurface::setLoop(bool on)
-// ----------------------------------------------------------------------------
-//   Set loop mode for the current media
-// ----------------------------------------------------------------------------
-{
-    loopMode = on;
 }
 
 

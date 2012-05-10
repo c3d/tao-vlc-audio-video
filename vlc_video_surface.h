@@ -33,6 +33,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
+#include "vlc_video_base.h"
 #include <qgl.h>
 #include <QString>
 #include <QStringList>
@@ -43,71 +44,19 @@
 #include <vlc/libvlc_media_player.h>
 #include <iostream>
 
-class VlcVideoSurface
+class VlcVideoSurface : public VlcVideoBase
 {
-public:
-    enum State
-    {
-        VS_STOPPED,
-        VS_PLAYING,
-        VS_PAUSED,
-        VS_ERROR,
-        VS_PLAY_ENDED,
-        VS_WAITING_FOR_SUBITEMS,
-        VS_ALL_SUBITEMS_RECEIVED,
-        VS_SUBITEM_READY,
-        VS_STARTING
-    };
-
-    std::string stateName(State state)
-    {
-#define ADD_STATE(st) case st: return #st
-        switch (state)
-        {
-        ADD_STATE(VS_STOPPED);
-        ADD_STATE(VS_PLAYING);
-        ADD_STATE(VS_PAUSED);
-        ADD_STATE(VS_ERROR);
-        ADD_STATE(VS_PLAY_ENDED);
-        ADD_STATE(VS_WAITING_FOR_SUBITEMS);
-        ADD_STATE(VS_ALL_SUBITEMS_RECEIVED);
-        ADD_STATE(VS_SUBITEM_READY);
-        ADD_STATE(VS_STARTING);
-        default: return "UNKNOWN";
-        }
-#undef ADD_STATE
-    }
-
 public:
     VlcVideoSurface(QString mediaNameAndOptions,
                     unsigned int w = 0, unsigned int h = 0);
-    ~VlcVideoSurface();
+    virtual ~VlcVideoSurface();
 
 public:
-    void           play();
-    void           pause();
-    void           stop();
-    void           mute(bool mute);
-    float          volume();
-    float          position();
-    float          time();
-    float          length();
-    float          rate();
-    bool           playing();
-    bool           paused();
-    bool           done();
-    bool           loop();
-    void           setVolume(float vol);
-    void           setPosition(float pos);
-    void           setTime(float pos);
-    void           setRate(float pos);
-    void           setLoop(bool on);
+    virtual void   stop();
     GLuint         texture();
-    QString        url ()   { return mediaName; }
 
 public:
-    unsigned                w, h;
-    QString                 lastError;
+    unsigned       w, h;
 
 protected:
     enum Chroma { INVALID, RV32, UYVY };
@@ -123,33 +72,23 @@ protected:
     };
 
 protected:
-    QString                 mediaName;
-    libvlc_instance_t *     vlc;
-    libvlc_media_player_t * player;
-    libvlc_media_t *        media;
+    libvlc_event_manager_t *mevm;
     QMutex                  mutex;  // Protect 'image' and 'updated'
     ImageBuf                image;
     bool                    updated;
     QImage                  converted;
     GLuint                  textureId;
-    State                   state;
-    libvlc_event_manager_t *pevm;
-    libvlc_event_manager_t *mevm;
     bool                    videoAvailable;
     bool                    descriptionMode;
     const QGLContext      * GLcontext;
-    bool                    loopMode;
-    QVector<char *>         mediaOptions;
 
 protected:
-    void           setState(State state);
+    virtual void   startPlayback();
     void           startGetMediaInfo();
-    void           startPlayback();
     void           getMediaSubItems();
     std::ostream & debug();
     void           checkGLContext();
     void           genTexture();
-    libvlc_media_t * newMediaFromPathOrUrl(QString name);
 
 protected:
     static unsigned videoFormat(void **opaque, char *chroma,
@@ -160,10 +99,7 @@ protected:
     static void    displayFrame(void *obj, void *picture);
 
     static void    mediaParsed(const struct libvlc_event_t *, void *obj);
-    static void    playerPlaying(const struct libvlc_event_t *, void *obj);
     static void    mediaSubItemAdded(const struct libvlc_event_t *, void *obj);
-    static void    playerEndReached(const struct libvlc_event_t *, void *obj);
-    static void    playerError(const struct libvlc_event_t *, void *obj);
 };
 
 #endif // VLC_VIDEO_SURFACE_H
