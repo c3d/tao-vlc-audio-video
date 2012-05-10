@@ -216,24 +216,32 @@ XL::Name_p VlcAudioVideo::vlc_init(XL::Tree_p self, XL::Tree_p opts)
 {
     bool ok = (vlc != NULL);
 
-    if (!vlc && !initFailed)
+    if (!vlc)
     {
         QStringList options;
         ParseTextTree parse(options);
         opts->Do(parse);
-        ok = vlcInit(options);
-        if (!ok)
+
+        // If previous init has failed, we want to try again only if options
+        // have changed
+        static QStringList prevOptions;
+        bool doInit = !initFailed || (options != prevOptions);
+        if (doInit)
         {
-            QString err = "Failed to initialize libVLC: $1";
-            if (options.size())
+            prevOptions = options;
+            ok = vlcInit(options);
+            if (!ok)
             {
-                err += "\nCheck user-supplied options: ";
-                foreach (QString opt, options)
-                    err += "'" + opt + "' ";
-                err += "\nNOTE: You must CLOSE the document before trying "
-                             "new options.";
+                QString err = "Failed to initialize libVLC: $1";
+                if (options.size())
+                {
+                    err += "\nCheck user-supplied options: ";
+                    foreach (QString opt, options)
+                        err += "'" + opt + "' ";
+                    err += "\n";
+                }
+                Ooops(+err, self);
             }
-            Ooops(+err, self);
         }
     }
     return ok ? XL::xl_true : XL::xl_false;
