@@ -72,10 +72,12 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
   HEADERS     = vlc_audio_video.h \
                 vlc_preferences.h \
                 vlc_video_base.h \
+                vlc_video_fullscreen.h \
                 vlc_video_surface.h
   SOURCES     = vlc_audio_video.cpp \
                 vlc_preferences.cpp \
                 vlc_video_base.cpp \
+                vlc_video_fullscreen.cpp \
                 vlc_video_surface.cpp
   !macx:SOURCES += $${TAOTOPSRC}/tao/include/tao/GL/glew.c
   TBL_SOURCES = vlc_audio_video.tbl
