@@ -126,7 +126,7 @@ void VlcVideoFullscreen::startPlayback()
 #elif defined (Q_OS_WIN)
         libvlc_media_player_set_hwnd(player, videoWidget->winId());
 #else
-#error Don't know how to play fullscreen video with VLC.
+#error "Don't know how to play fullscreen video with VLC."
 #endif
     }
 
