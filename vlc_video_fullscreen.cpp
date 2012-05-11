@@ -161,8 +161,14 @@ bool VlcVideoFullscreen::createVideoWindow()
 
     QDesktopWidget * desktop = qApp->desktop();
     QRect geom = desktop->availableGeometry(s);
-    videoWindow = new VideoWindow(this);//QMainWindow;
+    videoWindow = new VideoWindow(this);
     videoWindow->setAttribute(Qt::WA_DeleteOnClose);
+    // Don't paint window background on first show (window will remain
+    // invisible until the first picture is output by libVLC).
+    // Especially useful when playing network videos because there is a
+    // noticeable delay between start of play and the arrival of the first
+    // picture.
+    videoWindow->setAttribute(Qt::WA_NoSystemBackground);
     videoWidget = new QWidget;
     videoWindow->setCentralWidget(videoWidget);
     videoWindow->setGeometry(geom);
