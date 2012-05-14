@@ -391,6 +391,24 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
 }
 
 
+static bool checkVideoError(XL::Tree_p self, VlcVideoBase *video)
+// ----------------------------------------------------------------------------
+//   Convenience function to report errors on a video
+// ----------------------------------------------------------------------------
+{
+    if (video->lastError == "")
+        return false;
+
+    XL::Ooops("Cannot play: $1", self);
+    QString err = "Media player error: " + video->lastError;
+    XL::Ooops(+err, self);
+    QString err2 = "Path or URL: " + video->url();
+    XL::Ooops(+err2, self);
+    video->lastError = "";
+    return true;
+}
+
+
 XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                                           XL::Tree_p self, text name,
                                           XL::Integer_p width,
@@ -416,16 +434,8 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
 
     surface->exec();
 
-    if (surface->lastError != "")
-    {
-        XL::Ooops("Cannot play: $1", self);
-        QString err = "Media player error: " + surface->lastError;
-        XL::Ooops(+err, self);
-        QString err2 = "Path or URL: " + surface->url();
-        XL::Ooops(+err2, self);
-        surface->lastError = "";
+    if (checkVideoError(self, surface))
         return new Integer(0, self->Position());
-    }
 
     // Bind texture
     GLuint id = surface->texture();
@@ -471,26 +481,15 @@ XL::Name_p VlcAudioVideo::movie_fullscreen(XL::Context_p context,
 
     video->exec();
 
-    // REVISIT refactor
-    if (video->lastError != "")
-    {
-        XL::Ooops("Cannot play: $1", self);
-        QString err = "Media player error: " + video->lastError;
-        XL::Ooops(+err, self);
-        QString err2 = "Path or URL: " + video->url();
-        XL::Ooops(+err2, self);
-        video->lastError = "";
+    if (checkVideoError(self, video))
         return XL::xl_false;
-    }
 
     // Refresh every 500 ms only for reduced CPU usage
     // Video runs at its own pace, so this rate only impacts the state machine
     // in VlcVideobase (for instance, the fullscreen window may close as much
     // as 500 ms after the video has ended).
-    //
-    // TODO: check why the default (-1.0) makes such a difference
-    // (MacOSX: 40% CPU v. 115% CPU for the same H264 1080p video)
-    //tao->refreshOn(QEvent::Timer, -1.0);
+    // (This is a marginal optimization as long as movie_fullscreen is
+    // properly enclosed in a locally block)
     tao->refreshOn(QEvent::Timer, tao->currentTime() + .5);
 
     return XL::xl_true;
