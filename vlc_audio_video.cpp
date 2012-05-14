@@ -329,8 +329,11 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
         if (base)
         {
             // Another type of video object with the same name already exists.
-            // Do nothing.
-            return NULL;
+            // Replace it.
+            IFTRACE(video)
+                sdebug() << "Deleting existing video object "
+                            "of unsuitable type for media: " << name << "\n";
+            movie_drop(name);
         }
 
         text saveName(name);
