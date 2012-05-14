@@ -27,7 +27,7 @@ module_description
                 "See the COPYING file in the module folder."
     author "Taodyne SAS"
     website "http://gitorious.org/tao-presentation-modules/vlc_audio_video"
-    version 1.031
+    version 1.04
 
 module_description "fr",
     name "VLC Audio Vidéo"
