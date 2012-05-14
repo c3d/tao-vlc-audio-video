@@ -285,6 +285,33 @@ movie_texture(name:text);
  */
 movie_texture(name:text, width:integer, height:integer);
 
+/**
+ * @~english
+ * Plays video in fullscreen mode with best performance.
+ * A new fullscreen window is created on top of the current Tao Presentations
+ * window. The video is rendered directly into this window by libVLC.
+ * When the movie ends, or the movie is stopped (see @ref movie_stop,
+ * @ref movie_drop, @ref movie_only), the window is destroyed.
+ * @n
+ * Playing a video with this method is usually more efficient than using
+ * @ref movie or @ref movie_texture, because it allows libVLC to enable
+ * additional optimizations.
+ * @~french
+ * Lit un fichier vidéo en mode plein écran avec les meilleurs performances.
+ * Une nouvelle fenêtre est créée par dessus celle de Tao Presentations et
+ * est mise en mode plein écran. La vidéo est affichée directement dans cette
+ * fenêtre par libVLC. Lorsque le clip se termine, ou lorsqu'il est stoppé
+ * (cf. @ref movie_stop, @ref movie_drop, @ref movie_only), la fenêtre est
+ * détruite.
+ * @n
+ * La lecture d'une vidéo par cette méthode est généralement plus efficace
+ * qu'avec @ref movie ou @ref movie_texture, car elle permet à libVLC de
+ * faire des optimisations supplémentaires.
+ * @~
+ * @since 1.04
+ */
+movie_fullscreen(name:text);
+
 
 /**
  * @~english
