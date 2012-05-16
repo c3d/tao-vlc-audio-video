@@ -4,8 +4,8 @@
 //
 //   File Description:
 //
-//    Play audio and/or video using libvlc. Video is displayed in a new window
-//    in fullscreen mode.
+//    Play audio and/or video using libvlc. Video is displayed in a new widget.
+//
 //
 //
 //
@@ -36,32 +36,48 @@
 #include "base.h"  // IFTRACE()
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QMainWindow>
+#include <QWidget>
 #include <QKeyEvent>
 #include <vlc/libvlc_media_player.h>
 #include <string.h>
 
 
 
-class VideoWindow : public QMainWindow
+class VideoWidget : public QWidget
 // ----------------------------------------------------------------------------
-//   Container for the fullscreen video widget. Esc dismisses the window.
+//   Container for the video. Escape key stops playback and closes the widget.
 // ----------------------------------------------------------------------------
 {
 public:
-    VideoWindow(VlcVideoFullscreen *vobj)
-      : QMainWindow(), vobj(vobj) {}
+    VideoWidget(VlcVideoFullscreen *vobj)
+        : QWidget(), vobj(vobj), closing(false)
+    {
+        setAttribute(Qt::WA_DeleteOnClose);
+    }
 
 protected:
     virtual void keyPressEvent(QKeyEvent *e)
     {
         if (e->key() == Qt::Key_Escape)
-            vobj->stop();
+            close();
         else
-            QMainWindow::keyPressEvent(e);
+            QWidget::keyPressEvent(e);
     }
 
+    virtual void closeEvent(QCloseEvent *event)
+    {
+        closing = true;
+        Q_ASSERT(vobj);
+        vobj->stop();
+        VlcAudioVideo::tao->removeWidget(this);
+        event->accept();
+    }
+
+protected:
     VlcVideoFullscreen *vobj;
+
+public:
+    bool                closing;
 };
 
 
@@ -69,9 +85,9 @@ protected:
 VlcVideoFullscreen::VlcVideoFullscreen(QString mediaNameAndOptions,
                                        unsigned int w, unsigned int h)
 // ----------------------------------------------------------------------------
-//   Initialize a VLC media player to render into a fullscreen window
+//   Initialize a VLC media player to render into a dedicated widget
 // ----------------------------------------------------------------------------
-    : VlcVideoBase(mediaNameAndOptions), videoWindow(0), videoWidget(0)
+    : VlcVideoBase(mediaNameAndOptions), videoWidget(0)
 {
     Q_UNUSED(w);
     Q_UNUSED(h);
@@ -89,34 +105,32 @@ VlcVideoFullscreen::~VlcVideoFullscreen()
 
 void VlcVideoFullscreen::stop()
 // ----------------------------------------------------------------------------
-//   Stop playback and close video window
+//   Stop playback and close video widget
 // ----------------------------------------------------------------------------
 {
     VlcVideoBase::stop();
-    if (videoWindow)
-    {
-        IFTRACE(video)
-            debug() << "Closing video window\n";
-        videoWindow->close();
-    }
+    if (videoWidget && !videoWidget->closing)
+        videoWidget->close();
 }
 
 
 void VlcVideoFullscreen::startPlayback()
 // ----------------------------------------------------------------------------
-//   Configure output format and start playback
+//   Create output widget and start playback
 // ----------------------------------------------------------------------------
 {
     libvlc_media_player_stop(player); // CHECK THIS
 
-    if (!videoWindow)
+    if (!videoWidget)
     {
-        createVideoWindow();
+        IFTRACE(video)
+            debug() << "Creating video widget\n";
+        videoWidget = new VideoWidget(this);
 
-        // Show video window full-screen
-        videoWindow->setWindowState(videoWindow->windowState() |
-                                    Qt::WindowFullScreen);
-        videoWindow->show();
+        IFTRACE(video)
+            debug() << "Setting video widget as the main Tao display\n";
+        VlcAudioVideo::tao->addWidget(videoWidget);
+        VlcAudioVideo::tao->setCurrentWidget(videoWidget);
 
         // Connect the player to the window
 #if   defined (Q_OS_MACX)
@@ -126,7 +140,7 @@ void VlcVideoFullscreen::startPlayback()
 #elif defined (Q_OS_WIN)
         libvlc_media_player_set_hwnd(player, videoWidget->winId());
 #else
-#error "Don't know how to play fullscreen video with VLC."
+#error "Don't know how to play video into a widget."
 #endif
     }
 
@@ -144,37 +158,6 @@ void VlcVideoFullscreen::exec()
 
     if (state == VS_PLAY_ENDED)
         stop();
-}
-
-
-bool VlcVideoFullscreen::createVideoWindow()
-// ----------------------------------------------------------------------------
-//   Create a fullscreen window to display the video (do not show it yet)
-// ----------------------------------------------------------------------------
-{
-    Q_ASSERT(!videoWindow);
-    Q_ASSERT(!videoWidget);
-
-    int s = VlcAudioVideo::tao->screenNumber();
-    IFTRACE(video)
-        debug() << "Creating video window on screen #" << s << "\n";
-
-    QDesktopWidget * desktop = qApp->desktop();
-    QRect geom = desktop->availableGeometry(s);
-    videoWindow = new VideoWindow(this);
-    videoWindow->setAttribute(Qt::WA_DeleteOnClose);
-    // Don't paint window background on first show (window will remain
-    // invisible until the first picture is output by libVLC).
-    // Especially useful when playing network videos because there is a
-    // noticeable delay between start of play and the arrival of the first
-    // picture.
-    videoWindow->setAttribute(Qt::WA_NoSystemBackground);
-    videoWidget = new QWidget;
-    videoWindow->setCentralWidget(videoWidget);
-    videoWindow->setGeometry(geom);
-    qApp->setActiveWindow(videoWindow);
-
-    return true;
 }
 
 

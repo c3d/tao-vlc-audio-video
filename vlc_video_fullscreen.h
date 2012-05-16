@@ -37,10 +37,7 @@
 #include <QPointer>
 #include <iostream>
 
-QT_BEGIN_NAMESPACE
-class QMainWindow;
-class QWidget;
-QT_END_NAMESPACE
+class VideoWidget;
 
 
 class VlcVideoFullscreen : public VlcVideoBase
@@ -61,12 +58,9 @@ protected:
     virtual void   startPlayback();
 
     std::ostream & debug();
-    bool           createVideoWindow();
-    void           deleteVideoWindow();
 
 protected:
-    QPointer<QMainWindow>  videoWindow;
-    QWidget *              videoWidget;
+    QPointer<VideoWidget>  videoWidget;
 };
 
 #endif // VLC_VIDEO_FULLSCREEN_H
