@@ -50,9 +50,13 @@ class VideoWidget : public QWidget
 {
 public:
     VideoWidget(VlcVideoFullscreen *vobj)
-        : QWidget(), vobj(vobj), closing(false)
+        : QWidget(), vobj(vobj), painted(false), closing(false)
     {
         setAttribute(Qt::WA_DeleteOnClose);
+        setAttribute(Qt::WA_NoSystemBackground);
+        QPalette p(palette());
+        p.setColor(QPalette::Background, Qt::black);
+        setPalette(p);
     }
 
 protected:
@@ -73,8 +77,20 @@ protected:
         event->accept();
     }
 
+    virtual void paintEvent(QPaintEvent *e)
+    {
+        if (!painted)
+        {
+            QPainter painter(this);
+            painter.fillRect(rect(), palette().background());
+            painted = true;
+        }
+        QWidget::paintEvent(e);
+    }
+
 protected:
     VlcVideoFullscreen *vobj;
+    bool                painted;
 
 public:
     bool                closing;
