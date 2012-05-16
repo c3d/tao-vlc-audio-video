@@ -34,12 +34,9 @@
 #include "vlc_audio_video.h"
 #include "vlc_video_fullscreen.h"
 #include "base.h"  // IFTRACE()
-#include <QApplication>
-#include <QDesktopWidget>
 #include <QWidget>
 #include <QKeyEvent>
 #include <vlc/libvlc_media_player.h>
-#include <string.h>
 
 
 
