@@ -38,6 +38,8 @@
 #include "vlc_preferences.h"
 #include "action.h"
 #include "errors.h"
+#include <QDir>
+#include <QEvent>
 #include <QFileInfo>
 #include <QStringList>
 #include <QVector>
