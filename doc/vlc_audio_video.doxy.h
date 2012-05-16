@@ -287,22 +287,29 @@ movie_texture(name:text, width:integer, height:integer);
 
 /**
  * @~english
- * Plays video in fullscreen mode with best performance.
- * A new fullscreen window is created on top of the current Tao Presentations
- * window. The video is rendered directly into this window by libVLC.
+ * Plays video in the Tao window with best performance.
+ * A new graphical widget is created and covers the whole Tao Presentations
+ * window. The video is rendered directly into this widget by libVLC.
+ * The video is always sized to fit the window (which may or may not be in
+ * fullscreen mode).
+ * @n
  * When the movie ends, or the movie is stopped (see @ref movie_stop,
- * @ref movie_drop, @ref movie_only), the window is destroyed.
+ * @ref movie_drop, @ref movie_only), the widget is destroyed and the Tao
+ * document is visible again.
  * @n
  * Playing a video with this method is usually more efficient than using
  * @ref movie or @ref movie_texture, because it allows libVLC to enable
  * additional optimizations.
  * @~french
- * Lit un fichier vidéo en mode plein écran avec les meilleurs performances.
- * Une nouvelle fenêtre est créée par dessus celle de Tao Presentations et
- * est mise en mode plein écran. La vidéo est affichée directement dans cette
- * fenêtre par libVLC. Lorsque le clip se termine, ou lorsqu'il est stoppé
- * (cf. @ref movie_stop, @ref movie_drop, @ref movie_only), la fenêtre est
- * détruite.
+ * Lit un fichier vidéo dans la fenêtre Tao avec les meilleurs performances.
+ * Une nouvelle zone graphique est créée par dessus celle de Tao Presentations et
+ * la couvre entièrement. La vidéo est affichée directement dans cette
+ * zone par libVLC. La vidéo est toujours affichée de telle manière à remplir
+ * la fenêtre, que celle-ci soit ou non en mode plein écran.
+ * @n
+ * Lorsque le clip se termine, ou lorsqu'il est stoppé
+ * (cf. @ref movie_stop, @ref movie_drop, @ref movie_only), la zone graphique
+ * est détruite.
  * @n
  * La lecture d'une vidéo par cette méthode est généralement plus efficace
  * qu'avec @ref movie ou @ref movie_texture, car elle permet à libVLC de
