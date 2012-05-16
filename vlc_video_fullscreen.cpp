@@ -135,8 +135,6 @@ void VlcVideoFullscreen::startPlayback()
 //   Create output widget and start playback
 // ----------------------------------------------------------------------------
 {
-    libvlc_media_player_stop(player); // CHECK THIS
-
     if (!videoWidget)
     {
         IFTRACE(video)

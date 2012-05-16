@@ -250,6 +250,8 @@ void VlcVideoBase::getMediaSubItems()
    libvlc_media_list_unlock(mlist);
    libvlc_media_list_release(mlist);
 
+   libvlc_media_player_stop(player);
+
    setState(VS_SUBITEM_READY);
 }
 

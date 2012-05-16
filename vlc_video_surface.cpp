@@ -128,7 +128,6 @@ void VlcVideoSurface::startPlayback()
 //   Bind vmem callbacks to player and start playback
 // ----------------------------------------------------------------------------
 {
-    libvlc_media_player_stop(player);
     libvlc_video_set_callbacks(player, lockFrame, NULL, displayFrame, this);
     libvlc_video_set_format_callbacks(player, videoFormat, NULL);
 
