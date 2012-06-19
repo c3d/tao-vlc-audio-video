@@ -201,6 +201,8 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
             return NULL;
         }
 
+        libvlc_set_user_agent(vlc, "Tao Presentations", NULL);
+
         IFTRACE(video)
         {
             sdebug() << "libLVC version: " << libvlc_get_version() << "\n";
