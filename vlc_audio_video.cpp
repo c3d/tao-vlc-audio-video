@@ -201,7 +201,7 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
             return NULL;
         }
 
-        libvlc_set_user_agent(vlc, "Tao Presentations", NULL);
+        libvlc_set_user_agent(vlc, "Tao Presentations (LibVLC)", NULL);
 
         IFTRACE(video)
         {
