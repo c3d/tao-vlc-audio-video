@@ -66,7 +66,7 @@ protected:
     {
         ImageBuf() : ptr(NULL), size(0), chroma(INVALID) {}
 
-        void     * ptr;
+        void     * ptr;       // No PBO: converted.bits() / PBO: unconverted
         unsigned   size;      // bytes
         Chroma     chroma;
         QImage     converted; // RV32 -> GL_RGBA or flip YUVY
@@ -82,6 +82,11 @@ protected:
     bool                    descriptionMode;
     const QGLContext      * GLcontext;
 
+    bool                    usePBO;
+    GLuint                  pbo[2];
+    int                     curPBO;
+    GLubyte               * curPBOPtr;
+
 protected:
     virtual void   startPlayback();
 
@@ -90,6 +95,12 @@ protected:
     std::ostream & debug();
     void           checkGLContext();
     void           genTexture();
+    void           genPBO();
+    void           transferPBO();
+    void           transferNoPBO();
+    void           doGLTexImage2D();
+    void           displayFrameNoPBO(void *picture);
+    void           displayFramePBO(void *picture);
 
 protected:
     static unsigned videoFormat(void **opaque, char *chroma,
