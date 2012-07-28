@@ -178,6 +178,12 @@ void VlcVideoSurface::transferPBO()
 
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[curPBO]);
     curPBOPtr = (GLubyte*) glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+    if (!curPBOPtr)
+    {
+        curPBOPtr = (GLubyte*)1;
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        return;
+    }
 #if defined(Q_OS_MACX)
     if (image.chroma == UYVY)
     {
