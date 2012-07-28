@@ -335,9 +335,9 @@ void VlcVideoSurface::genPBO()
 
     glGenBuffers(2, pbo);
     glBindBuffer(t, pbo[0]);
-    glBufferData(t, image.size, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(t, image.size, NULL, GL_STREAM_DRAW);
     glBindBuffer(t, pbo[1]);
-    glBufferData(t, image.size, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(t, image.size, NULL, GL_STREAM_DRAW);
     curPBOPtr = (GLubyte *)1; // REVISIT?
     curPBO = 1;
     glBindBuffer(t, 0);
