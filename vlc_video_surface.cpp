@@ -75,6 +75,13 @@ VlcVideoSurface::~VlcVideoSurface()
 
     if (textureId)
         glDeleteTextures(1, &textureId);
+
+    if (usePBO)
+    {
+        IFTRACE(video)
+            debug() << "Deleting PBOs\n";
+        glDeleteBuffers(2, pbo);
+    }
 }
 
 
