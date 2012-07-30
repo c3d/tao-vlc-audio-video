@@ -142,6 +142,8 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
 {
     if (!vlc)
     {
+        glewInit();
+
         QVector<const char *> argv;
         argv.append("--no-video-title-show");
 
@@ -625,7 +627,6 @@ int module_init(const Tao::ModuleApi *api, const Tao::ModuleInfo *mod)
 // ----------------------------------------------------------------------------
 {
     Q_UNUSED(mod);
-    glewInit();
     XL_INIT_TRACES();
     VlcAudioVideo::tao = api;
 #ifdef Q_OS_WIN32

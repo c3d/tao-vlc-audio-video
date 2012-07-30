@@ -31,6 +31,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
+#include "tao/tao_gl.h"
 #include "vlc_audio_video.h"
 #include "vlc_video_surface.h"
 #include "base.h"  // IFTRACE()
@@ -56,6 +57,9 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
 {
     genTexture();
     if (getenv("TAO_VLC_NO_PBO"))
+        usePBO = false;
+    if (glGenBuffers == NULL || glBufferData == NULL || glMapBuffer == NULL ||
+        glBindBuffer == NULL)
         usePBO = false;
     IFTRACE(video)
         debug() << "Will " << (char*)(usePBO ? "" : "not ") << "use PBOs\n";
@@ -95,6 +99,7 @@ void VlcVideoSurface::stop()
 }
 
 
+#if defined(Q_OS_MACX)
 static void verticalFlip16(void *to, const void *from, int w, int h)
 // ----------------------------------------------------------------------------
 //   Flip 16-bit image vertically
@@ -113,6 +118,7 @@ static void verticalFlip16(void *to, const void *from, int w, int h)
             dsl[dx] = ssl[sx];
     }
 }
+#endif
 
 
 static void convertToGLFormat(QImage &dst, const QImage &src)
