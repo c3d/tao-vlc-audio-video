@@ -213,7 +213,7 @@ movie(name:text);
  * or any other shape in the 3D space.
  * The @p name parameter specifies a local file or a URL.
  * If @p name refers to a video, the resolution is made available through
- * the @ref texture_width and @ref texture_height primitives. No texture
+ * the @p texture_width and @p texture_height primitives. No texture
  * is bound when @p name contains no video, or until the first frame is
  * available.
  * When the end of the media stream is reached, playback stops and the last
@@ -235,7 +235,7 @@ movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
  * Le paramètre @p name spécifie un fichier local ou une URL. Une chaîne vide
  * permet d'arrêter la lecture de la vidéo associée à cet appel.
  * Lorsque @p name représente une vidéo, la résolution de l'image est
- * disponible grâce aux primitives @ref texture_width et @ref texture_height.
+ * disponible grâce aux primitives @p texture_width et @p texture_height.
  * Si par contre @p name ne contient pas de vidéo, ou tant que la lecture n'est
  * pas commencée, aucune texture n'est activée.
  * Lorsque la fin du fichier est atteinte, la lecture s'arrête et la dernière
@@ -391,7 +391,7 @@ movie_pause(name:text);
  * @~french
  * Arrête la lecture d'un flux multimédia.
  * Cette commande arrête la lecture du flux @p name. Il est possible de
- * relancer la lecture à nouveau en utilisant @ref play_movie, mais la lecture
+ * relancer la lecture à nouveau en utilisant @p movie_play, mais la lecture
  * reprendra au début.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
  * @~
