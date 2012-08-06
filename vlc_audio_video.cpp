@@ -307,10 +307,6 @@ bool VlcAudioVideo::licenseOk()
         licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.04");
         tested = true;
     }
-
-    if (!licensed && !tao->blink(4.5, 0.5, 300.0))
-        return false;
-
     return true;
 }
 #endif
