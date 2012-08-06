@@ -142,6 +142,8 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
 {
     if (!vlc)
     {
+        glewInit();
+
         QVector<const char *> argv;
         argv.append("--no-video-title-show");
 
@@ -304,7 +306,7 @@ bool VlcAudioVideo::licenseOk()
     static bool licensed, tested = false;
     if (!tested)
     {
-        licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.04");
+        licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.041");
         tested = true;
     }
     return true;
@@ -621,7 +623,6 @@ int module_init(const Tao::ModuleApi *api, const Tao::ModuleInfo *mod)
 // ----------------------------------------------------------------------------
 {
     Q_UNUSED(mod);
-    glewInit();
     XL_INIT_TRACES();
     VlcAudioVideo::tao = api;
 #ifdef Q_OS_WIN32

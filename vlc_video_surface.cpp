@@ -31,6 +31,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
+#include "tao/tao_gl.h"
 #include "vlc_audio_video.h"
 #include "vlc_video_surface.h"
 #include "base.h"  // IFTRACE()
@@ -50,9 +51,19 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
 // ----------------------------------------------------------------------------
     : VlcVideoBase(mediaNameAndOptions),
       w(w), h(h), updated(false), textureId(0),
-      videoAvailable(false), GLcontext(QGLContext::currentContext())
+      videoAvailable(false), GLcontext(QGLContext::currentContext()),
+      usePBO(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_1),
+      curPBO(0), curPBOPtr(NULL)
 {
     genTexture();
+    if (getenv("TAO_VLC_NO_PBO"))
+        usePBO = false;
+    if (glGenBuffers == NULL || glBufferData == NULL || glMapBuffer == NULL ||
+        glBindBuffer == NULL)
+        usePBO = false;
+    IFTRACE(video)
+        debug() << "Will " << (char*)(usePBO ? "" : "not ") << "use PBOs\n";
+    pbo[0] = pbo[1] = 0;
 }
 
 
@@ -68,6 +79,13 @@ VlcVideoSurface::~VlcVideoSurface()
 
     if (textureId)
         glDeleteTextures(1, &textureId);
+
+    if (usePBO)
+    {
+        IFTRACE(video)
+            debug() << "Deleting PBOs\n";
+        glDeleteBuffers(2, pbo);
+    }
 }
 
 
@@ -81,6 +99,151 @@ void VlcVideoSurface::stop()
 }
 
 
+#if defined(Q_OS_MACX)
+static void verticalFlip16(void *to, const void *from, int w, int h)
+// ----------------------------------------------------------------------------
+//   Flip 16-bit image vertically
+// ----------------------------------------------------------------------------
+{
+    // Adapted from Qt source code: qimage.cpp
+    // (License: LGPL)
+
+    int dy = h-1;
+    for (int sy = 0; sy < h; sy++, dy--)
+    {
+        quint16* ssl = (quint16*)((quint8*)from + sy*w*2);
+        quint16* dsl = (quint16*)((quint8*)to + dy*w*2);
+        int dx = 0;
+        for (int sx = 0; sx < w; sx++, dx++)
+            dsl[dx] = ssl[sx];
+    }
+}
+#endif
+
+
+static void convertToGLFormat(QImage &dst, const QImage &src)
+// ----------------------------------------------------------------------------
+//   Convert from QImage::Format_RGB32 to GL_RGBA
+// ----------------------------------------------------------------------------
+{
+    // Adapted from Qt source code: qgl.cpp
+    // (License: LGPL)
+
+    Q_ASSERT(src.depth() == 32);
+    Q_ASSERT(dst.depth() == 32);
+
+    const int width = src.width();
+    const int height = src.height();
+    const uint *p = (const uint*) src.scanLine(src.height() - 1);
+    uint *q = (uint*) dst.scanLine(0);
+
+    if (QSysInfo::ByteOrder == QSysInfo::BigEndian)
+    {
+        for (int i=0; i < height; ++i)
+        {
+            const uint *end = p + width;
+            while (p < end)
+            {
+                *q = (*p << 8) | ((*p >> 24) & 0xff);
+                p++;
+                q++;
+            }
+            p -= 2 * width;
+        }
+    }
+    else
+    {
+        for (int i=0; i < height; ++i)
+        {
+            const uint *end = p + width;
+            while (p < end)
+            {
+                *q = ((*p << 16) & 0xff0000) | ((*p >> 16) & 0xff)
+                                             | (*p & 0xff00ff00);
+                p++;
+                q++;
+            }
+            p -= 2 * width;
+        }
+    }
+}
+
+
+void VlcVideoSurface::transferPBO()
+// ----------------------------------------------------------------------------
+//   PBO update and GL texture transfer
+// ----------------------------------------------------------------------------
+{
+    Q_ASSERT(image.ptr);
+    Q_ASSERT(image.size);
+
+    checkGLContext();
+
+    // Copy and convert at the same time the latest picture into the current
+    // PBO
+
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[curPBO]);
+    curPBOPtr = (GLubyte*) glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+    if (!curPBOPtr)
+    {
+        curPBOPtr = (GLubyte*)1;
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        return;
+    }
+#if defined(Q_OS_MACX)
+    if (image.chroma == UYVY)
+    {
+        verticalFlip16(curPBOPtr, image.ptr, w, h);
+    }
+    else
+#endif
+    {
+        QImage from((const uchar *)image.ptr, w, h, QImage::Format_RGB32);
+        QImage to((uchar *)curPBOPtr, w, h, QImage::Format_RGB32);
+        convertToGLFormat(to, from);
+    }
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
+    // Copy from previous PBO to texture
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[1-curPBO]);
+    doGLTexImage2D();
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    curPBO = 1 - curPBO;
+}
+
+
+void VlcVideoSurface::transferNoPBO()
+// ----------------------------------------------------------------------------
+//   Normal GL texture transfer
+// ----------------------------------------------------------------------------
+{
+    checkGLContext();
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    doGLTexImage2D();
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+
+void VlcVideoSurface::doGLTexImage2D()
+// ----------------------------------------------------------------------------
+//   GL texture transfer
+// ----------------------------------------------------------------------------
+{
+    GLenum format = GL_RGBA, type = GL_UNSIGNED_BYTE;
+#ifdef Q_OS_MACX
+    if (image.chroma == UYVY /* mirrored */)
+    {
+        format = GL_YCBCR_422_APPLE;
+        type = GL_UNSIGNED_SHORT_8_8_APPLE;
+    }
+#endif
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, format, type,
+                 usePBO ? NULL : image.ptr);
+}
+
 void VlcVideoSurface::exec()
 // ----------------------------------------------------------------------------
 //   Run state machine in main thread
@@ -91,24 +254,22 @@ void VlcVideoSurface::exec()
     case VS_PLAYING:
     case VS_PAUSED:
     case VS_PLAY_ENDED:
+        // CHECK: videoAvailable should be accessed under lock
         if (videoAvailable)
         {
             mutex.lock();
             if (updated)
             {
-                checkGLContext();
-                glBindTexture(GL_TEXTURE_2D, textureId);
-
-                GLenum format = GL_RGBA, type = GL_UNSIGNED_BYTE;
-#ifdef Q_OS_MACX
-                if (image.chroma == UYVY /* mirrored */)
+                if (usePBO)
                 {
-                    format = GL_YCBCR_422_APPLE;
-                    type = GL_UNSIGNED_SHORT_8_8_APPLE;
+                    if (!curPBOPtr && image.size)
+                        genPBO();
+                    transferPBO();
                 }
-#endif
-                glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, format, type,
-                             image.ptr);
+                else
+                {
+                    transferNoPBO();
+                }
                 updated = false;
             }
             mutex.unlock();
@@ -157,6 +318,8 @@ void VlcVideoSurface::checkGLContext()
         IFTRACE(video)
             debug() << "GL context changed\n";
         genTexture();
+        if (image.size)
+            genPBO();
         GLcontext = current;
     }
 }
@@ -170,6 +333,30 @@ void VlcVideoSurface::genTexture()
     glGenTextures(1, &textureId);
     IFTRACE(video)
         debug() << "Will render to texture #" << textureId << "\n";
+}
+
+
+void VlcVideoSurface::genPBO()
+// ----------------------------------------------------------------------------
+//   Create two GL Pixel Buffer Objects for asynchronous transfer to texture
+// ----------------------------------------------------------------------------
+{
+    Q_ASSERT(image.size);
+
+    GLuint t = GL_PIXEL_UNPACK_BUFFER;
+
+    glGenBuffers(2, pbo);
+    glBindBuffer(t, pbo[0]);
+    glBufferData(t, image.size, NULL, GL_STREAM_DRAW);
+    glBindBuffer(t, pbo[1]);
+    glBufferData(t, image.size, NULL, GL_STREAM_DRAW);
+    curPBOPtr = (GLubyte *)1; // REVISIT?
+    curPBO = 1;
+    glBindBuffer(t, 0);
+
+    IFTRACE(video)
+        debug() << "PBOs and buffers allocated: #"
+                << pbo[0] << ", #" << pbo[1] << "\n";
 }
 
 
@@ -221,23 +408,51 @@ unsigned VlcVideoSurface::videoFormat(void **opaque, char *chroma,
     const char * newchroma;
 
 #if defined(Q_OS_MACX)
-    newchroma = "UYVY";
-    v->image.chroma = UYVY;
-    pitches[0] = pitches[1] = pitches[2] = v->w * 2;
-    lines  [0] = lines  [1] = lines  [2] = v->h;
-    v->image.size = v->w * v->h * 2;
-#else
-    newchroma = "RV32";
-    v->image.chroma = RV32;
-    pitches[0] = pitches[1] = pitches[2] = v->w * 4;
-    lines  [0] = lines  [1] = lines  [2] = v->h;
-    v->image.chroma = RV32;
-    v->image.size = v->w * v->h * 4;
+    bool useUYVY = (getenv("TAO_VLC_RV32") == NULL);
+    if (useUYVY)
+    {
+        newchroma = "UYVY";
+        v->image.chroma = UYVY;
+        pitches[0] = pitches[1] = pitches[2] = v->w * 2;
+        lines  [0] = lines  [1] = lines  [2] = v->h;
+        v->image.size = v->w * v->h * 2;
+    }
+    else
 #endif
+    {
+        newchroma = "RV32";
+        v->image.chroma = RV32;
+        pitches[0] = pitches[1] = pitches[2] = v->w * 4;
+        lines  [0] = lines  [1] = lines  [2] = v->h;
+        v->image.chroma = RV32;
+        v->image.size = v->w * v->h * 4;
+    }
 
     IFTRACE(video)
         v->debug() << "Requesting " << newchroma << " chroma\n";
     strcpy(chroma, newchroma);
+
+    float fps = libvlc_media_player_get_fps(v->player);
+    if (v->usePBO)
+    {
+        if (fps)
+        {
+            int64_t delay = 1000000/fps;
+            IFTRACE(video)
+            {
+                v->debug() << "FPS: " << fps << "\n";
+                v->debug() << "Compensating for PBO ping-pong delay: "
+                           << delay << " us\n";
+            }
+            libvlc_audio_set_delay(v->player, delay);
+        }
+        else
+        {
+            IFTRACE(video)
+                v->debug() << "Unknown FPS - "
+                              "won't compensate for PBO ping-pong delay\n";
+        }
+    }
 
     return 1;
 }
@@ -289,29 +504,52 @@ void VlcVideoSurface::displayFrame(void *obj, void *picture)
         v->state != VS_STOPPED)
         v->setState(VS_PLAYING);
 
+    if (v->usePBO)
+        v->displayFramePBO(picture);
+    else
+        v->displayFrameNoPBO(picture);
+
+}
+
+
+void VlcVideoSurface::displayFrameNoPBO(void *picture)
+{
 #if defined(Q_OS_MACX)
-    if (v->image.chroma == UYVY)
+    if (image.chroma == UYVY)
     {
         // Hack: here, image is upside-down. To flip it use a QImage with a
         // 16bpp format.
-        QImage image((const uchar *)picture, v->w, v->h, QImage::Format_RGB16);
+        QImage image((const uchar *)picture, w, h, QImage::Format_RGB16);
         QImage converted = image.mirrored();
         freeFrame(picture);
-        v->mutex.lock();
-        v->image.converted = converted;
-        v->image.ptr = v->image.converted.bits();
+        mutex.lock();
+        this->image.converted = converted;
+        this->image.ptr = this->image.converted.bits();
     }
     else
 #endif
     {
-        QImage image((const uchar *)picture, v->w, v->h, QImage::Format_RGB32);
+        QImage image((const uchar *)picture, w, h, QImage::Format_RGB32);
         QImage converted = QGLWidget::convertToGLFormat(image);
         freeFrame(picture);
-        v->mutex.lock();
-        v->image.converted = converted;
-        v->image.ptr = v->image.converted.bits();
+        mutex.lock();
+        this->image.converted = converted;
+        this->image.ptr = this->image.converted.bits();
     }
-    v->updated = true;
-    v->mutex.unlock();
-    v->videoAvailable = true;
+    updated = true;
+    mutex.unlock();
+    videoAvailable = true;
+}
+
+
+void VlcVideoSurface::displayFramePBO(void *picture)
+{
+    mutex.lock();
+    void * prev = image.ptr;
+    image.ptr = picture;
+    updated = true;
+    videoAvailable = true;
+    mutex.unlock();
+
+    freeFrame(prev);
 }
