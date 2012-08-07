@@ -79,7 +79,10 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
                 vlc_video_base.cpp \
                 vlc_video_fullscreen.cpp \
                 vlc_video_surface.cpp
-  !macx:SOURCES += $${TAOTOPSRC}/tao/include/tao/GL/glew.c
+  win32 {
+    DEFINES += GLEW_STATIC
+    SOURCES += $${TAOTOPSRC}/tao/include/tao/GL/glew.c
+  }
   TBL_SOURCES = vlc_audio_video.tbl
   OTHER_FILES = vlc_audio_video.xl vlc_audio_video.tbl traces.tbl
 
