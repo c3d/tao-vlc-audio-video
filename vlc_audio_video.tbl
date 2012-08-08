@@ -19,8 +19,6 @@
 //  (C) 2010-2011 Taodyne SAS
 // ****************************************************************************
 
-#include "vlc_audio_video.h"
-
 PREFIX(VlcInit,  tree,  "vlc_init",
        PARM(t, tree, "The VLC options as a comma-separated list of text."),
        return VlcAudioVideo::vlc_init(self, t),
