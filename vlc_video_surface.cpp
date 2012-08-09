@@ -58,9 +58,11 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
     genTexture();
     if (getenv("TAO_VLC_NO_PBO"))
         usePBO = false;
+#ifdef WIN32
     if (glGenBuffers == NULL || glBufferData == NULL || glMapBuffer == NULL ||
         glBindBuffer == NULL)
         usePBO = false;
+#endif
     IFTRACE(video)
         debug() << "Will " << (char*)(usePBO ? "" : "not ") << "use PBOs\n";
     pbo[0] = pbo[1] = 0;
