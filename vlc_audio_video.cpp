@@ -303,12 +303,8 @@ bool VlcAudioVideo::licenseOk()
 //   License checking code
 // ----------------------------------------------------------------------------
 {
-    static bool licensed, tested = false;
-    if (!tested)
-    {
-        licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.041");
-        tested = true;
-    }
+    static bool licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.041");
+    Q_UNUSED(licensed);
     return true;
 }
 #endif
