@@ -78,7 +78,8 @@ protected:
     bool                    updated;
     QImage                  converted;
     GLuint                  textureId;
-    bool                    videoAvailable;
+    bool                    videoAvailable;          // In ImageBuf
+    bool                    videoAvailableInTexture;
     bool                    descriptionMode;
     const QGLContext      * GLcontext;
 

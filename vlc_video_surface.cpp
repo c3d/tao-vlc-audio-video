@@ -51,7 +51,8 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
 // ----------------------------------------------------------------------------
     : VlcVideoBase(mediaNameAndOptions),
       w(w), h(h), updated(false), textureId(0),
-      videoAvailable(false), GLcontext(QGLContext::currentContext()),
+      videoAvailable(false), videoAvailableInTexture(false),
+      GLcontext(QGLContext::currentContext()),
       usePBO(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_1),
       curPBO(0), curPBOPtr(NULL)
 {
@@ -98,6 +99,7 @@ void VlcVideoSurface::stop()
 {
     VlcVideoBase::stop();
     videoAvailable = false;
+    videoAvailableInTexture = false;
 }
 
 
@@ -181,6 +183,8 @@ void VlcVideoSurface::transferPBO()
 
     checkGLContext();
 
+    bool firstFrame = (curPBOPtr == (GLubyte *)1);
+
     // Copy and convert at the same time the latest picture into the current
     // PBO
 
@@ -207,11 +211,16 @@ void VlcVideoSurface::transferPBO()
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 
     // Copy from previous PBO to texture
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[1-curPBO]);
-    doGLTexImage2D();
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+
+    if (!firstFrame)
+    {
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[1-curPBO]);
+        doGLTexImage2D();
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        videoAvailableInTexture = true;
+    }
 
     curPBO = 1 - curPBO;
 }
@@ -226,6 +235,7 @@ void VlcVideoSurface::transferNoPBO()
     glBindTexture(GL_TEXTURE_2D, textureId);
     doGLTexImage2D();
     glBindTexture(GL_TEXTURE_2D, 0);
+    videoAvailableInTexture = true;
 }
 
 
@@ -305,7 +315,7 @@ GLuint VlcVideoSurface::texture()
 {
     if (!vlc) // CHECK this
         return 0;
-    return videoAvailable ? textureId : 0;
+    return videoAvailableInTexture ? textureId : 0;
 }
 
 
