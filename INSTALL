@@ -4,17 +4,20 @@ Linux (x86, x86_64).
 
 To build this module, you need the following:
 
-1. Tao Presentations 1.0-beta10 or later, available from http://taodyne.com/.
+1. Tao Presentations, available from http://taodyne.com/.
 2. The VLC media player, available from http://www.videolan.org/vlc/.
-   On Windows, you need the Zip package, because some header files are not
-   distributed with the Installer (Exe) package :(.
-3. The Qt SDK, available from http://qt.nokia.com/.
-4. On Windows, you also need the MinGW build environment.
+   On Windows, you need the 7zip package, because the SDK is not distributed
+   with the Installer (Exe) or the Zip package :(.
+3. The Qt SDK, available from http://qt-project.org/downloads.
+4. On Windows, you also need the MinGW/MSYS build environment. Get it from
+   http://www.mingw.org/.
 
 Build steps:
 
 1. Open the Tao Presentation installation folder and locate the 'sdk' folder.
 2. Copy the 'sdk' folder to a safe place, for instance your home directory.
+   On Windows, you should extract the VLC .7z archive next to the 'sdk' folder
+   and rename it 'VLC', so that it will be found automatically.
 3. Clone this project into sdk/modules/vlc_audio_video:
    $ cd sdk/modules
    $ git clone git://gitorious.org/tao-presentation-modules/vlc_audio_video.git
