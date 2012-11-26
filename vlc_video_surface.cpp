@@ -249,7 +249,13 @@ void VlcVideoSurface::doGLTexImage2D()
     if (image.chroma == UYVY /* mirrored */)
     {
         format = GL_YCBCR_422_APPLE;
-        type = GL_UNSIGNED_SHORT_8_8_APPLE;
+        type = GL_UNSIGNED_SHORT_8_8_APPLE; // 2 bytes per pixel
+        if (w % 2)
+        {
+            // Row size in bytes is w * 2, which is not a multiple of 4
+            // (the default value for GL_UNPACK_ALIGNEMENT) when w is odd.
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+        }
     }
 #endif
     glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, format, type,
