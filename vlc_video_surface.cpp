@@ -54,7 +54,7 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
       videoAvailable(false), videoAvailableInTexture(false),
       GLcontext(QGLContext::currentContext()),
       usePBO(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_1),
-      curPBO(0), curPBOPtr(NULL)
+      curPBO(0), curPBOPtr(NULL), fps(-1.0)
 {
     genTexture();
     if (getenv("TAO_VLC_NO_PBO"))
@@ -270,6 +270,31 @@ void VlcVideoSurface::exec()
     switch (state)
     {
     case VS_PLAYING:
+        if (usePBO && fps == -1.0)
+        {
+            fps = libvlc_media_player_get_fps(player);
+            if (usePBO)
+            {
+                if (fps)
+                {
+                    int64_t delay = 1000000/fps;
+                    IFTRACE(video)
+                    {
+                        debug() << "FPS: " << fps << "\n";
+                        debug() << "Compensating for PBO ping-pong delay: "
+                                << delay << " us\n";
+                    }
+                    libvlc_audio_set_delay(player, delay);
+                }
+                else
+                {
+                    IFTRACE(video)
+                        debug() << "Unknown FPS - "
+                                   "won't compensate for PBO ping-pong delay\n";
+                }
+            }
+        }
+        // FALL THROUGH
     case VS_PAUSED:
     case VS_PLAY_ENDED:
         // CHECK: videoAvailable should be accessed under lock
@@ -449,28 +474,6 @@ unsigned VlcVideoSurface::videoFormat(void **opaque, char *chroma,
     IFTRACE(video)
         v->debug() << "Requesting " << newchroma << " chroma\n";
     strcpy(chroma, newchroma);
-
-    float fps = libvlc_media_player_get_fps(v->player);
-    if (v->usePBO)
-    {
-        if (fps)
-        {
-            int64_t delay = 1000000/fps;
-            IFTRACE(video)
-            {
-                v->debug() << "FPS: " << fps << "\n";
-                v->debug() << "Compensating for PBO ping-pong delay: "
-                           << delay << " us\n";
-            }
-            libvlc_audio_set_delay(v->player, delay);
-        }
-        else
-        {
-            IFTRACE(video)
-                v->debug() << "Unknown FPS - "
-                              "won't compensate for PBO ping-pong delay\n";
-        }
-    }
 
     return 1;
 }

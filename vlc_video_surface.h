@@ -87,6 +87,7 @@ protected:
     GLuint                  pbo[2];
     int                     curPBO;
     GLubyte               * curPBOPtr;
+    float                   fps;     // -1: not tested, 0: unknown
 
 protected:
     virtual void   startPlayback();
