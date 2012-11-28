@@ -36,7 +36,15 @@ PREFIX(MovieTextureWH,  tree,  "movie_texture",
        PARM(u, text, "The URL of the movie to play")
        PARM(w, integer, "The texture width")
        PARM(h, integer, "The texture height"),
-       return VlcAudioVideo::movie_texture(context, self, u, w, h),
+       return VlcAudioVideo::movie_texture(context, self, u, w, h, -1.0, -1.0),
+       GROUP(video)
+       SYNOPSIS("Create a fixed sized texture from a video.")
+       DESCRIPTION("Create a dynamic texture from the given movie."))
+PREFIX(MovieTextureWpHp,  tree,  "movie_texture_relative",
+       PARM(u, text, "The URL of the movie to play")
+       PARM(sw, real, "The texture width, relative to native witdh (0.0-1.0)")
+       PARM(sh, real, "The texture height, relative to the native height (0.0-1.0)"),
+       return VlcAudioVideo::movie_texture_relative(context, self, u, sw, sh),
        GROUP(video)
        SYNOPSIS("Create a fixed sized texture from a video.")
        DESCRIPTION("Create a dynamic texture from the given movie."))

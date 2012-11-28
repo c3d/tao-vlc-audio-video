@@ -287,6 +287,31 @@ movie_texture(name:text, width:integer, height:integer);
 
 /**
  * @~english
+ * Creates a video texture of a specific size.
+ * This function is similar to @ref movie_texture(name:text, width:integer, height:integer),
+ * except that the size is specified relative to the native resolution of the video
+ * rather than as an absolute value in pixels. @p width and @p height are real values
+ * between 0.0 and 1.0. For example:
+ * @~french
+ * Crée une texture vidéo de la taille spécifiée.
+ * Cette fonction est similaire à @ref movie_texture(name:text, width:integer, height:integer),
+ * mais au lieu de prendre des valeurs fixes en pixels, elle accepte des valeurs
+ * relatives par rapport à la résolution native de la video. @p width et @p height sont
+ * des réels compris entre 0.0 et 1.0. Par exemple:
+ * @~
+ * @code
+import VLCAudioVideo 1.05
+color "white"
+movie_texture_relative "test.mov", 50%, 50%
+rectangle 0, 0, texture_width, texture_height
+ * @endcode
+ * @see movie_texture(name:text), movie_texture(name:text, width:integer, height:integer), movie_drop, movie_only
+ * @since 1.05
+ */
+movie_texture_relative(name:text, width:real, height:real);
+
+/**
+ * @~english
  * Plays video in the Tao window with best performance.
  * A new graphical widget is created and covers the whole Tao Presentations
  * window. The video is rendered directly into this widget by libVLC.

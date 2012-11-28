@@ -48,7 +48,8 @@ class VlcVideoSurface : public VlcVideoBase
 {
 public:
     VlcVideoSurface(QString mediaNameAndOptions,
-                    unsigned int w = 0, unsigned int h = 0);
+                    unsigned int w = 0, unsigned int h = 0,
+                    float wscale = -1.0, float hscale = -1.0);
     virtual ~VlcVideoSurface();
 
 public:
@@ -58,6 +59,7 @@ public:
 
 public:
     unsigned       w, h;
+    float          wscale, hscale;
 
 protected:
     enum Chroma { INVALID, RV32, UYVY };

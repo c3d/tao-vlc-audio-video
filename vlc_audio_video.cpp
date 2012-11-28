@@ -303,7 +303,7 @@ bool VlcAudioVideo::licenseOk()
 //   License checking code
 // ----------------------------------------------------------------------------
 {
-    static bool licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.042");
+    static bool licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.05");
     Q_UNUSED(licensed);
     return true;
 }
@@ -315,7 +315,9 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
                                           XL::Tree_p self,
                                           text name,
                                           unsigned width,
-                                          unsigned height)
+                                          unsigned height,
+                                          float wscale,
+                                          float hscale)
 // ----------------------------------------------------------------------------
 //   Find object derived from VlcVideoBase by name, or create it and start it
 // ----------------------------------------------------------------------------
@@ -362,7 +364,7 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
             }
 
             // 4. Create and keep video player
-            vobj = new T(+name, width, height);
+            vobj = new T(+name, width, height, wscale, hscale);
             videos[saveName] = (VlcVideoBase *)vobj;
 
             // 5. Ouput error if file does not exist
@@ -410,9 +412,10 @@ static bool checkVideoError(XL::Tree_p self, VlcVideoBase *video)
 XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                                           XL::Tree_p self, text name,
                                           XL::Integer_p width,
-                                          XL::Integer_p height)
+                                          XL::Integer_p height,
+                                          float wscale, float hscale)
 // ----------------------------------------------------------------------------
-//   Make a video player texture of given size
+//   Make a video player texture of given size (in pixels, or relative)
 // ----------------------------------------------------------------------------
 {
     if (name == "")
@@ -426,7 +429,8 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
     VlcVideoSurface *surface =
             getOrCreateVideoObject<VlcVideoSurface>(context, self, name,
                                                     width->value,
-                                                    height->value);
+                                                    height->value,
+                                                    wscale, hscale);
     if (!surface)
         return new Integer(0, self->Position());
 
@@ -453,7 +457,23 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
 {
     return movie_texture(context, self, name,
                          new XL::Integer(0, self->Position()),
-                         new XL::Integer(0, self->Position()));
+                         new XL::Integer(0, self->Position()),
+                         -1.0, -1.0);
+}
+
+
+XL::Integer_p VlcAudioVideo::movie_texture_relative(XL::Context_p context,
+                                          XL::Tree_p self, text name,
+                                          float wscale,
+                                          float hscale)
+// ----------------------------------------------------------------------------
+//   Make a video player texture of given size (relative to native resolution)
+// ----------------------------------------------------------------------------
+{
+    return movie_texture(context, self, name,
+                         new XL::Integer(0, self->Position()),
+                         new XL::Integer(0, self->Position()),
+                         wscale, hscale);
 }
 
 

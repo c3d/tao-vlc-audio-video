@@ -47,7 +47,8 @@ class VlcVideoFullscreen : public VlcVideoBase
 {
 public:
     VlcVideoFullscreen(QString mediaNameAndOptions,
-                       unsigned int w = 0, unsigned int h = 0);
+                       unsigned int w = 0, unsigned int h = 0,
+                       float wscale = -1.0, float hscale = -1.0);
     ~VlcVideoFullscreen();
 
 public:

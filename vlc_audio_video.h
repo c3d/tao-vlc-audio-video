@@ -69,7 +69,15 @@ public:
                                               XL::Tree_p self,
                                               text name,
                                               XL::Integer_p width,
-                                              XL::Integer_p height);
+                                              XL::Integer_p height,
+                                              float wscale,
+                                              float hscale);
+    static XL::Integer_p        movie_texture_relative(
+                                              XL::Context_p context,
+                                              XL::Tree_p self,
+                                              text name,
+                                              float wscale,
+                                              float hscale);
     static XL::Name_p           movie_fullscreen(XL::Context_p context,
                                                  XL::Tree_p self,
                                                  text name);
@@ -121,7 +129,9 @@ protected:
                                                        XL::Tree_p self,
                                                        text name,
                                                        unsigned width,
-                                                       unsigned height);
+                                                       unsigned height,
+                                                       float wscale = -1.0,
+                                                       float hscale = -1.0);
 
 protected:
     static bool                 initFailed;

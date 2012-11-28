@@ -45,12 +45,14 @@
 
 
 VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
-                                 unsigned int w, unsigned int h)
+                                 unsigned int w, unsigned int h,
+                                 float wscale, float hscale)
 // ----------------------------------------------------------------------------
 //   Initialize a VLC media player to render a video into a texture
 // ----------------------------------------------------------------------------
     : VlcVideoBase(mediaNameAndOptions),
-      w(w), h(h), updated(false), textureId(0),
+      w(w), h(h), wscale(wscale), hscale(hscale),
+      updated(false), textureId(0),
       videoAvailable(false), videoAvailableInTexture(false),
       GLcontext(QGLContext::currentContext()),
       usePBO(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_1),
@@ -431,6 +433,15 @@ unsigned VlcVideoSurface::videoFormat(void **opaque, char *chroma,
                    << " resolution " << *width << "x" << *height
                    << " chroma " << chroma << "\n";
 
+    if (v->wscale != -1.0 && v->hscale != 1.0)
+    {
+        IFTRACE(video)
+            v->debug() << "Relative texture size requested: ("
+                       << 100 * v->wscale << "%)x("
+                       << 100 * v->hscale << "%)\n";
+        v->w = *width  * v->wscale;
+        v->h = *height * v->hscale;
+    }
     if (v->w == 0 && v->h == 0)
     {
         v->w = *width;

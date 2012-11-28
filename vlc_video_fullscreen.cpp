@@ -96,14 +96,13 @@ public:
 
 
 VlcVideoFullscreen::VlcVideoFullscreen(QString mediaNameAndOptions,
-                                       unsigned int w, unsigned int h)
+                                       unsigned int, unsigned int,
+                                       float, float)
 // ----------------------------------------------------------------------------
 //   Initialize a VLC media player to render into a dedicated widget
 // ----------------------------------------------------------------------------
     : VlcVideoBase(mediaNameAndOptions), videoWidget(0)
 {
-    Q_UNUSED(w);
-    Q_UNUSED(h);
 }
 
 
