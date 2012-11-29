@@ -654,6 +654,7 @@ int module_exit()
 // ----------------------------------------------------------------------------
 {
     VlcAudioVideo::movie_only("");
+    AsyncSetVolume::stop();
     VlcAudioVideo::deleteVlcInstance();
     return 0;
 }

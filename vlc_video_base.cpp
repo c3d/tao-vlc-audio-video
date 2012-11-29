@@ -37,7 +37,9 @@
 #include <vlc/libvlc_events.h>
 #include <vlc/libvlc_media_list.h>
 #include <string.h>
+#include <QMutexLocker>
 #include <QVector>
+#include <QTime>
 #ifdef Q_OS_WIN32
 #include <QProcess>
 #endif
@@ -120,6 +122,7 @@ VlcVideoBase::~VlcVideoBase()
 
     if (player)
     {
+        AsyncSetVolume::discard(player);
         libvlc_media_player_stop(player);
         libvlc_media_player_release(player);
     }
@@ -473,7 +476,7 @@ void VlcVideoBase::setVolume(float vol)
         return;
     if (vol < 0) vol = 0;
     if (vol > 1) vol = 1;
-    libvlc_audio_set_volume(player, int(vol * 100));
+    AsyncSetVolume::libvlc_audio_set_volume(player, int(vol * 100));
 }
 
 
@@ -532,4 +535,98 @@ std::ostream & VlcVideoBase::debug()
 {
     std::cerr << "[VlcVideoBase " << (void*)this << "] ";
     return std::cerr;
+}
+
+
+
+// ============================================================================
+//
+//   Setting LibVLC volume asynchronously
+//
+// ============================================================================
+
+AsyncSetVolume * AsyncSetVolume::inst = NULL;
+
+
+AsyncSetVolume * AsyncSetVolume::instance()
+// ----------------------------------------------------------------------------
+//   Instance of the singleton
+// ----------------------------------------------------------------------------
+{
+    if (!inst)
+    {
+        inst = new AsyncSetVolume;
+        inst->moveToThread(inst);
+        inst->start();
+    }
+    return inst;
+}
+
+
+void AsyncSetVolume::setVolume(libvlc_media_player_t *player, int volume)
+// ----------------------------------------------------------------------------
+//   Queue volume change request
+// ----------------------------------------------------------------------------
+{
+    QMutexLocker locker(&mutex);
+    if (!pendingPlayers.contains(player))
+        pendingPlayers.append(player);
+    volumes[player] = volume;
+    cond.wakeOne();
+}
+
+
+void AsyncSetVolume::stopAndWait()
+// ----------------------------------------------------------------------------
+//   Stop the thread and wait for it to terminate
+// ----------------------------------------------------------------------------
+{
+    mutex.lock();
+    done = true;
+    cond.wakeOne();
+    mutex.unlock();
+    wait();
+}
+
+
+void AsyncSetVolume::discardPending(libvlc_media_player_t *player)
+// ----------------------------------------------------------------------------
+//  Remove player from the list of pending requests
+// ----------------------------------------------------------------------------
+{
+    QMutexLocker locker(&mutex);
+    if (pendingPlayers.contains(player))
+    {
+        pendingPlayers.removeOne(player);
+        volumes.remove(player);
+    }
+}
+
+
+void AsyncSetVolume::run()
+// ----------------------------------------------------------------------------
+//   Main loop run by the thread
+// ----------------------------------------------------------------------------
+{
+    QMutexLocker locker(&mutex);
+
+    for(;;)
+    {
+        while (pendingPlayers.isEmpty() && !done)
+            cond.wait(&mutex);
+
+        if (done)
+            return;
+
+        Q_ASSERT(!pendingPlayers.isEmpty());
+        libvlc_media_player_t * player = pendingPlayers.takeFirst();
+        Q_ASSERT(!pendingPlayers.contains(player));
+        Q_ASSERT(volumes.contains(player));
+        int volume = volumes[player];
+        volumes.remove(player);
+
+        mutex.unlock();
+        ::libvlc_audio_set_volume(player, volume);
+        mutex.lock();
+    }
 }

@@ -34,7 +34,11 @@
 // ****************************************************************************
 
 #include <qgl.h>
+#include <QMap>
+#include <QMutex>
 #include <QString>
+#include <QThread>
+#include <QWaitCondition>
 #include <vlc/libvlc.h>
 #include <vlc/libvlc_media.h>
 #include <vlc/libvlc_media_player.h>
@@ -129,6 +133,53 @@ protected:
     static void    playerEndReached(const struct libvlc_event_t *, void *obj);
     static void    playerError(const struct libvlc_event_t *, void *obj);
     static void    mediaSubItemAdded(const struct libvlc_event_t *, void *obj);
+};
+
+
+
+struct AsyncSetVolume : public QThread
+// ----------------------------------------------------------------------------
+//  Singleton for non-blocking (threaded) calls to libvlc_audio_set_volume
+// ----------------------------------------------------------------------------
+{
+    AsyncSetVolume() : done(false) {}
+    virtual ~AsyncSetVolume() {}
+
+public:
+    static void libvlc_audio_set_volume(libvlc_media_player_t *player,
+                                        int volume)
+    {
+        instance()->setVolume(player, volume);
+    }
+    static void discard(libvlc_media_player_t *player)
+    {
+        instance()->discardPending(player);
+    }
+    static void stop()
+    {
+        instance()->stopAndWait();
+        delete AsyncSetVolume::inst;
+    }
+
+protected:
+    void                    setVolume(libvlc_media_player_t *p_mi,
+                                      int i_volume);
+    void                    discardPending(libvlc_media_player_t *player);
+    void                    stopAndWait();
+    void                    run();
+
+protected:
+    static AsyncSetVolume * instance();
+
+protected:
+    QList<libvlc_media_player_t *>      pendingPlayers;
+    QMap<libvlc_media_player_t *, int>  volumes;
+    QMutex                              mutex;
+    QWaitCondition                      cond;
+    bool                                done;
+
+protected:
+    static AsyncSetVolume *             inst;
 };
 
 #endif // VLC_VIDEO_BASE_H
