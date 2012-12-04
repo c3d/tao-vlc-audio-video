@@ -157,8 +157,12 @@ public:
     }
     static void stop()
     {
-        instance()->stopAndWait();
-        delete AsyncSetVolume::inst;
+        AsyncSetVolume *& inst = AsyncSetVolume::inst;
+        if (!inst)
+            return;
+        inst->stopAndWait();
+        delete inst;
+        inst = NULL;
     }
 
 protected:
