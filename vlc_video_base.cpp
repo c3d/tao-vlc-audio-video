@@ -191,6 +191,7 @@ void VlcVideoBase::play()
 
     if (state == VS_PAUSED)
     {
+        setState(VS_PLAYING); // Or playerPlaying() would pause again
         libvlc_media_player_set_pause(player, false);
         return;
     }
@@ -308,7 +309,20 @@ void VlcVideoBase::playerPlaying(const struct libvlc_event_t *, void *obj)
 // ----------------------------------------------------------------------------
 {
     VlcVideoBase *v = (VlcVideoBase *)obj;
-    v->setState(VS_PLAYING);
+
+    switch (v->state)
+    {
+    case VS_PAUSED:
+        // If pause() was called before the first playerPlaying() notification
+        // (#2653 movie immediately followed by movie_pause), the LibVLC call
+        // to set_pause was ignored. Do it again.
+        libvlc_media_player_set_pause(v->player, true);
+        break;
+    case VS_PLAYING:
+        break;
+    default:
+        v->setState(VS_PLAYING);
+    }
 }
 
 
