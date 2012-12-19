@@ -211,6 +211,7 @@ void VlcVideoSurface::transferPBO()
         convertToGLFormat(to, from);
     }
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     // Copy from previous PBO to texture
 
