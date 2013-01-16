@@ -135,6 +135,32 @@ VlcVideoBase *VlcAudioVideo::surface(text name)
 }
 
 
+QList<VlcVideoBase *> VlcAudioVideo::surfaces(text expr)
+// ----------------------------------------------------------------------------
+//   Return the videos that match expr ("<name>" or "re:<regexp>")
+// ----------------------------------------------------------------------------
+{
+    QList<VlcVideoBase *> ret;
+    QString qexpr(+expr);
+    if (qexpr.startsWith("re:"))
+    {
+        QRegExp re(qexpr.mid(3));
+        for (video_map::iterator v = videos.begin(); v != videos.end(); ++v)
+        {
+            VlcVideoBase *s = (*v).second;
+            if (re.indexIn(s->url()) != -1)
+                ret.append(s);
+        }
+    }
+    else
+    {
+        if (VlcVideoBase *s = surface(expr))
+            ret.append(s);
+    }
+    return ret;
+}
+
+
 libvlc_instance_t * VlcAudioVideo::vlcInstance()
 // ----------------------------------------------------------------------------
 //   Return/create the VLC instance
@@ -558,12 +584,13 @@ XL::Name_p VlcAudioVideo::movie_only(text name)
 #define MOVIE_ADAPTER(id)                       \
 XL::Name_p VlcAudioVideo::movie_##id(text name)  \
 {                                               \
-    if (VlcVideoBase *s = surface(name))        \
+    bool ok = false;                            \
+    foreach (VlcVideoBase *s, surfaces(name))   \
     {                                           \
         s->id();                                \
-        return XL::xl_true;                     \
+        ok = true;                              \
     }                                           \
-    return XL::xl_false;                        \
+    return ok ? XL::xl_true : XL::xl_false;     \
 }
 
 MOVIE_ADAPTER(play)
@@ -587,13 +614,14 @@ MOVIE_FLOAT_ADAPTER(length,   )
 MOVIE_FLOAT_ADAPTER(rate ,    )
 
 #define MOVIE_BOOL_ADAPTER(id)                  \
-XL::Name_p VlcAudioVideo::movie_##id(text name)  \
+XL::Name_p VlcAudioVideo::movie_##id(text name) \
 {                                               \
+    QList<VlcVideoBase *>list = surfaces(name); \
+    bool ok = !list.isEmpty();                  \
     tao->refreshOn(QEvent::Timer, -1);          \
-    if (VlcVideoBase *s = surface(name))        \
-        if (s->id())                            \
-            return XL::xl_true;                 \
-    return XL::xl_false;                        \
+    foreach (VlcVideoBase *s, surfaces(name))   \
+        ok &= s->id();                          \
+    return ok ? XL::xl_true : XL::xl_false;     \
 }
 
 MOVIE_BOOL_ADAPTER(playing)
@@ -604,12 +632,13 @@ MOVIE_BOOL_ADAPTER(loop)
 #define MOVIE_FLOAT_SETTER(id, mid)                             \
 XL::Name_p VlcAudioVideo::movie_set_##id(text name, float value) \
 {                                                               \
-    if (VlcVideoBase *s = surface(name))                        \
+    bool ok = false;                                            \
+    foreach (VlcVideoBase *s, surfaces(name))                   \
     {                                                           \
         s->mid(value);                                          \
-        return XL::xl_true;                                     \
+        ok = true;                                              \
     }                                                           \
-    return XL::xl_false;                                        \
+    return ok ? XL::xl_true : XL::xl_false;                     \
 }
 
 
@@ -621,12 +650,13 @@ MOVIE_FLOAT_SETTER(rate, setRate)
 #define MOVIE_BOOL_SETTER(id, mid)                              \
 XL::Name_p VlcAudioVideo::movie_set_##id(text name, bool on)    \
 {                                                               \
-    if (VlcVideoBase *s = surface(name))                        \
+    bool ok = false;                                            \
+    foreach (VlcVideoBase *s, surfaces(name))                   \
     {                                                           \
         s->mid(on);                                             \
-        return XL::xl_true;                                     \
+        ok = true;                                              \
     }                                                           \
-    return XL::xl_false;                                        \
+    return ok ? XL::xl_true : XL::xl_false;                     \
 }
 
 MOVIE_BOOL_SETTER(loop, setLoop)

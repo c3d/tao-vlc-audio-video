@@ -39,6 +39,7 @@
 #include "tao/tao_info.h"
 #include <vlc/libvlc.h>
 #include <map>
+#include <QList>
 #include <QStringList>
 
 
@@ -117,6 +118,7 @@ protected:
 
 protected:
     static VlcVideoBase *       surface(text name);
+    static QList<VlcVideoBase*> surfaces(text name);
     static bool                 vlcInit(QStringList options);
     static std::ostream &       sdebug();
 #ifdef USE_LICENSE

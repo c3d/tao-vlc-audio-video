@@ -84,6 +84,32 @@ page "The End",
  * @ref movie_set_rate. A movie can be paused with @ref movie_pause
  * and resumed with @ref movie_play.
  *
+ * @anchor RegExp <b>Regular expressions in resource names (re: syntax)</b>
+ *
+ * Since version 1.052,
+ * several functions such as @ref movie_pause can apply to several multimedia
+ * streams simultaneously. To specifiy several media in a single
+ * @p name parameter, you use the <tt>re:</tt> prefix followed by a regular
+ * expression. For instance, the following call would pause all
+ * movies having <tt>.mov</tt> in their path or URL:
+ * @code
+movie_pause "re:\.mov"
+ * @endcode
+ * When used with functions that return a boolean value, such as
+ * @ref movie_playing or @ref movie_paused, the function returns <tt>true</tt>
+ * if and only if at least one media object matches the specified pattern,
+ * and the function would have returned <tt>true</tt> for all media matching
+ * the pattern. For example, you may determine whether all <tt>HTTP</tt>
+ * streams have finished playing with:
+ * @code
+if movie_done "re:^http://" then
+    // Do something
+ * @endcode
+ * The functions that support the <tt>re:</tt> syntax are explicitely marked as
+ * such in this documentation.
+ *
+ * <b>License</b>
+ *
  * In compliance with the GNU General Public Licence for the VLC code used
  * by this module, the source code for the module is available here:
  * http://gitorious.org/tao-presentation-modules
@@ -158,6 +184,34 @@ page "The End",
  * ralentir la lecture grâce à @ref movie_set_rate. Pour mettre en pause,
  * appeler @ref movie_pause; @ref movie_play permet de poursuivre la
  * lecture.
+ *
+ * @anchor RegExp <b>Expressions régulières dans les noms (syntaxe re:)</b>
+ *
+ * Depuis la version 1.052,
+ * plusieurs fonctions, comme @ref movie_pause par exemple, peuvent s'appliquer
+ * à plusieurs flux multimédia simultanément. Pour cela vous pouvez utiliser le
+ * préfixe  <tt>re:</tt> suivi d'une expression régulière. Par exemple, l'appel
+ * suivant met en pause toutes les vidéos dont le chemin ou l'URL contient
+ * <tt>.mov</tt>.
+ * @code
+movie_pause "re:\.mov"
+ * @endcode
+ * Lorsque cette syntaxe est utilisée avec une fonction qui renvoie un booléen
+ * (<tt>true</tt> ou <tt>false</tt>), comme
+ * @ref movie_playing or @ref movie_paused, la valeur de retour est
+ * <tt>true</tt> si et seulement si au moins une vidéo correspond à
+ * l'expression régulière, et la fonction aurait renvoyé <tt>true</tt> pour
+ * toutes les vidéos correspondant à l'expression régulière.
+ * Par exemple, vous pouvez déterminer si toutes les flux <tt>HTTP</tt>
+ * précédemment démarrés on terminé grâce à :
+ * @code
+if movie_done "re:^http://" then
+    // Quelque chose
+ * @endcode
+ * Les fonctions qui autorisent la syntaxe <tt>re:</tt> sont explicitement
+ * signalées dans cette documentation.
+ *
+ * <b>License</b>
  *
  * En accord avec la licence GNU General Public Licence du code VLC utilisé
  * par ce module, le code source du module est disponible ici:
@@ -384,11 +438,13 @@ movie_only(name:text);
  * Resume playback of a paused movie.
  * This command plays a movie that was paused by @ref movie_pause.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * @~french
  * Reprend la lecture d'un flux multimédia.
  * Cette commande reprend la lecture d'un flux qui a été arrêté par
  * @ref movie_pause.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_pause, movie_stop.
  */
@@ -400,11 +456,13 @@ movie_play(name:text);
  * This command pauses a movie at its current location. The movie playback
  * can be resumed using @ref movie_play.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * @~french
  * Suspend la lecture d'un flux multimédia.
  * Cette commande suspend temporairement la lecture du flux @p name. La lecture
  * reprend au même endroit lorsque @ref movie_play est appelé.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_play, movie_pause.
  */
@@ -415,12 +473,14 @@ movie_pause(name:text);
  * Stop movie playback.
  * This command stops movie playback.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * @~french
  * Arrête la lecture d'un flux multimédia.
  * Cette commande arrête la lecture du flux @p name. Il est possible de
  * relancer la lecture à nouveau en utilisant @p movie_play, mais la lecture
  * reprendra au début.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_play, movie_pause.
  */
@@ -502,9 +562,11 @@ movie_rate(name:text);
  * @~english
  * Returns true if the movie is currently playing.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * @~french
  * Renvoie true si le flux multimédia est en cours de lecture.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_paused, movie_done.
  */
@@ -514,9 +576,11 @@ movie_playing(name:text);
  * @~english
  * Returns true if the movie is currently paused.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * @~french
  * Renvoie true si le flux multimédia est en pause.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_playing, movie_done.
  */
@@ -526,9 +590,11 @@ movie_paused(name:text);
  * @~english
  * Returns true if the movie is was played until its end.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * @~french
  * Renvoie true si le flux multimédia a joué jusqu'au bout.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_paused, movie_playing.
  */
@@ -538,9 +604,11 @@ movie_done(name:text);
  * @~english
  * Returns true if loop mode is enabled for the movie.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * @~french
  * Renvoie true si le mode boucle est actif pour le flux multimédia.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_set_loop.
  */
@@ -552,11 +620,13 @@ movie_loop(name:text);
  * Sets the playback volume for the movie.
  * Adjust the sound playback volume for the given movie.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * The @p volume parameter specifies the volume, in the range 0.0 (silent)
  * to 1.0 (maximum volume).
  * @~french
  * Contrôle le volume audio.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_volume.
  */
@@ -567,11 +637,13 @@ movie_set_volume(name:text, volume:real);
  * Sets the playback position for the movie.
  * Adjust the movie playback position for the given movie.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * The @p position parameter specifies the position in the movie,
  * in the range 0.0 (beginning of the movie) to 1.0 (end of the movie).
  * @~french
  * Choisit la position à l'intérieur d'un flux multimédia.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_position, movie_time, movie_set_time.
  */
@@ -582,11 +654,13 @@ movie_set_position(name:text, position:real);
  * Sets the playback position in seconds.
  * Adjust the movie playback position for the given movie.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * The @p time parameter specifies the position in the movie in seconds,
  * in the range 0.0 (beginning of the movie) to the @ref movie_length.
  * @~french
  * Choisit la position en secondes à l'intérieur d'un flux multimédia.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_time, movie_position, movie_set_position.
  */
@@ -597,12 +671,14 @@ movie_set_time(name:text, time:real);
  * Sets the playback rate.
  * Adjust the movie playback rate for the given movie.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * The @p rate parameter specifies the rate of the movie, where 1.0 is
  * normal playback speed, 2.0 indicates a 2x speedup, and 0.5 indicates
  * half-speed playback.
  * @~french
  * Choisit la vitesse de lecture d'un flux multimédia.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * @~
  * @see movie_rate.
  */
@@ -614,11 +690,13 @@ movie_set_rate(name:text, rate:real);
  * Sets the loop mode.
  * Enables or disables loop mode for the given movie.
  * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
  * If @p mode is true, the movie will automatically be restarted when done
  * playing.
  * @~french
  * Active ou désactive la lecture en boucle d'un flux multimédia.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
  * Si @p mode est @a true, la lecture reprend automatiquement dès que la fin
  * de la lecture est atteinte.
  * @~
@@ -645,6 +723,18 @@ movie "http://youtube.com/watch?v=bKpPTq3-Qic"
  * @since 1.02
  */
 vlc_init(options:tree);
+
+
+/**
+ * @~english
+ * A name that matches all currently loaded movies.
+ * May be passed to any function that supports the @ref RegExp "re:" syntax.
+ * @~french
+ * Un nom qui désigne tous les medias ouverts par le module. Peut être
+ * utilisé dans n'importe quelle fonction qui accepte la syntaxe
+ * @ref RegExp "re:".
+ */
+ALL_MOVIES = "re:";
 
 /**
  * @}

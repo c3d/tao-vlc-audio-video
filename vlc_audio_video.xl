@@ -27,7 +27,7 @@ module_description
                 "See the COPYING file in the module folder."
     author "Taodyne SAS"
     website "http://gitorious.org/tao-presentation-modules/vlc_audio_video"
-    version 1.051
+    version 1.052
 
 module_description "fr",
     name "VLC Audio Vidéo"
@@ -46,3 +46,7 @@ movie x:real, y:real, sx:real, sy:real, name:text ->
         rectangle x, y, texture_width, texture_height
 
 movie name:text -> movie 0, 0, 1, 1, name
+
+// This empty regular expression matches all currently known movies
+// May be used in all functions that support the "re:" syntax.
+ALL_MOVIES -> "re:"
