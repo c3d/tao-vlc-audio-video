@@ -32,7 +32,8 @@ module_description
                       "@loader_path\vlc"
     on_load_error "The VLC Audio and Video module could not be loaded. " &
                   "The most probable cause is that the VLC player is not " &
-                  "installed on this computer, or that the version of VLC " &
+                  "installed in the default location on this computer, or "
+                  "that the version of VLC " &
                   "is not compatible with this module. Please install VLC " &
                   "2.x from http://www.videolan.org/vlc/ and try again."
     version 1.052
@@ -47,7 +48,8 @@ module_description "fr",
                 "le répertoire du module."
     on_load_error "Impossible de charger le module VLC Audio Vidéo. " &
                   "La cause la plus fréquente de cette erreur est que le " &
-                  "lecteur VLC n'est pas installé sur cet ordinateur, " &
+                  "lecteur VLC n'est pas installé à l'endroit standard " &
+                  "sur cet ordinateur, " &
                   "ou que la version installée n'est pas compatible avec " &
                   "ce module. Installez VLC 2.x depuis " &
                   "http://www.videolan.org/vlc/ et essayez à nouveau."
