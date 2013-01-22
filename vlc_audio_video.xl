@@ -27,6 +27,9 @@ module_description
                 "See the COPYING file in the module folder."
     author "Taodyne SAS"
     website "http://gitorious.org/tao-presentation-modules/vlc_audio_video"
+    windows_load_path "%PROGRAMFILES%\VideoLAN\VLC;" &
+                      "%PROGRAMFILES(x86)%\VideoLAN\VLC;" &
+                      "@loader_path\vlc"
     on_load_error "The VLC Audio and Video module could not be loaded. " &
                   "The most probable cause is that the VLC player is not " &
                   "installed on this computer, or that the version of VLC " &

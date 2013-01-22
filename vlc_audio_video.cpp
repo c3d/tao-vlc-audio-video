@@ -205,7 +205,7 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
         // first time
         // libvlc_new() takes care of updating plugins.dat if needed, but it
         // seems that it corrupts the current process doing so.
-        QString cg(+modulePath + "/lib/vlc-cache-gen.exe");
+        QString cg(+modulePath + "/lib/vlc/vlc-cache-gen.exe");
         QStringList args("plugins");
         IFTRACE(video)
             sdebug() << "Running: '" << +cg << " " << +args.join(" ")

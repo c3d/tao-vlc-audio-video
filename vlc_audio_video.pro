@@ -127,13 +127,13 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
       INSTALLS += vlc_rm_freetype
     }
     win32 {
-      # Install will create <module>/lib/{plugins,lua}
-      vlc_libs.path = $${MODINSTPATH}/lib
+      # Install will create <module>/lib/vlc/{plugins,lua}
+      vlc_libs.path = $${MODINSTPATH}/lib/vlc
       vlc_libs.files = "$${VLC}/../*.dll" "$${VLC}/../vlc-cache-gen.exe"
-      vlc_plugins.path  = $${MODINSTPATH}/lib/plugins
-      vlc_plugins.commands = mkdir -p $${MODINSTPATH}/lib/plugins ; cp -R "$${VLC}/../plugins/*" $${MODINSTPATH}/lib/plugins
-      vlc_lua.path  = $${MODINSTPATH}/lib/lua
-      vlc_lua.commands = mkdir -p $${MODINSTPATH}/lib/lua ; cp -R "$${VLC}/../lua/*" $${MODINSTPATH}/lib/lua
+      vlc_plugins.path  = $${MODINSTPATH}/lib/vlc/plugins
+      vlc_plugins.commands = mkdir -p $${MODINSTPATH}/lib/vlc/plugins ; cp -R "$${VLC}/../plugins/*" $${MODINSTPATH}/lib/vlc/plugins
+      vlc_lua.path  = $${MODINSTPATH}/lib/vlc/lua
+      vlc_lua.commands = mkdir -p $${MODINSTPATH}/lib/vlc/lua ; cp -R "$${VLC}/../lua/*" $${MODINSTPATH}/lib/vlc/lua
     }
     macx|win32:INSTALLS += vlc_libs vlc_plugins vlc_lua
   } else {
