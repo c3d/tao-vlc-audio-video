@@ -88,13 +88,16 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
     SOURCES += $${TAOTOPSRC}/tao/include/tao/GL/glew.c
   }
   TBL_SOURCES = vlc_audio_video.tbl
-  OTHER_FILES = vlc_audio_video.xl vlc_audio_video.tbl traces.tbl
+  OTHER_FILES = vlc_audio_video.xl vlc_audio_video.tbl traces.tbl macosx_update_rpath_for_vlc.sh
 
   QT       += core gui opengl
 
   INCLUDEPATH += "$${VLC}/include"
   LIBS += -L"$${VLC}/lib" -lvlc -lvlccore
-  macx:LIBS += -framework AppKit
+  macx {
+    LIBS += -framework AppKit
+    QMAKE_POST_LINK = ./macosx_update_rpath_for_vlc.sh "$(TARGET)"
+  }
 
   # Icon: http://en.wikipedia.org/wiki/File:VLC_Icon.svg
   # License: CC BY-SA 3.0
@@ -109,18 +112,18 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
   # Install VLC libraries/plugins
   isEmpty(VLCAV_NO_VLC_INSTALL) {
     macx {
-      # Install will create <module>/lib/{lib,plugins,share/lua}
-      vlc_libs.path = $${MODINSTPATH}/lib
+      # Install will create <module>/lib/vlc/{lib,plugins,share/lua}
+      vlc_libs.path = $${MODINSTPATH}/lib/vlc
       vlc_libs.files = "$${VLC}/lib"
-      vlc_plugins.path  = $${MODINSTPATH}/lib
+      vlc_plugins.path  = $${MODINSTPATH}/lib/vlc
       vlc_plugins.files = "$${VLC}/plugins"
-      vlc_lua.path = $${MODINSTPATH}/lib/share
+      vlc_lua.path = $${MODINSTPATH}/lib/vlc/share
       vlc_lua.files = "$${VLC}/share/lua"
 
       # Bug #1944
-      vlc_rm_freetype.commands = rm \"$${MODINSTPATH}/lib/plugins/libfreetype_plugin.dylib\"
+      vlc_rm_freetype.commands = rm \"$${MODINSTPATH}/lib/vlc/plugins/libfreetype_plugin.dylib\"
       vlc_rm_freetype.depends = install_vlc_plugins
-      vlc_rm_freetype.path = $${MODINSTPATH}/lib/plugins
+      vlc_rm_freetype.path = $${MODINSTPATH}/lib/vlc/plugins
       INSTALLS += vlc_rm_freetype
     }
     win32 {
