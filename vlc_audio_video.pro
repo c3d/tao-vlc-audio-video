@@ -22,6 +22,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 # ******************************************************************************
 
+# Qmake options:
+#   VLCAV_NO_VLC_INSTALL=1
+#     Do not install VLC libraries/plugins.
+
 isEmpty(VLC) {
   # Default location for the VLC SDK
   macx:VLC=/Applications/VLC.app/Contents/MacOS
@@ -102,31 +106,36 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
   QMAKE_TARGETS += copying
   INSTALLS += copying
 
-  macx {
-    # Install will create <module>/lib/{lib,plugins,share/lua}
-    vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = "$${VLC}/lib"
-    vlc_plugins.path  = $${MODINSTPATH}/lib
-    vlc_plugins.files = "$${VLC}/plugins"
-    vlc_lua.path = $${MODINSTPATH}/lib/share
-    vlc_lua.files = "$${VLC}/share/lua"
+  # Install VLC libraries/plugins
+  isEmpty(VLCAV_NO_VLC_INSTALL) {
+    macx {
+      # Install will create <module>/lib/{lib,plugins,share/lua}
+      vlc_libs.path = $${MODINSTPATH}/lib
+      vlc_libs.files = "$${VLC}/lib"
+      vlc_plugins.path  = $${MODINSTPATH}/lib
+      vlc_plugins.files = "$${VLC}/plugins"
+      vlc_lua.path = $${MODINSTPATH}/lib/share
+      vlc_lua.files = "$${VLC}/share/lua"
 
-    # Bug #1944
-    vlc_rm_freetype.commands = rm \"$${MODINSTPATH}/lib/plugins/libfreetype_plugin.dylib\"
-    vlc_rm_freetype.depends = install_vlc_plugins
-    vlc_rm_freetype.path = $${MODINSTPATH}/lib/plugins
-    INSTALLS += vlc_rm_freetype
+      # Bug #1944
+      vlc_rm_freetype.commands = rm \"$${MODINSTPATH}/lib/plugins/libfreetype_plugin.dylib\"
+      vlc_rm_freetype.depends = install_vlc_plugins
+      vlc_rm_freetype.path = $${MODINSTPATH}/lib/plugins
+      INSTALLS += vlc_rm_freetype
+    }
+    win32 {
+      # Install will create <module>/lib/{plugins,lua}
+      vlc_libs.path = $${MODINSTPATH}/lib
+      vlc_libs.files = "$${VLC}/../*.dll" "$${VLC}/../vlc-cache-gen.exe"
+      vlc_plugins.path  = $${MODINSTPATH}/lib/plugins
+      vlc_plugins.commands = mkdir -p $${MODINSTPATH}/lib/plugins ; cp -R "$${VLC}/../plugins/*" $${MODINSTPATH}/lib/plugins
+      vlc_lua.path  = $${MODINSTPATH}/lib/lua
+      vlc_lua.commands = mkdir -p $${MODINSTPATH}/lib/lua ; cp -R "$${VLC}/../lua/*" $${MODINSTPATH}/lib/lua
+    }
+    macx|win32:INSTALLS += vlc_libs vlc_plugins vlc_lua
+  } else {
+    !build_pass:message([VLCAV_NO_VLC_INSTALL] Will not install VLC libraries & plugins)
   }
-  win32 {
-    # Install will create <module>/lib/{plugins,lua}
-    vlc_libs.path = $${MODINSTPATH}/lib
-    vlc_libs.files = "$${VLC}/../*.dll" "$${VLC}/../vlc-cache-gen.exe"
-    vlc_plugins.path  = $${MODINSTPATH}/lib/plugins
-    vlc_plugins.commands = mkdir -p $${MODINSTPATH}/lib/plugins ; cp -R "$${VLC}/../plugins/*" $${MODINSTPATH}/lib/plugins
-    vlc_lua.path  = $${MODINSTPATH}/lib/lua
-    vlc_lua.commands = mkdir -p $${MODINSTPATH}/lib/lua ; cp -R "$${VLC}/../lua/*" $${MODINSTPATH}/lib/lua
-  }
-  macx|win32:INSTALLS += vlc_libs vlc_plugins vlc_lua
 
   LICENSE_FILES = vlc_audio_video.taokey.notsigned
   exists(../licenses.pri):include(../licenses.pri)
