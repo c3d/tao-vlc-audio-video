@@ -520,10 +520,16 @@ movie_position(name:text);
  * Return the position in a given movie in seconds from the start.
  * The movie position is returned in seconds from the start of the movie.
  * The @p name parameter specifies the name of the movie.
+ * The function returns -1.0 if @name is unknown or the playback has been
+ * stopped, and 0.0 when the movie position is not yet known or cannot be
+ * determined.
  * @~french
  * Renvoie la position en secondes dans un flux multimédia en cours de lecture.
  * La position est exprimée en secondes depuis le début du fichier.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * Cette fonction renvoie -1.0 si la vidéo n'a pas été démarrée ou a été
+ * stoppée, et 0.0 si la position n'est pas encore connue ou ne peut pas être
+ * déterminée.
  * @~
  * @see movie_set_time.
  */
@@ -533,9 +539,17 @@ movie_time(name:text);
  * @~english
  * Return the length of a given movie in seconds.
  * The @p name parameter specifies the name of the movie.
+ * The function returns -1.0 if @name is unknown or the playback has been
+ * stopped, and 0.0 when the movie duration is not yet known or cannot be
+ * determined.
+ *
  * @~french
  * Renvoie la longueur en secondes d'un flux multimédia en cours de lecture.
  * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * Cette fonction renvoie -1.0 si la vidéo n'a pas été démarrée ou a été
+ * stoppée, et 0.0 si la durée n'est pas encore connue ou ne peut pas être
+ * déterminée.
+ *
  * @~
  * @see movie_time, movie_set_time.
  */
