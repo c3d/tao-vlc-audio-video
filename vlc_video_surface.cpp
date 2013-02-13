@@ -499,14 +499,14 @@ void * VlcVideoSurface::lockFrame(void *obj, void **plane)
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
     Q_ASSERT(v->image.size);
 
- #ifdef Q_OS_WIN32
-     *plane = __mingw_aligned_malloc(v->image.size, 32);
-     if (!*plane)
-         throw std::bad_alloc();
- #else
-     if (posix_memalign(plane, 32, v->image.size))
-         throw std::bad_alloc();
- #endif
+#ifdef Q_OS_WIN32
+    *plane = __mingw_aligned_malloc(v->image.size, 32);
+    if (!*plane)
+        throw std::bad_alloc();
+#else
+    if (posix_memalign(plane, 32, v->image.size))
+        throw std::bad_alloc();
+#endif
 
     return *plane;
 }
