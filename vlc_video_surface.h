@@ -90,6 +90,7 @@ protected:
     int                     curPBO;
     GLubyte               * curPBOPtr;
     float                   fps;     // -1: not tested, 0: unknown
+    QSet<void *>            allocatedFrames;
 
 protected:
     virtual void   startPlayback();
@@ -105,6 +106,7 @@ protected:
     void           doGLTexImage2D();
     void           displayFrameNoPBO(void *picture);
     void           displayFramePBO(void *picture);
+    void           freeFrame(void *picture);
 
 protected:
     static unsigned videoFormat(void **opaque, char *chroma,

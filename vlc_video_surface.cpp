@@ -91,6 +91,12 @@ VlcVideoSurface::~VlcVideoSurface()
             debug() << "Deleting PBOs\n";
         glDeleteBuffers(2, pbo);
     }
+
+    IFTRACE(video)
+        if (!allocatedFrames.empty())
+            debug() << "Freeing " << allocatedFrames.size() << " frame(s)\n";
+    foreach (void *frame, allocatedFrames)
+        freeFrame(frame);
 }
 
 
@@ -508,11 +514,12 @@ void * VlcVideoSurface::lockFrame(void *obj, void **plane)
         throw std::bad_alloc();
 #endif
 
+    v->allocatedFrames.insert(*plane);
     return *plane;
 }
 
 
-void freeFrame(void *picture)
+void VlcVideoSurface::freeFrame(void *picture)
 // ----------------------------------------------------------------------------
 //   Release video memory
 // ----------------------------------------------------------------------------
@@ -522,6 +529,8 @@ void freeFrame(void *picture)
 #else
     free(picture);
 #endif
+
+    allocatedFrames.remove(picture);
 }
 
 
