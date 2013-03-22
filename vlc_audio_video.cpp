@@ -348,6 +348,16 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
 //   Find object derived from VlcVideoBase by name, or create it and start it
 // ----------------------------------------------------------------------------
 {
+#if (TAO_MODULE_API_CURRENT > 30 || \
+    (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE >= 12))
+    if (tao->offlineRendering())
+    {
+        IFTRACE(video)
+            sdebug() << "Tao is in 'offline rendering' mode\n";
+        return NULL;
+    }
+#endif
+
     VlcVideoBase *base = surface(name);
     T *vobj = dynamic_cast<T *>(base);
     if (!vobj)
