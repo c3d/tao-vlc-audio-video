@@ -101,11 +101,13 @@ VlcVideoBase::VlcVideoBase(QString mediaNameAndOptions)
     QStringList options;
     if (!opts.isEmpty())
     {
-        options = opts.split("##", QString::SkipEmptyParts);
+        options = opts.split("##");
         if (options.length() == 1)
-            options = opts.split(" ", QString::SkipEmptyParts);
+            options = opts.split(" ");
         foreach (QString opt, options)
         {
+            if (opt.isEmpty())
+                continue;
             char *o = strdup((+opt).c_str());
             mediaOptions.append(o);
         }
