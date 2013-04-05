@@ -31,6 +31,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
+#include "tao/graphic_state.h"
 #include "tao/tao_gl.h"
 #include "vlc_audio_video.h"
 #include "vlc_video_surface.h"
@@ -42,7 +43,8 @@
 #include <malloc.h>
 #endif
 
-
+DLL_PUBLIC Tao::GraphicState * graphic_state = NULL;
+#define GL (*graphic_state)
 
 VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
                                  unsigned int w, unsigned int h,
@@ -100,6 +102,49 @@ VlcVideoSurface::~VlcVideoSurface()
 }
 
 
+
+void VlcVideoSurface::render_callback(void *arg)
+// ----------------------------------------------------------------------------
+//   Rendering callback: call the render function for the object
+// ----------------------------------------------------------------------------
+{
+    ((VlcVideoSurface *)arg)->Draw();
+}
+
+
+void VlcVideoSurface::identify_callback(void *arg)
+// ----------------------------------------------------------------------------
+//   Identify callback: don't do anything
+// ----------------------------------------------------------------------------
+{
+    (void) arg;
+}
+
+
+void VlcVideoSurface::delete_callback(void *arg)
+// ----------------------------------------------------------------------------
+//   Delete callback: destroy object
+// ----------------------------------------------------------------------------
+{
+    (void) arg;
+}
+
+
+void VlcVideoSurface::Draw()
+// ----------------------------------------------------------------------------
+//   Draw video texture
+// ----------------------------------------------------------------------------
+{
+    // Bind Texture
+    GL.Enable(GL_TEXTURE_2D);
+    GL.BindTexture(GL_TEXTURE_2D, texture());
+    GL.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    GL.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GL.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+}
+
+
 void VlcVideoSurface::stop()
 // ----------------------------------------------------------------------------
 //   Stop playback
@@ -138,7 +183,7 @@ static void convertToGLFormat(QImage &dst, const QImage &src)
 //   Convert from QImage::Format_RGB32 to GL_RGBA
 // ----------------------------------------------------------------------------
 {
-    // Adapted from Qt source code: qgl.cpp
+    // Adapted from Qt source code: qglcpp
     // (License: LGPL)
 
     Q_ASSERT(src.depth() == 32);
@@ -193,15 +238,18 @@ void VlcVideoSurface::transferPBO()
 
     bool firstFrame = (curPBOPtr == (GLubyte *)1);
 
+    // Assure we save and restore settings to avoid
+    // conflict with Tao GL states
+    glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+
     // Copy and convert at the same time the latest picture into the current
     // PBO
-
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[curPBO]);
     curPBOPtr = (GLubyte*) glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
     if (!curPBOPtr)
     {
         curPBOPtr = (GLubyte*)1;
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        glPopClientAttrib();
         return;
     }
 #if defined(Q_OS_MACX)
@@ -217,21 +265,23 @@ void VlcVideoSurface::transferPBO()
         convertToGLFormat(to, from);
     }
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     // Copy from previous PBO to texture
 
     if (!firstFrame)
     {
+        glPushAttrib(GL_TEXTURE_BIT);
         glBindTexture(GL_TEXTURE_2D, textureId);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[1-curPBO]);
         doGLTexImage2D();
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glPopAttrib();
         videoAvailableInTexture = true;
     }
 
     curPBO = 1 - curPBO;
+
+    // Restore saved settings
+    glPopClientAttrib();
 }
 
 
@@ -241,9 +291,14 @@ void VlcVideoSurface::transferNoPBO()
 // ----------------------------------------------------------------------------
 {
     checkGLContext();
+
+    // Assure we save and restore settings to avoid
+    // conflict with Tao GL states
+    glPushAttrib(GL_TEXTURE_BIT);
     glBindTexture(GL_TEXTURE_2D, textureId);
     doGLTexImage2D();
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glPopAttrib();
+
     videoAvailableInTexture = true;
 }
 
@@ -394,9 +449,11 @@ void VlcVideoSurface::genPBO()
 // ----------------------------------------------------------------------------
 {
     Q_ASSERT(image.size);
-
     GLuint t = GL_PIXEL_UNPACK_BUFFER;
 
+    // Assure we save and restore settings to avoid
+    // conflict with Tao GL states
+    glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
     glGenBuffers(2, pbo);
     glBindBuffer(t, pbo[0]);
     glBufferData(t, image.size, NULL, GL_STREAM_DRAW);
@@ -404,7 +461,9 @@ void VlcVideoSurface::genPBO()
     glBufferData(t, image.size, NULL, GL_STREAM_DRAW);
     curPBOPtr = (GLubyte *)1; // REVISIT?
     curPBO = 1;
-    glBindBuffer(t, 0);
+
+    // Restore saved settings
+    glPopClientAttrib();
 
     IFTRACE(video)
         debug() << "PBOs and buffers allocated: #"

@@ -468,7 +468,10 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
     // Bind texture
     GLuint id = surface->texture();
     if (id != 0)
-        tao->BindTexture2D(id, surface->w, surface->h);
+        tao->AddToLayout2(VlcVideoSurface::render_callback,
+                         VlcVideoSurface::identify_callback,
+                         surface, VlcVideoSurface::delete_callback);
+
 
     tao->refreshOn(QEvent::Timer, -1.0);
     return new Integer(id, self->Position());
