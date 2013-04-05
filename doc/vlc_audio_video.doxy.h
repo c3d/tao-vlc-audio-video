@@ -280,6 +280,15 @@ movie(name:text);
  * @code
 movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
  * @endcode
+ * Since version 1.06, individual options may also be separated by <tt>##</tt>.
+ * If the option string contains at least one occurrence
+ * of <tt>##</tt> (not including the initial one), then <tt>##</tt> is the
+ * separator. Otherwise the separator is the space character.
+ * This enables passing options that contain spaces.
+ * For instance:
+ * @code
+movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
+ * @endcode
  * Refer to the VLC documentation for information on media-specific options.
  * @note Some VLC options have no effect, such as video filters which are
  * currently not useable within Tao Presentations.
@@ -302,6 +311,14 @@ movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
  * Par exemple :
  * @code
 movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
+ * @endcode
+ * Depuis la version 1.06, chaque option peut également être séparée de la suivante
+ * par <tt>##</tt>. Si la chaîne d'options contient au moins une occurrence de
+ * <tt>##</tt> (en plus de la première), alors <tt>##</tt> est le séparateur.
+ * Sinon, c'est le caractère espace. Ceci permet de passer à VLC des options qui
+ * contiennent des espaces. Par exemple :
+ * @code
+movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
  * @endcode
  * Voyez la documentation VLC pour plus d'informations sur les options média
  * de VLC.
