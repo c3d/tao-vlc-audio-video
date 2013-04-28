@@ -8,6 +8,7 @@ lib*.so.*
 *.dll
 moc_*.cpp
 *.o
+*.xl.sig
 /debug
 /release
 /*.taokey
