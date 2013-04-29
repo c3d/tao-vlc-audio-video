@@ -52,6 +52,13 @@ public:
                     float wscale = -1.0, float hscale = -1.0);
     virtual ~VlcVideoSurface();
 
+    void            Draw();
+
+    static void     render_callback(void *arg);
+    static void     identify_callback(void *arg);
+    static void     delete_callback(void *arg);
+
+
 public:
     virtual void   stop();
     virtual void   exec();
