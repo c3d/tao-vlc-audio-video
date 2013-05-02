@@ -348,8 +348,7 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
 //   Find object derived from VlcVideoBase by name, or create it and start it
 // ----------------------------------------------------------------------------
 {
-#if (TAO_MODULE_API_CURRENT > 30 || \
-    (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE >= 12))
+#if (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE == 12)
     if (tao->offlineRendering())
     {
         IFTRACE(video)
@@ -421,6 +420,18 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
         }
 
         vobj->play();
+
+#if (TAO_MODULE_API_CURRENT > 30 || \
+    (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE > 12))
+    if (tao->offlineRendering())
+    {
+        IFTRACE(video)
+            sdebug() << "Tao is in 'offline rendering' mode\n";
+        vobj->pause();
+        double ttime = tao->currentPageTime();
+        vobj->setTime(ttime);
+    }
+#endif
     }
 
     return vobj;
@@ -469,6 +480,21 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                                                     wscale, hscale);
     if (!surface)
         return new Integer(0, self->Position());
+
+#if (TAO_MODULE_API_CURRENT > 30 || \
+    (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE > 12))
+    if (tao->offlineRendering())
+    {
+        IFTRACE(video)
+            sdebug() << "Tao is in 'offline rendering' mode\n";
+        double ttime = tao->currentPageTime();
+        surface->setTime(ttime);
+        while (surface->texture() == 0 && surface->lastError == "")
+            surface->exec();
+        while (surface->lastError == "" && surface->time() < ttime)
+            surface->exec();
+    }
+#endif
 
     surface->exec();
 
