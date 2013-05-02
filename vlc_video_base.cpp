@@ -69,7 +69,9 @@ VlcVideoBase::VlcVideoBase(QString mediaNameAndOptions)
 // ----------------------------------------------------------------------------
 //   Initialize a VLC media player to render a video
 // ----------------------------------------------------------------------------
-    : vlc(VlcAudioVideo::vlcInstance()), player(NULL), media(NULL),
+    : lastTime(-1.0), lastRate(1.0), frameTime(0),
+      offline(false),
+      vlc(VlcAudioVideo::vlcInstance()), player(NULL), media(NULL),
       state(VS_STOPPED), mevm(NULL), pevm(NULL), loopMode(false)
 {
     if (!vlc)
@@ -81,7 +83,8 @@ VlcVideoBase::VlcVideoBase(QString mediaNameAndOptions)
     }
 
     IFTRACE(video)
-        debug() << "Creating media player to play " << +mediaNameAndOptions << "\n";
+        debug() << "Creating media player to play "
+                << +mediaNameAndOptions << "\n";
 
     player = libvlc_media_player_new(vlc);
     pevm = libvlc_media_player_event_manager(player);
@@ -415,7 +418,15 @@ float VlcVideoBase::time()
 {
     if (!vlc)
         return 0.0;
-    return libvlc_media_player_get_time(player) * 0.001;
+    double vlcTime = libvlc_media_player_get_time(player) * 0.001;
+
+    // If VLC gives us a new time, take that
+    if (lastTime != vlcTime)
+        lastTime = frameTime = vlcTime;
+        
+    // Otherwise, compute the time from the sum of frames
+    vlcTime = frameTime;
+    return vlcTime;
 }
 
 
@@ -437,7 +448,10 @@ float VlcVideoBase::rate()
 {
     if (!vlc)
         return 1.0;
-    return libvlc_media_player_get_rate(player);
+    double vlcRate = libvlc_media_player_get_rate(player);
+    if (!offline)
+        lastRate = vlcRate;
+    return vlcRate;
 }
 
 
@@ -506,6 +520,8 @@ void VlcVideoBase::setPosition(float pos)
     if (!vlc)
         return;
     libvlc_media_player_set_position(player, pos);
+    if (!offline)
+        lastTime = libvlc_media_player_get_time(player) * 0.001;
 }
 
 
@@ -517,6 +533,8 @@ void VlcVideoBase::setTime(float t)
     if (!vlc)
         return;
     libvlc_media_player_set_time(player, libvlc_time_t(t * 1000));
+    if (!offline)
+        lastTime = libvlc_media_player_get_time(player) * 0.001;
 }
 
 
@@ -528,6 +546,8 @@ void VlcVideoBase::setRate(float rate)
     if (!vlc)
         return;
     libvlc_media_player_set_rate(player, rate);
+    if (!offline)
+        lastRate = rate;
 }
 
 

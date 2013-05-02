@@ -52,10 +52,11 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
 // ----------------------------------------------------------------------------
     : VlcVideoBase(mediaNameAndOptions),
       w(w), h(h), wscale(wscale), hscale(hscale),
-      updated(false), textureId(0),
+      textureId(0),
+      updated(false), 
       videoAvailable(false), videoAvailableInTexture(false),
-      GLcontext(QGLContext::currentContext()),
       usePBO(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_1),
+      GLcontext(QGLContext::currentContext()),
       curPBO(0), curPBOPtr(NULL), fps(-1.0)
 {
     genTexture();
@@ -232,6 +233,8 @@ void VlcVideoSurface::transferPBO()
     }
 
     curPBO = 1 - curPBO;
+    if (fps > 0)
+        frameTime += lastRate / fps;
 }
 
 
@@ -245,6 +248,8 @@ void VlcVideoSurface::transferNoPBO()
     doGLTexImage2D();
     glBindTexture(GL_TEXTURE_2D, 0);
     videoAvailableInTexture = true;
+    if (fps > 0)
+        frameTime += lastRate / fps;
 }
 
 

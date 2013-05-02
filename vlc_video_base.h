@@ -107,6 +107,10 @@ public:
 
 public:
     QString                 lastError;
+    double                  lastTime;
+    double                  lastRate;
+    double                  frameTime;
+    bool                    offline;
 
 protected:
     QString                 mediaName;

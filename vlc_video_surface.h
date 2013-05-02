@@ -77,15 +77,13 @@ protected:
 protected:
     QMutex                  mutex;  // Protect 'image' and 'updated'
     ImageBuf                image;
-    bool                    updated;
     QImage                  converted;
     GLuint                  textureId;
+    bool                    updated;
     bool                    videoAvailable;          // In ImageBuf
     bool                    videoAvailableInTexture;
-    bool                    descriptionMode;
-    const QGLContext      * GLcontext;
-
     bool                    usePBO;
+    const QGLContext      * GLcontext;
     GLuint                  pbo[2];
     int                     curPBO;
     GLubyte               * curPBOPtr;

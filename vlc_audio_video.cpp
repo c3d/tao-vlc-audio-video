@@ -43,6 +43,7 @@
 #include <QFileInfo>
 #include <QStringList>
 #include <QVector>
+#include <QTime>
 #ifdef Q_OS_WIN32
 #include <QProcess>
 #endif
@@ -427,9 +428,9 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
     {
         IFTRACE(video)
             sdebug() << "Tao is in 'offline rendering' mode\n";
-        vobj->pause();
         double ttime = tao->currentPageTime();
-        vobj->setTime(ttime);
+        double itime = vobj->lastTime + vobj->lastRate*(ttime-vobj->lastTime);
+        vobj->setTime(itime);
     }
 #endif
     }
@@ -487,12 +488,58 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
     {
         IFTRACE(video)
             sdebug() << "Tao is in 'offline rendering' mode\n";
+
+        if (!surface->offline)
+        {
+            surface->setVolume(0);
+            surface->offline = true;
+        }
+
         double ttime = tao->currentPageTime();
-        surface->setTime(ttime);
-        while (surface->texture() == 0 && surface->lastError == "")
+        double itime = surface->lastTime +
+                       surface->lastRate * (ttime-surface->lastTime);
+        QTime t0;
+        const int TIMEOUT = 2000;
+        t0.start();
+        surface->setTime(itime);
+        
+        IFTRACE(video)
+            sdebug() << "Seeking at " << t0.elapsed()
+                     << " movie " << surface->time()
+                     << " target " << itime
+                     << " texture " << surface->texture()
+                     << "\n";
+
+        while (surface->texture() == 0      &&
+               surface->lastError == ""     &&
+               t0.elapsed() < TIMEOUT)
             surface->exec();
-        while (surface->lastError == "" && surface->time() < ttime)
+        IFTRACE(video)
+            sdebug() << "Texture at " << t0.elapsed()
+                     << " stime " << surface->time()
+                     << " itime " << itime
+                     << " tex " << surface->texture()
+                     << "\n";
+
+        while (surface->time() < itime &&
+               surface->lastError == ""     &&
+               t0.elapsed() < TIMEOUT)
             surface->exec();
+
+        IFTRACE(video)
+            sdebug() << "Result  at " << t0.elapsed()
+                     << " stime " << surface->time()
+                     << " itime " << itime
+                     << " tex " << surface->texture()
+                     << "\n";
+    }
+    else
+    {
+        if (surface->offline)
+        {
+            surface->setVolume(1);
+            surface->offline = false;
+        }
     }
 #endif
 
