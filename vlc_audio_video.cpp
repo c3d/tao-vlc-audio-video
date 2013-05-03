@@ -323,19 +323,6 @@ QString VlcAudioVideo::stripOptions(QString &name)
 }
 
 
-#ifdef USE_LICENSE
-bool VlcAudioVideo::licenseOk()
-// ----------------------------------------------------------------------------
-//   License checking code
-// ----------------------------------------------------------------------------
-{
-    static bool licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.06");
-    Q_UNUSED(licensed);
-    return true;
-}
-#endif
-
-
 template <class T>
 T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
                                           XL::Tree_p self,
@@ -457,11 +444,6 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
     if (name == "")
         return new Integer(0, self->Position());
 
-#ifdef USE_LICENSE
-    if (!licenseOk())
-        return new Integer(0, self->Position());
-#endif
-
     VlcVideoSurface *surface =
             getOrCreateVideoObject<VlcVideoSurface>(context, self, name,
                                                     width->value,
@@ -521,11 +503,6 @@ XL::Name_p VlcAudioVideo::movie_fullscreen(XL::Context_p context,
 {
     if (name == "")
         return  XL::xl_false;
-
-#ifdef USE_LICENSE
-    if (!licenseOk())
-        return  XL::xl_false;
-#endif
 
     VlcVideoFullscreen *video =
             getOrCreateVideoObject<VlcVideoFullscreen>(context, self, name,

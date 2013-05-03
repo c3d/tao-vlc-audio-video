@@ -140,9 +140,6 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
     !build_pass:message([VLCAV_NO_VLC_INSTALL] Will not install VLC libraries & plugins)
   }
 
-  LICENSE_FILES = vlc_audio_video.taokey.notsigned
-  exists(../licenses.pri):include(../licenses.pri)
-
   QMAKE_SUBSTITUTES = doc/Doxyfile.in
   DOXYFILE = doc/Doxyfile
   DOXYLANG = en,fr
