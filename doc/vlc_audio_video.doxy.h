@@ -514,6 +514,43 @@ movie_pause(name:text);
 
 /**
  * @~english
+ * Request the next frame of a paused video.
+ * The @p name parameter specifies the name of the movie.
+ * The @ref RegExp "re:" syntax is supported.
+ * The following example plays a video. The space bar may be used to pause and
+ * resume playback, the "n" key will step forward by one frame when the movie
+ * is paused.
+ * @~french
+ * Demande la trame suivante d'une vidéo en pause.
+ * @p name est le nom du fichier ou l'URL de la ressource multimédia.
+ * La syntaxe @ref RegExp "re:" est supportée.
+ * L'exemple qui suit joue une vidéo qu'on peut mettre en pause et redémarrer
+ * par la barre d'espace, et faire avancer image par image grâce à la touche
+ * "n".
+ * @~
+ * @code
+import VLCAudioVideo
+
+Movie -> "movie.mp4"
+
+locally
+     movie Movie
+
+Paused -> 0
+key "Space" ->
+    if Paused = 1 then
+        movie_play Movie
+    else
+        movie_pause Movie
+    Paused := 1 - Paused
+key "n" -> movie_next_frame Movie
+ * @endcode
+ * @since 1.07
+ **/
+movie_next_frame(name:text);
+
+/**
+ * @~english
  * Stop movie playback.
  * This command stops movie playback.
  * The @p name parameter specifies the name of the movie.

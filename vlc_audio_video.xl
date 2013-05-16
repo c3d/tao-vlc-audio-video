@@ -36,7 +36,7 @@ module_description
                   "that the version of VLC " &
                   "is not compatible with this module. Please install VLC " &
                   "2.x from http://www.videolan.org/vlc/ and try again."
-    version 1.06
+    version 1.07
 
 module_description "fr",
     name "VLC Audio Vidéo"

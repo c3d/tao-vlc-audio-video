@@ -87,6 +87,7 @@ public:
     static XL::Name_p           movie_play(text name);
     static XL::Name_p           movie_pause(text name);
     static XL::Name_p           movie_stop(text name);
+    static XL::Name_p           movie_next_frame(text name);
 
     static XL::Real_p           movie_volume(XL::Tree_p self, text name);
     static XL::Real_p           movie_position(XL::Tree_p self, text name);
