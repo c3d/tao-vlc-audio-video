@@ -537,7 +537,7 @@ movie_position(name:text);
  * Return the position in a given movie in seconds from the start.
  * The movie position is returned in seconds from the start of the movie.
  * The @p name parameter specifies the name of the movie.
- * The function returns -1.0 if @name is unknown or the playback has been
+ * The function returns -1.0 if @p name is unknown or the playback has been
  * stopped, and 0.0 when the movie position is not yet known or cannot be
  * determined.
  * @~french
@@ -556,7 +556,7 @@ movie_time(name:text);
  * @~english
  * Return the length of a given movie in seconds.
  * The @p name parameter specifies the name of the movie.
- * The function returns -1.0 if @name is unknown or the playback has been
+ * The function returns -1.0 if @p name is unknown or the playback has been
  * stopped, and 0.0 when the movie duration is not yet known or cannot be
  * determined.
  *
