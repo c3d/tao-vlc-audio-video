@@ -267,7 +267,8 @@ movie(name:text);
  * This primitive plays an audio and/or video file and makes the video
  * available as a texture. You can subsequently map the texture on a rectangle
  * or any other shape in the 3D space.
- * The @p name parameter specifies a local file or a URL.
+ * The @p name parameter specifies a local file or a URL. A new player instance
+ * is created (and playback is started) whenever a new name is given.
  * If @p name refers to a video, the resolution is made available through
  * the @p texture_width and @p texture_height primitives. No texture
  * is bound when @p name contains no video, or until the first frame is
@@ -279,6 +280,18 @@ movie(name:text);
  * separated with spaces. For instance:
  * @code
 movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
+ * @endcode
+ * Media options are part of @p name and therefore the same path or URL with
+ * different options will create several player instances, as one would expect.
+ * For instance, the following code will play <tt>movie.mp4</tt> twice, the top
+ * rectangle shows the video from the beginning while the bottom one skips the
+ * first minute:
+ * @code
+color "white"
+movie_texture "video.mp4"
+rectangle 0, 180, 640, 360
+movie_texture "video.mp4##start-time=60"
+rectangle 0, -180, 640, 360
  * @endcode
  * Since version 1.06, individual options may also be separated by <tt>##</tt>.
  * If the option string contains at least one occurrence
@@ -297,8 +310,9 @@ movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
  * Cette primitive lit un fichier audio et/ou vidéo et rend disponible la
  * vidéo sous forme de texture. Vous pouvez ensuite appliquer cette texture sur
  * un rectangle ou n'importe quelle autre forme dans l'espace 3D.
- * Le paramètre @p name spécifie un fichier local ou une URL. Une chaîne vide
- * permet d'arrêter la lecture de la vidéo associée à cet appel.
+ * Le paramètre @p name spécifie un fichier local ou une URL. Une nouvelle
+ * instance de lecteur multimédia est créée (et la lecture démarre) à chaque
+ * fois qu'une nouvelle valeur de @p name est passée.
  * Lorsque @p name représente une vidéo, la résolution de l'image est
  * disponible grâce aux primitives @p texture_width et @p texture_height.
  * Si par contre @p name ne contient pas de vidéo, ou tant que la lecture n'est
@@ -311,6 +325,19 @@ movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
  * Par exemple :
  * @code
 movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
+ * @endcode
+ * Les options font partie intégrante de @p name et donc le même chemin ou URL
+ * mais avec des options différentes provoquera logiquement la création de
+ * plusieurs lecteurs.
+ * Par exemple, le code suivant joue <tt>video.mp4</tt> deux fois. Le rectangle
+ * du haut joue la vidéo depuis le début, alors que celui du bas passe la
+ * première minute:
+ * @code
+color "white"
+movie_texture "video.mp4"
+rectangle 0, 180, 640, 360
+movie_texture "video.mp4##start-time=60"
+rectangle 0, -180, 640, 360
  * @endcode
  * Depuis la version 1.06, chaque option peut également être séparée de la suivante
  * par <tt>##</tt>. Si la chaîne d'options contient au moins une occurrence de
