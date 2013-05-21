@@ -164,6 +164,17 @@ void VlcVideoBase::stop()
 }
 
 
+void VlcVideoBase::next_frame()
+// ----------------------------------------------------------------------------
+//   Decode next frame of a paused video
+// ----------------------------------------------------------------------------
+{
+    if (state != VS_PAUSED)
+        return;
+    libvlc_media_player_next_frame(player);
+}
+
+
 libvlc_media_t *VlcVideoBase::newMediaFromPathOrUrl(QString name)
 // ----------------------------------------------------------------------------
 //   Create media instance from path or URL.

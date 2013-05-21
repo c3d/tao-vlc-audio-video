@@ -87,6 +87,7 @@ public:
     void           play();
     void           pause();
     virtual void   stop();
+    void           next_frame();
     void           mute(bool mute);
     float          volume();
     float          position();
