@@ -121,7 +121,7 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
       vlc_lua.files = "$${VLC}/share/lua"
 
       # Bug #1944
-      vlc_rm_freetype.commands = rm \"$${MODINSTPATH}/lib/vlc/plugins/libfreetype_plugin.dylib\"
+      vlc_rm_freetype.commands = rm -f \"$${MODINSTPATH}/lib/vlc/plugins/libfreetype_plugin.dylib\"
       vlc_rm_freetype.depends = install_vlc_plugins
       vlc_rm_freetype.path = $${MODINSTPATH}/lib/vlc/plugins
       INSTALLS += vlc_rm_freetype
