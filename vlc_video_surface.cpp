@@ -85,7 +85,7 @@ VlcVideoSurface::~VlcVideoSurface()
         debug() << "Deleting texture\n";
 
     if (textureId)
-        glDeleteTextures(1, &textureId);
+        GL.DeleteTextures(1, &textureId);
 
     if (usePBO)
     {
@@ -138,6 +138,9 @@ void VlcVideoSurface::Draw()
     // Bind Texture
     GL.Enable(GL_TEXTURE_2D);
     GL.BindTexture(GL_TEXTURE_2D, texture());
+
+    // We don't want to use Tao preferences so we
+    // have to set texture settings
     GL.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.TexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -270,11 +273,9 @@ void VlcVideoSurface::transferPBO()
 
     if (!firstFrame)
     {
-        glPushAttrib(GL_TEXTURE_BIT);
-        glBindTexture(GL_TEXTURE_2D, textureId);
+        GL.BindTexture(GL_TEXTURE_2D, textureId);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[1-curPBO]);
         doGLTexImage2D();
-        glPopAttrib();
         videoAvailableInTexture = true;
     }
 
@@ -292,12 +293,8 @@ void VlcVideoSurface::transferNoPBO()
 {
     checkGLContext();
 
-    // Assure we save and restore settings to avoid
-    // conflict with Tao GL states
-    glPushAttrib(GL_TEXTURE_BIT);
-    glBindTexture(GL_TEXTURE_2D, textureId);
+    GL.BindTexture(GL_TEXTURE_2D, textureId);
     doGLTexImage2D();
-    glPopAttrib();
 
     videoAvailableInTexture = true;
 }
@@ -318,11 +315,11 @@ void VlcVideoSurface::doGLTexImage2D()
         {
             // Row size in bytes is w * 2, which is not a multiple of 4
             // (the default value for GL_UNPACK_ALIGNEMENT) when w is odd.
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+            GL.PixelStorei(GL_UNPACK_ALIGNMENT, 2);
         }
     }
 #endif
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, format, type,
+    GL.TexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, format, type,
                  usePBO ? NULL : image.ptr);
 }
 
@@ -437,7 +434,7 @@ void VlcVideoSurface::genTexture()
 //   Create GL texture to render to
 // ----------------------------------------------------------------------------
 {
-    glGenTextures(1, &textureId);
+    GL.GenTextures(1, &textureId);
     IFTRACE(video)
         debug() << "Will render to texture #" << textureId << "\n";
 }

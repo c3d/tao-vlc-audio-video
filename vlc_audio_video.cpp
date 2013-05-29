@@ -31,6 +31,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
+#include "tao/graphic_state.h"
 #include "tao/tao_gl.h"
 #include "vlc_audio_video.h"
 #include "vlc_video_surface.h"
@@ -46,6 +47,8 @@
 #ifdef Q_OS_WIN32
 #include <QProcess>
 #endif
+
+#define GL (*graphic_state)
 
 
 inline QString operator +(std::string s)
@@ -477,6 +480,7 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
 
     // Bind texture
     GLuint id = surface->texture();
+    GL.TextureSize(surface->w, surface->h);
     if (id != 0)
         tao->AddToLayout2(VlcVideoSurface::render_callback,
                          VlcVideoSurface::identify_callback,
