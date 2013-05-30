@@ -66,8 +66,8 @@ change_install_name @loader_path/lib/libvlc.5.dylib @rpath/libvlc.5.dylib "$DYLI
 change_install_name @loader_path/lib/libvlccore.5.dylib @rpath/libvlccore.5.dylib "$DYLIB"
 
 # Paths where to look for VLC, * IN ORDER *
+add_rpath @loader_path/vlc/lib "$DYLIB"
 add_rpath @executable_path/../../../VLC.app/Contents/MacOS/lib "$DYLIB"
 add_rpath /Applications/VLC.app/Contents/MacOS/lib "$DYLIB"
-add_rpath @loader_path/vlc/lib "$DYLIB"
 
 echo "[$SCRIPT] # '$DYLIB' is up-to-date"
