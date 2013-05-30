@@ -82,6 +82,11 @@ PREFIX(MovieStop,  tree,  "movie_stop",
        return VlcAudioVideo::movie_stop(u),
        GROUP(video)
        SYNOPSIS("Stop the video."))
+PREFIX(MovieNextFrame,  tree,  "movie_next_frame",
+       PARM(u, text, "The URL of the movie"),
+       return VlcAudioVideo::movie_next_frame(u),
+       GROUP(video)
+       SYNOPSIS("Request the next frame of a paused video."))
 PREFIX(MovieVolume,  tree,  "movie_volume",
        PARM(u, text, "The URL of the movie for which we want the volume"),
        return VlcAudioVideo::movie_volume(self, u),

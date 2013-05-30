@@ -583,6 +583,7 @@ XL::Name_p VlcAudioVideo::movie_##id(text name)  \
 MOVIE_ADAPTER(play)
 MOVIE_ADAPTER(pause)
 MOVIE_ADAPTER(stop)
+MOVIE_ADAPTER(next_frame)
 
 #define MOVIE_FLOAT_ADAPTER(id, ev)                             \
 XL::Real_p VlcAudioVideo::movie_##id(XL::Tree_p self, text name) \
