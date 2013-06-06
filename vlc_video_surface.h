@@ -91,6 +91,7 @@ protected:
     GLubyte               * curPBOPtr;
     float                   fps;     // -1: not tested, 0: unknown
     QSet<void *>            allocatedFrames;
+    bool                    dropFrames;  // Ignore decoded pictures
 
 protected:
     virtual void   startPlayback();
@@ -115,6 +116,8 @@ protected:
                                 unsigned *lines);
     static void *  lockFrame(void *obj, void **plane);
     static void    displayFrame(void *obj, void *picture);
+
+    static void    playerTimeChanged(const struct libvlc_event_t *, void *obj);
 };
 
 #endif // VLC_VIDEO_SURFACE_H
