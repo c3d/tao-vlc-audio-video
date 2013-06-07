@@ -56,8 +56,7 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
       updated(false), 
       videoAvailable(false), videoAvailableInTexture(false),
       usePBO(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_1),
-      GLcontext(QGLContext::currentContext()),
-      curPBO(0), curPBOPtr(NULL), fps(-1.0)
+      curPBO(0), curPBOPtr(NULL), fps(-1.0), dropFrames(false)
 {
     genTexture();
     if (getenv("TAO_VLC_NO_PBO"))
@@ -349,6 +348,35 @@ void VlcVideoSurface::startPlayback()
     libvlc_video_set_callbacks(player, lockFrame, NULL, displayFrame, this);
     libvlc_video_set_format_callbacks(player, videoFormat, NULL);
 
+    // #3026 workaround VLC bug
+    // When start-time is non-zero, VLC shows one or more frames that belong to
+    // the beginning of the video before actually showing the frames that are
+    // (approximately) at start-time.
+    // With this code I could get rid of the unwanted pictures with all the
+    // videos I tested.
+    foreach(char *opt, mediaOptions)
+    {
+        QString option(opt);
+        if (option.startsWith("start-time="))
+        {
+            bool ok = false;
+            double start = option.mid(option.indexOf("=") + 1).toDouble(&ok);
+            if (ok && start != 0.0)
+            {
+                if (!dropFrames)
+                {
+                    IFTRACE(video)
+                        debug() << "start-time != 0: drop frames until "
+                                   "MediaPlayerTimeChanged\n";
+                    dropFrames = true;
+                    libvlc_event_attach(pevm,
+                                        libvlc_MediaPlayerTimeChanged,
+                                        playerTimeChanged, this);
+                }
+            }
+        }
+    }
+
     VlcVideoBase::startPlayback();
 }
 
@@ -547,6 +575,12 @@ void VlcVideoSurface::displayFrame(void *obj, void *picture)
     VlcVideoSurface *v = (VlcVideoSurface *)obj;
     Q_ASSERT(v->w && v->h && "Invalid video size");
 
+    if (v->dropFrames)
+    {
+        v->freeFrame(picture);
+        return;
+    }
+
     if (v->state != VS_PLAYING && v->state != VS_PAUSED &&
         v->state != VS_STOPPED)
         v->setState(VS_PLAYING);
@@ -599,4 +633,19 @@ void VlcVideoSurface::displayFramePBO(void *picture)
     mutex.unlock();
 
     freeFrame(prev);
+}
+
+
+void VlcVideoSurface::playerTimeChanged(const libvlc_event_t *, void *obj)
+// ----------------------------------------------------------------------------
+//   Callback for libvlc_MediaPlayerTimeChanged event
+// ----------------------------------------------------------------------------
+{
+    VlcVideoSurface *v = (VlcVideoSurface *)obj;
+    IFTRACE(video)
+        v->debug() << "MediaPlayerTimeChanged: stop dropping frames\n";
+    v->dropFrames = false;
+    libvlc_event_detach(v->pevm,
+                        libvlc_MediaPlayerTimeChanged,
+                        playerTimeChanged, v);
 }
