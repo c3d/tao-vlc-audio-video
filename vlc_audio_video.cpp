@@ -44,6 +44,7 @@
 #include <QFileInfo>
 #include <QStringList>
 #include <QVector>
+#include <QTime>
 #ifdef Q_OS_WIN32
 #include <QProcess>
 #endif
@@ -326,19 +327,6 @@ QString VlcAudioVideo::stripOptions(QString &name)
 }
 
 
-#ifdef USE_LICENSE
-bool VlcAudioVideo::licenseOk()
-// ----------------------------------------------------------------------------
-//   License checking code
-// ----------------------------------------------------------------------------
-{
-    static bool licensed = tao->checkImpressOrLicense("VLCAudioVideo 1.06");
-    Q_UNUSED(licensed);
-    return true;
-}
-#endif
-
-
 template <class T>
 T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
                                           XL::Tree_p self,
@@ -351,8 +339,7 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
 //   Find object derived from VlcVideoBase by name, or create it and start it
 // ----------------------------------------------------------------------------
 {
-#if (TAO_MODULE_API_CURRENT > 30 || \
-    (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE >= 12))
+#if (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE == 12)
     if (tao->offlineRendering())
     {
         IFTRACE(video)
@@ -424,6 +411,18 @@ T * VlcAudioVideo::getOrCreateVideoObject(XL::Context_p context,
         }
 
         vobj->play();
+
+#if (TAO_MODULE_API_CURRENT > 30 || \
+    (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE > 12))
+    if (tao->offlineRendering())
+    {
+        IFTRACE(video)
+            sdebug() << "Tao is in 'offline rendering' mode\n";
+        double ttime = tao->currentPageTime();
+        double itime = vobj->lastTime + vobj->lastRate*(ttime-vobj->lastTime);
+        vobj->setTime(itime);
+    }
+#endif
     }
 
     return vobj;
@@ -460,11 +459,6 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
     if (name == "")
         return new Integer(0, self->Position());
 
-#ifdef USE_LICENSE
-    if (!licenseOk())
-        return new Integer(0, self->Position());
-#endif
-
     VlcVideoSurface *surface =
             getOrCreateVideoObject<VlcVideoSurface>(context, self, name,
                                                     width->value,
@@ -472,6 +466,67 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                                                     wscale, hscale);
     if (!surface)
         return new Integer(0, self->Position());
+
+#if (TAO_MODULE_API_CURRENT > 30 || \
+    (TAO_MODULE_API_CURRENT == 30 && TAO_MODULE_API_AGE > 12))
+    if (tao->offlineRendering())
+    {
+        IFTRACE(video)
+            sdebug() << "Tao is in 'offline rendering' mode\n";
+
+        if (!surface->offline)
+        {
+            surface->setVolume(0);
+            surface->offline = true;
+        }
+
+        double ttime = tao->currentPageTime();
+        double itime = surface->lastTime +
+                       surface->lastRate * (ttime-surface->lastTime);
+        QTime t0;
+        const int TIMEOUT = 2000;
+        t0.start();
+        surface->setTime(itime);
+        
+        IFTRACE(video)
+            sdebug() << "Seeking at " << t0.elapsed()
+                     << " movie " << surface->time()
+                     << " target " << itime
+                     << " texture " << surface->texture()
+                     << "\n";
+
+        while (surface->texture() == 0      &&
+               surface->lastError == ""     &&
+               t0.elapsed() < TIMEOUT)
+            surface->exec();
+        IFTRACE(video)
+            sdebug() << "Texture at " << t0.elapsed()
+                     << " stime " << surface->time()
+                     << " itime " << itime
+                     << " tex " << surface->texture()
+                     << "\n";
+
+        while (surface->time() < itime &&
+               surface->lastError == ""     &&
+               t0.elapsed() < TIMEOUT)
+            surface->exec();
+
+        IFTRACE(video)
+            sdebug() << "Result  at " << t0.elapsed()
+                     << " stime " << surface->time()
+                     << " itime " << itime
+                     << " tex " << surface->texture()
+                     << "\n";
+    }
+    else
+    {
+        if (surface->offline)
+        {
+            surface->setVolume(1);
+            surface->offline = false;
+        }
+    }
+#endif
 
     surface->exec();
 
@@ -528,11 +583,6 @@ XL::Name_p VlcAudioVideo::movie_fullscreen(XL::Context_p context,
 {
     if (name == "")
         return  XL::xl_false;
-
-#ifdef USE_LICENSE
-    if (!licenseOk())
-        return  XL::xl_false;
-#endif
 
     VlcVideoFullscreen *video =
             getOrCreateVideoObject<VlcVideoFullscreen>(context, self, name,
