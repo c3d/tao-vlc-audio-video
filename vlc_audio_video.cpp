@@ -534,14 +534,17 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
         return new Integer(0, self->Position());
 
     // Bind texture
+    unsigned int w = 0, h = 0;
     GLuint id = surface->texture();
     if (id != 0)
     {
-        GL.TextureSize(surface->w, surface->h);
+        w = surface->w;
+        h = surface->h;
         tao->AddToLayout2(VlcVideoSurface::render_callback,
                          VlcVideoSurface::identify_callback,
                          surface, VlcVideoSurface::delete_callback);
     }
+    GL.TextureSize(w, h);
 
     tao->refreshOn(QEvent::Timer, -1.0);
     return new Integer(id, self->Position());
