@@ -21,8 +21,7 @@
 /**
  * @~english
  * @taomoduledescription{VLCAudioVideo, VLC audio and video playback}
- *
- * <tt>import VLCAudioVideo</tt> - Play audio and video content.
+ * <tt>import VLCAudioVideo</tt> - Play audio and video content.@n
  * The @c VLCAudioVideo module is
  * based on the
  * <a href="http://www.videolan.org/vlc/">VideoLAN (VLC) player</a>,
@@ -118,8 +117,7 @@ if movie_done "re:^http://" then
  *
  * @~french
  * @taomoduledescription{VLCAudioVideo, Lecteur Audio/Vidéo VLC}
- *
- * <tt>import VLCAudioVideo</tt> - Lecteur multimédia (audio et vidéo).\n
+ * <tt>import VLCAudioVideo</tt> - Lecteur multimédia (audio et vidéo).@n
  * Basé sur le lecteur
  * <a href="http://www.videolan.org/vlc/">VideoLAN (VLC)</a>, un outil
  * du logiciel libre, multi-plateforme, qui permet de jouer la plupart des
