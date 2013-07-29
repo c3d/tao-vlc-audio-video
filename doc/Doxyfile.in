@@ -1,6 +1,6 @@
 @INCLUDE = ../../Doxyfile
 PROJECT_NAME = \"VLC Audio Video\"
-PROJECT_NUMBER = 1.071
+PROJECT_NUMBER = 1.072
 PROJECT_LOGO = ../icon.png
-QHP_NAMESPACE = com.taodyne.TaoPresentations.modules.VLCAudioVideo.1.071
+QHP_NAMESPACE = com.taodyne.TaoPresentations.modules.VLCAudioVideo.1.072
 QHP_VIRTUAL_FOLDER = VLCAudioVideo
