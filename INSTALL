@@ -1,4 +1,5 @@
-Build instructions for the VLCAudioVideo module for Tao Presentations 1.0.
+Build instructions for the VLCAudioVideo module for Tao Presentations 1.40
+or later.
 Supported platforms: Windows (x86) (MinGW), MacOSX (x86, x86_64),
 Linux (x86, x86_64).
 
