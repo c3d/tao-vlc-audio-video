@@ -58,6 +58,7 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
       updated(false), 
       videoAvailable(false), videoAvailableInTexture(false),
       usePBO(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_1),
+      GLcontext(QGLContext::currentContext()),
       curPBO(0), curPBOPtr(NULL), fps(-1.0), dropFrames(false)
 {
     genTexture();
