@@ -457,7 +457,7 @@ void VlcVideoSurface::checkGLContext()
         IFTRACE(video)
             debug() << "GL context changed\n";
         genTexture();
-        if (image.size)
+        if (usePBO && image.size)
             genPBO();
         GLcontext = current;
     }
