@@ -674,8 +674,10 @@ void AsyncSetVolume::run()
         int volume = volumes[player];
         volumes.remove(player);
 
+        libvlc_media_player_retain(player);
         mutex.unlock();
         ::libvlc_audio_set_volume(player, volume);
         mutex.lock();
+        libvlc_media_player_release(player);
     }
 }
