@@ -32,10 +32,10 @@
  * You can use the commands documented on this page to add music and videos
  * to your presentations. You can even embbed YouTube videos, for example:
  *
- * @code
+@code
 import VLCAudioVideo
 movie "http://www.youtube.com/watch?v=jNQXAC9IVRw"
- * @endcode
+@endcode
  * @image html YouTube.png "Playing a YouTube video in a Tao document"
  *
  * Multimedia streams are identified by their name. It is possible to
@@ -51,7 +51,7 @@ movie "http://www.youtube.com/watch?v=jNQXAC9IVRw"
  * you can switch between videos. Passing an empty string stops the
  * playback.
  *
- * @code
+@code
 import VLCAudioVideo
 
 play T:text ->
@@ -75,7 +75,7 @@ page "The End",
         color "Black"
         text "That's all Folks!"
     play ""
- * @endcode
+@endcode
  *
  * To start playing at a given time in the movie, use @ref
  * movie_set_time or @ref movie_set_position. To set the movie volume,
@@ -91,19 +91,19 @@ page "The End",
  * @p name parameter, you use the <tt>re:</tt> prefix followed by a regular
  * expression. For instance, the following call would pause all
  * movies having <tt>.mov</tt> in their path or URL:
- * @code
+@code
 movie_pause "re:\.mov"
- * @endcode
+@endcode
  * When used with functions that return a boolean value, such as
  * @ref movie_playing or @ref movie_paused, the function returns <tt>true</tt>
  * if and only if at least one media object matches the specified pattern,
  * and the function would have returned <tt>true</tt> for all media matching
  * the pattern. For example, you may determine whether all <tt>HTTP</tt>
  * streams have finished playing with:
- * @code
+@code
 if movie_done "re:^http://" then
     // Do something
- * @endcode
+@endcode
  * The functions that support the <tt>re:</tt> syntax are explicitely marked as
  * such in this documentation.
  *
@@ -128,10 +128,10 @@ if movie_done "re:^http://" then
  * musique et des vidéos à vos présentations. Vous pouvez même jouer des vidéos
  * YouTube :
  *
- * @code
+@code
 import VLCAudioVideo
 movie "http://www.youtube.com/watch?v=jNQXAC9IVRw"
- * @endcode
+@endcode
  * @image html YouTube.png "Une vidéo YouTube dans un document Tao"
  *
  * Les flux multimédias sont identifiés par leur nom. Il est possible de
@@ -150,7 +150,7 @@ movie "http://www.youtube.com/watch?v=jNQXAC9IVRw"
  * lorsque vous changez de page dans l'exemple. Pour stopper la lecture,
  * on passe une chaîne vide à la fonction.
  *
- * @code
+@code
 import VLCAudioVideo
 
 jouer T:text ->
@@ -174,7 +174,7 @@ page "The End",
         color "Black"
         text "That's all Folks!"
     jouer ""
- * @endcode
+@endcode
  *
  * Pour commencer à jouer à une certaine position, utilisez
  * @ref movie_set_time ou @ref movie_set_position. Pour régler le volume,
@@ -191,9 +191,9 @@ page "The End",
  * préfixe  <tt>re:</tt> suivi d'une expression régulière. Par exemple, l'appel
  * suivant met en pause toutes les vidéos dont le chemin ou l'URL contient
  * <tt>.mov</tt>.
- * @code
+@code
 movie_pause "re:\.mov"
- * @endcode
+@endcode
  * Lorsque cette syntaxe est utilisée avec une fonction qui renvoie un booléen
  * (<tt>true</tt> ou <tt>false</tt>), comme
  * @ref movie_playing or @ref movie_paused, la valeur de retour est
@@ -202,10 +202,10 @@ movie_pause "re:\.mov"
  * toutes les vidéos correspondant à l'expression régulière.
  * Par exemple, vous pouvez déterminer si toutes les flux <tt>HTTP</tt>
  * précédemment démarrés on terminé grâce à :
- * @code
+@code
 if movie_done "re:^http://" then
     // Quelque chose
- * @endcode
+@endcode
  * Les fonctions qui autorisent la syntaxe <tt>re:</tt> sont explicitement
  * signalées dans cette documentation.
  *
@@ -254,7 +254,7 @@ movie(x:real, y:real, sx:real, sy:real, name:text);
  * Lit un fichier audio et/ou vidéo.
  * Cette fonction est équivalente à :
  * @~
- * @code movie 0, 0, 1, 1, name @endcode
+@code movie 0, 0, 1, 1, name @endcode
  * @see movie_texture.
  */
 movie(name:text);
@@ -276,30 +276,30 @@ movie(name:text);
  * Since version 1.03, it is possible to append media-specific VLC options to
  * the @p name. The separator is <tt>##</tt>. Several options may be specified,
  * separated with spaces. For instance:
- * @code
+@code
 movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
- * @endcode
+@endcode
  * Media options are part of @p name and therefore the same path or URL with
  * different options will create several player instances, as one would expect.
  * For instance, the following code will play <tt>movie.mp4</tt> twice, the top
  * rectangle shows the video from the beginning while the bottom one skips the
  * first minute:
- * @code
+@code
 color "white"
 movie_texture "video.mp4"
 rectangle 0, 180, 640, 360
 movie_texture "video.mp4##start-time=60"
 rectangle 0, -180, 640, 360
- * @endcode
+@endcode
  * Since version 1.06, individual options may also be separated by <tt>##</tt>.
  * If the option string contains at least one occurrence
  * of <tt>##</tt> (not including the initial one), then <tt>##</tt> is the
  * separator. Otherwise the separator is the space character.
  * This enables passing options that contain spaces.
  * For instance:
- * @code
+@code
 movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
- * @endcode
+@endcode
  * Refer to the VLC documentation for information on media-specific options.
  * @note Some VLC options have no effect, such as video filters which are
  * currently not useable within Tao Presentations.
@@ -321,30 +321,30 @@ movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
  * au média grâce au paramètre @p name. Le séparateur est <tt>##</tt>. Plusieurs
  * options peuvent être séparées par des espaces.
  * Par exemple :
- * @code
+@code
 movie_texture "video.mp4##input-repeat=1 start-time=10 stop-time=15"
- * @endcode
+@endcode
  * Les options font partie intégrante de @p name et donc le même chemin ou URL
  * mais avec des options différentes provoquera logiquement la création de
  * plusieurs lecteurs.
  * Par exemple, le code suivant joue <tt>video.mp4</tt> deux fois. Le rectangle
  * du haut joue la vidéo depuis le début, alors que celui du bas passe la
  * première minute:
- * @code
+@code
 color "white"
 movie_texture "video.mp4"
 rectangle 0, 180, 640, 360
 movie_texture "video.mp4##start-time=60"
 rectangle 0, -180, 640, 360
- * @endcode
+@endcode
  * Depuis la version 1.06, chaque option peut également être séparée de la suivante
  * par <tt>##</tt>. Si la chaîne d'options contient au moins une occurrence de
  * <tt>##</tt> (en plus de la première), alors <tt>##</tt> est le séparateur.
  * Sinon, c'est le caractère espace. Ceci permet de passer à VLC des options qui
  * contiennent des espaces. Par exemple :
- * @code
+@code
 movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
- * @endcode
+@endcode
  * Voyez la documentation VLC pour plus d'informations sur les options média
  * de VLC.
  * @note Certaines options n'ont aucun effet, comme par exemple les filtres
@@ -397,12 +397,12 @@ movie_texture(name:text, width:integer, height:integer);
  * relatives par rapport à la résolution native de la video. @p width et @p height sont
  * des réels compris entre 0.0 et 1.0. Par exemple:
  * @~
- * @code
+@code
 import VLCAudioVideo 1.05
 color "white"
 movie_texture_relative "test.mov", 50%, 50%
 rectangle 0, 0, texture_width, texture_height
- * @endcode
+@endcode
  * @see movie_texture(name:text), movie_texture(name:text, width:integer, height:integer), movie_drop, movie_only
  * @since 1.05
  */
@@ -526,7 +526,7 @@ movie_pause(name:text);
  * par la barre d'espace, et faire avancer image par image grâce à la touche
  * "n".
  * @~
- * @code
+@code
 import VLCAudioVideo
 
 Movie -> "movie.mp4"
@@ -542,7 +542,7 @@ key "Space" ->
         movie_pause Movie
     Paused := 1 - Paused
 key "n" -> movie_next_frame Movie
- * @endcode
+@endcode
  * @since 1.07
  **/
 movie_next_frame(name:text);
@@ -808,11 +808,11 @@ movie_set_loop(name:text, mode:boolean);
  * Cette fonction permet de passer des options spécifiques.
  * Par exemple :
  * @~
- * @code
+@code
 import VLCAudioVideo 1.02
 vlc_init "--http-proxy", "http://proxy.example.com:8080"
 movie "http://youtube.com/watch?v=bKpPTq3-Qic"
- * @endcode
+@endcode
  * @since 1.02
  */
 vlc_init(options:tree);
