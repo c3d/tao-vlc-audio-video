@@ -63,7 +63,11 @@ add_rpath() {
 echo "[$SCRIPT] # Processing: '$DYLIB'"
 
 change_install_name @loader_path/lib/libvlc.5.dylib @rpath/libvlc.5.dylib "$DYLIB"
-change_install_name @loader_path/lib/libvlccore.5.dylib @rpath/libvlccore.5.dylib "$DYLIB"
+if otool -l "$DYLIB" | grep @loader_path/lib/libvlccore.7.dylib; then
+    change_install_name @loader_path/lib/libvlccore.7.dylib @rpath/libvlccore.7.dylib "$DYLIB"
+else
+    change_install_name @loader_path/lib/libvlccore.5.dylib @rpath/libvlccore.5.dylib "$DYLIB"
+fi
 
 # Paths where to look for VLC, * IN ORDER *
 add_rpath @loader_path/vlc/lib "$DYLIB"
