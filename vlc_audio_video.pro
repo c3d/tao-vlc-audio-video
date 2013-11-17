@@ -93,7 +93,15 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
   QT       += core gui opengl
 
   INCLUDEPATH += "$${VLC}/include"
-  LIBS += -L"$${VLC}/lib" -lvlc -lvlccore
+  win32 {
+      # VLC >= 2.1 does not ship lib<name>.dll.a anymore. It does not provide lib<name>.a, either.
+      # The lib/ directory has lib<name>.lib which is non-standard since it would require -llib<name>.
+      # Fortunately, -l<name> will happily link against <name>.dll in the main directory.
+      LIBS += -L "$${VLC}/.."
+  } else {
+      LIBS += -L"$${VLC}/lib"
+  }
+  LIBS += -lvlc -lvlccore
   macx {
     LIBS += -framework AppKit
     QMAKE_POST_LINK = ./macosx_update_rpath_for_vlc.sh "$(TARGET)"
