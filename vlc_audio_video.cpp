@@ -544,6 +544,8 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
                          VlcVideoSurface::identify_callback,
                          surface, VlcVideoSurface::delete_callback);
     }
+    GL.Enable(GL_TEXTURE_2D);
+    GL.BindTexture(GL_TEXTURE_2D, id);
     GL.TextureSize(w, h);
 
     tao->refreshOn(QEvent::Timer, -1.0);

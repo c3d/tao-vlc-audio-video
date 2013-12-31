@@ -277,7 +277,6 @@ void VlcVideoSurface::transferPBO()
         GL.BindTexture(GL_TEXTURE_2D, textureId);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[1-curPBO]);
         doGLTexImage2D();
-        videoAvailableInTexture = true;
     }
 
     // Restore saved settings
@@ -299,8 +298,6 @@ void VlcVideoSurface::transferNoPBO()
 
     GL.BindTexture(GL_TEXTURE_2D, textureId);
     doGLTexImage2D();
-
-    videoAvailableInTexture = true;
     if (fps > 0)
         frameTime += lastRate / fps;
 }
@@ -327,7 +324,9 @@ void VlcVideoSurface::doGLTexImage2D()
 #endif
     GL.TexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, format, type,
                  usePBO ? NULL : image.ptr);
+    videoAvailableInTexture = true;
 }
+
 
 void VlcVideoSurface::exec()
 // ----------------------------------------------------------------------------
