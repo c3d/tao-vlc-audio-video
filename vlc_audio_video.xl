@@ -58,8 +58,7 @@ movie x:real, y:real, sx:real, sy:real, name:text ->
     locally
         color "white"
         movie_texture name
-        scale sx, sy, 1
-        rectangle x, y, texture_width, texture_height
+        rectangle x, y, texture_width * sx, texture_height * sy
 
 movie name:text -> movie 0, 0, 1, 1, name
 
