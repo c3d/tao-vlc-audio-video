@@ -180,7 +180,6 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
         // Tracing options
         IFTRACE(vlc)
         {
-            argv.append("--extraintf=logger");
             argv.append("--verbose=2");
         }
         else
