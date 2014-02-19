@@ -537,11 +537,13 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
     GLuint id = surface->texture();
     if (id != 0)
     {
-        w = surface->w;
-        h = surface->h;
-        tao->AddToLayout2(VlcVideoSurface::render_callback,
-                         VlcVideoSurface::identify_callback,
-                         surface, VlcVideoSurface::delete_callback);
+        VideoTrack * t = surface->currentVideoTrack();
+        t->ref();
+        w = t->width();
+        h = t->height();
+        tao->AddToLayout2(VideoTrack::render_callback,
+                          VideoTrack::identify_callback,
+                          t, VideoTrack::delete_callback);
     }
     GL.Enable(GL_TEXTURE_2D);
     GL.BindTexture(GL_TEXTURE_2D, id);
@@ -733,6 +735,21 @@ XL::Name_p VlcAudioVideo::movie_set_##id(text name, bool on)    \
 }
 
 MOVIE_BOOL_SETTER(loop, setLoop)
+
+XL::Name_p VlcAudioVideo::movie_set_video_stream(text name, int num)
+{
+    int st = 0;
+    foreach (VlcVideoBase *s, surfaces(name))
+    {
+        if (st == 0)
+            st = 1;
+        VlcVideoSurface * sf = dynamic_cast<VlcVideoSurface *>(s);
+        if (!sf || !sf->setVideoTrack(num))
+            if (st == 1)
+                st = 2;
+    }
+    return (st == 1) ? XL::xl_true : XL::xl_false;
+}
 
 XL_DEFINE_TRACES
 

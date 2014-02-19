@@ -106,6 +106,7 @@ public:
     static XL::Name_p           movie_set_time(text name, float position);
     static XL::Name_p           movie_set_rate(text name, float rate);
     static XL::Name_p           movie_set_loop(text name, bool on);
+    static XL::Name_p           movie_set_video_stream(text name, int num);
 
 protected:
     struct VlcCleanup

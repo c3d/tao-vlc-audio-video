@@ -37,6 +37,12 @@ HEADER=$$VLC/include/vlc/libvlc_media_player.h
 exists($$HEADER) {
   VLC_FOUND=1
   system(bash -c \"grep libvlc_video_set_format_callbacks \\\"$$HEADER\\\" >/dev/null 2>&1 \"):VLC_VERSION_OK=1
+  system(bash -c \"grep libvlc_video_format_cb_get_track_id \\\"$$HEADER\\\" >/dev/null 2>&1 \"){
+    !build_pass:message("[$${LITERAL_HASH}3355] OK, patched VLC found at $$HEADER")
+    DEFINES+=VLC_HAS_TRACK_ID
+  } else {
+    !build_pass:message("[$${LITERAL_HASH}3355] WARNING: VLC not patched, multi-stream playback will be unreliable ($$HEADER)")
+  }
 } else {
   !build_pass:macx:exists($$VLC/include/libvlc.h) {
       message("*** Broken MacOSX VLC package warning:")

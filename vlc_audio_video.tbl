@@ -164,3 +164,9 @@ PREFIX(MovieSetLoop,  tree,  "movie_set_loop",
        return VlcAudioVideo::movie_set_loop(u, b),
        GROUP(video)
        SYNOPSIS("Enable or disable loop mode for a given video."))
+PREFIX(MovieSetVideoStream,  tree,  "movie_set_video_stream",
+      PARM(u, text, "The URL of the movie")
+      PARM(n, integer, "The elementary stream id of the video stream"),
+      return VlcAudioVideo::movie_set_video_stream(u, n),
+      GROUP(video)
+      SYNOPSIS("Select which video stream to show in a multi-stream container."))

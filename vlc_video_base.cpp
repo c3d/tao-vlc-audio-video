@@ -576,7 +576,6 @@ void VlcVideoBase::setLoop(bool on)
 }
 
 
-
 std::ostream & VlcVideoBase::debug()
 // ----------------------------------------------------------------------------
 //   Convenience method to log with a common prefix
