@@ -613,6 +613,9 @@ void VideoTrack::transferPBO()
     glPopClientAttrib();
 
     curPBO = 1 - curPBO;
+
+    if (id == 0 && parent)
+        parent->updateTime();
 }
 
 
@@ -625,6 +628,9 @@ void VideoTrack::transferNoPBO()
 
     GL.BindTexture(GL_TEXTURE_2D, textureId);
     doGLTexImage2D();
+
+    if (id == 0 && parent)
+        parent->updateTime();
 }
 
 

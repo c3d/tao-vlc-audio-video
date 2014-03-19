@@ -72,6 +72,8 @@ public:
     // REVISIT make VlcVideoSurface::setState() public?
     void           _setState(State s) { setState(s); }
 
+    void          updateTime() { if (fps > 0) frameTime += lastRate/fps; }
+
 protected:
     unsigned                w, h;
     float                   wscale, hscale;
