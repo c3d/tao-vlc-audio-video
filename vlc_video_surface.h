@@ -72,8 +72,6 @@ public:
     // REVISIT make VlcVideoSurface::setState() public?
     void           _setState(State s) { setState(s); }
 
-    void          updateTime() { if (fps > 0) frameTime += lastRate/fps; }
-
 protected:
     unsigned                w, h;
     float                   wscale, hscale;
@@ -81,7 +79,6 @@ protected:
     int                     vtId;        // Current track id (-1: none)
     int                     nextVtId;    // Next available id for unumbered tracks
     bool                    usePBO;
-    float                   fps;         // -1: not tested, 0: unknown
     bool                    dropFrames;
     QMutex                  mutex;       // make videoFormat() thread-safe
 
@@ -163,6 +160,7 @@ protected:
     GLubyte               * curPBOPtr;
     QSet<void *>            allocatedFrames;
     unsigned                refs;
+    double                  frameTime;
 
 protected:
     std::ostream & debug();

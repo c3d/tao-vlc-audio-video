@@ -58,7 +58,7 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
     : VlcVideoBase(mediaNameAndOptions),
       w(w), h(h), wscale(wscale), hscale(hscale), vtId(-1), nextVtId(0),
       usePBO(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_1),
-      fps(-1), dropFrames(false)
+      dropFrames(false)
 {
     if (getenv("TAO_VLC_NO_PBO"))
         usePBO = false;
@@ -384,6 +384,8 @@ int VlcVideoSurface::newTrack(int es_id)
     return id;
 }
 
+
+
 // ============================================================================
 //
 //   VideoTrack
@@ -391,6 +393,9 @@ int VlcVideoSurface::newTrack(int es_id)
 // ============================================================================
 
 VideoTrack::VideoTrack(VlcVideoSurface *parent, unsigned id)
+// ----------------------------------------------------------------------------
+//   Individual video track in a multistream file
+// ----------------------------------------------------------------------------
     : parent(parent), id(id),
       w(parent->w), h(parent->h),
       wscale(parent->wscale), hscale(parent->hscale),
@@ -399,7 +404,7 @@ VideoTrack::VideoTrack(VlcVideoSurface *parent, unsigned id)
       videoAvailable(false), videoAvailableInTexture(false),
       usePBO(parent->usePBO),
       GLcontext(NULL),
-      curPBO(0), curPBOPtr(NULL), refs(1)
+      curPBO(0), curPBOPtr(NULL), refs(1), frameTime(-1)
 {
     IFTRACE(video)
         debug() << "Creation\n";
@@ -410,6 +415,9 @@ VideoTrack::VideoTrack(VlcVideoSurface *parent, unsigned id)
 
 
 VideoTrack::~VideoTrack()
+// ----------------------------------------------------------------------------
+//    Video track destructor
+// ----------------------------------------------------------------------------
 {
     IFTRACE(video)
         debug() << "Deleting texture\n";
@@ -614,8 +622,8 @@ void VideoTrack::transferPBO()
 
     curPBO = 1 - curPBO;
 
-    if (id == 0 && parent)
-        parent->updateTime();
+    if (parent)
+        frameTime = parent->updateTime(frameTime);
 }
 
 
@@ -629,8 +637,8 @@ void VideoTrack::transferNoPBO()
     GL.BindTexture(GL_TEXTURE_2D, textureId);
     doGLTexImage2D();
 
-    if (id == 0 && parent)
-        parent->updateTime();
+    if (parent)
+        frameTime = parent->updateTime(frameTime);
 }
 
 
@@ -660,6 +668,9 @@ void VideoTrack::doGLTexImage2D()
 
 
 void VideoTrack::updateTexture()
+// ----------------------------------------------------------------------------
+//   Update the texture in a thread-safe way
+// ----------------------------------------------------------------------------
 {
     if (videoAvailable)
     {

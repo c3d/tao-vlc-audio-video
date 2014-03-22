@@ -105,12 +105,14 @@ public:
     void           setLoop(bool on);
     QString        url ()   { return mediaName; }
     virtual void   exec();
+    double         updateTime(double frameTime);
 
 public:
     QString                 lastError;
     double                  lastTime;
     double                  lastRate;
     double                  frameTime;
+    double                  fps;         // -1: not tested, 0: unknown
     bool                    offline;
 
 protected:
@@ -190,5 +192,23 @@ protected:
 protected:
     static AsyncSetVolume *             inst;
 };
+
+
+inline double VlcVideoBase::updateTime(double prevTime)
+// ----------------------------------------------------------------------------
+//   Update time for the current stream
+// ----------------------------------------------------------------------------
+//   The input prevTime is used in the case of multistream movies.
+//   In that case, we don't know which stream is going to update time first.
+//   So we take as a reference frames that help us make "forward progress"
+{
+    if (fps > 0 && prevTime > 0)
+    {
+        double newTime = prevTime + lastRate/fps;
+        if (frameTime < newTime)
+            frameTime = newTime;
+    }
+    return frameTime;
+}
 
 #endif // VLC_VIDEO_BASE_H

@@ -69,7 +69,7 @@ VlcVideoBase::VlcVideoBase(QString mediaNameAndOptions)
 // ----------------------------------------------------------------------------
 //   Initialize a VLC media player to render a video
 // ----------------------------------------------------------------------------
-    : lastTime(-1.0), lastRate(1.0), frameTime(0),
+    : lastTime(-1.0), lastRate(1.0), frameTime(0), fps(-1),
       offline(false),
       vlc(VlcAudioVideo::vlcInstance()), player(NULL), media(NULL),
       state(VS_STOPPED), mevm(NULL), pevm(NULL), loopMode(false)
