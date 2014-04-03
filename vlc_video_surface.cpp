@@ -38,7 +38,6 @@
 #include "base.h"  // IFTRACE()
 #include <QApplication>  // qApp
 #include <QMutexLocker>
-#include <vlc/libvlc_version.h>
 #include <vlc/libvlc_events.h>
 #include <vlc/libvlc_media_list.h>
 #include <string.h>
