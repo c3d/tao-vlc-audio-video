@@ -45,6 +45,9 @@
 #include <iostream>
 
 class VlcVideoBase
+// ----------------------------------------------------------------------------
+//   Base class for VLC audio and video streams
+// ----------------------------------------------------------------------------
 {
 public:
     enum State
@@ -205,7 +208,8 @@ inline double VlcVideoBase::updateTime(double prevTime)
     if (fps > 0 && prevTime > 0)
     {
         double newTime = prevTime + lastRate/fps;
-        if (frameTime < newTime)
+        double oldestTime = prevTime - lastRate/fps;
+        if (frameTime >= oldestTime && frameTime < newTime)
             frameTime = newTime;
     }
     return frameTime;

@@ -544,6 +544,7 @@ void VlcVideoBase::setTime(float t)
     if (!vlc)
         return;
     libvlc_media_player_set_time(player, libvlc_time_t(t * 1000));
+    lastTime = frameTime = t;
     if (!offline)
         lastTime = libvlc_media_player_get_time(player) * 0.001;
 }
