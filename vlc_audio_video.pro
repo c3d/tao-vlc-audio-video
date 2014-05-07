@@ -28,7 +28,7 @@
 
 isEmpty(VLC) {
   # Default location for the VLC SDK
-  macx:VLC=/Applications/VLC.app/Contents/MacOS
+  macx:VLC=../../../vlc/build/VLC.app/Contents/MacOS
   win32:VLC=../../../VLC/sdk
   linux-g++*:VLC=/usr
 }
