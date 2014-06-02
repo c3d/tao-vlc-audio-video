@@ -432,9 +432,10 @@ float VlcVideoBase::time()
     double vlcTime = libvlc_media_player_get_time(player) * 0.001;
 
     // If VLC gives us a new time, take that
-    if (lastTime != vlcTime)
+    // Cannot rely on lastTime != vlcTime, see #3446
+    if (fabs(lastTime - vlcTime) >= 0.0005)
         lastTime = frameTime = vlcTime;
-        
+
     // Otherwise, compute the time from the sum of frames
     vlcTime = frameTime;
     return vlcTime;
