@@ -6,7 +6,7 @@
 //
 //   File Description:
 //
-//    Audio/video decoding and playback for Tao Presentations, based on VLC.
+//    Audio/video decoding and playback for Tao3D, based on VLC.
 //
 //
 //

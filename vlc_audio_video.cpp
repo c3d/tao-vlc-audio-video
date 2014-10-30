@@ -4,7 +4,7 @@
 //
 //   File Description:
 //
-//    Audio/video decoding and playback for Tao Presentations, based on VLC.
+//    Audio/video decoding and playback for Tao3D, based on VLC.
 //
 //
 //
@@ -232,7 +232,7 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
             return NULL;
         }
 
-        libvlc_set_user_agent(vlc, "Tao Presentations (LibVLC)", NULL);
+        libvlc_set_user_agent(vlc, "Tao3D (LibVLC)", NULL);
 
         IFTRACE(video)
         {

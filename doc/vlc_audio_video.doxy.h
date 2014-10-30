@@ -302,7 +302,7 @@ movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
 @endcode
  * Refer to the VLC documentation for information on media-specific options.
  * @note Some VLC options have no effect, such as video filters which are
- * currently not useable within Tao Presentations.
+ * currently not useable within Tao3D.
  * @~french
  * Crée une texture vidéo.
  * Cette primitive lit un fichier audio et/ou vidéo et rend disponible la
@@ -348,7 +348,7 @@ movie_texture "dshow://##dshow-vdev=Foomatic USB2 camera##"
  * Voyez la documentation VLC pour plus d'informations sur les options média
  * de VLC.
  * @note Certaines options n'ont aucun effet, comme par exemple les filtres
- * vidéo qui ne sont pas actuellement utilisables dans Tao Presentations.
+ * vidéo qui ne sont pas actuellement utilisables dans Tao3D.
  * @~
  * @see movie.
  */
@@ -411,7 +411,7 @@ movie_texture_relative(name:text, width:real, height:real);
 /**
  * @~english
  * Plays video in the Tao window with best performance.
- * A new graphical widget is created and covers the whole Tao Presentations
+ * A new graphical widget is created and covers the whole Tao3D
  * window. The video is rendered directly into this widget by libVLC.
  * The video is always sized to fit the window (which may or may not be in
  * fullscreen mode).
@@ -425,7 +425,7 @@ movie_texture_relative(name:text, width:real, height:real);
  * additional optimizations.
  * @~french
  * Lit un fichier vidéo dans la fenêtre Tao avec les meilleurs performances.
- * Une nouvelle zone graphique est créée par dessus celle de Tao Presentations et
+ * Une nouvelle zone graphique est créée par dessus celle de Tao3D et
  * la couvre entièrement. La vidéo est affichée directement dans cette
  * zone par libVLC. La vidéo est toujours affichée de telle manière à remplir
  * la fenêtre, que celle-ci soit ou non en mode plein écran.
