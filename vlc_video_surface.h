@@ -46,9 +46,9 @@
 #include <vlc/libvlc_media_player.h>
 #include <iostream>
 
-class VideoTrack;
+struct VideoTrack;
 
-class VlcVideoSurface : public VlcVideoBase
+struct VlcVideoSurface : VlcVideoBase
 // ----------------------------------------------------------------------------
 //    Make video from a file/URL available as a texture
 // ----------------------------------------------------------------------------
@@ -101,7 +101,7 @@ protected:
 
     static void    playerTimeChanged(const struct libvlc_event_t *, void *obj);
 
-friend class VideoTrack;
+    friend struct VideoTrack;
 };
 
 
@@ -183,7 +183,7 @@ protected:
     static void *  lockFrame(void *obj, void **plane);
     static void    displayFrame(void *obj, void *picture);
 
-friend class VlcVideoSurface;
+    friend struct VlcVideoSurface;
 };
 
 #endif // VLC_VIDEO_SURFACE_H

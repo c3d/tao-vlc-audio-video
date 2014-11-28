@@ -43,7 +43,7 @@
 #include <QStringList>
 
 
-class VlcVideoBase;
+struct VlcVideoBase;
 
 
 struct VlcAudioVideo
