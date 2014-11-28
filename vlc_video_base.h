@@ -33,18 +33,19 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
 // ****************************************************************************
 
-#include <qgl.h>
+#include "tao/tao_gl.h"
 #include <QMap>
 #include <QMutex>
 #include <QString>
 #include <QThread>
 #include <QWaitCondition>
+#include <QVector>
 #include <vlc/libvlc.h>
 #include <vlc/libvlc_media.h>
 #include <vlc/libvlc_media_player.h>
 #include <iostream>
 
-class VlcVideoBase
+struct VlcVideoBase
 // ----------------------------------------------------------------------------
 //   Base class for VLC audio and video streams
 // ----------------------------------------------------------------------------

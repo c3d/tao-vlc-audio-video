@@ -40,6 +40,7 @@
 #include <QMutex>
 #include <QImage>
 #include <QVector>
+#include <QSet>
 #include <vlc/libvlc.h>
 #include <vlc/libvlc_media.h>
 #include <vlc/libvlc_media_player.h>
@@ -104,7 +105,7 @@ friend class VideoTrack;
 };
 
 
-class VideoTrack
+struct VideoTrack
 // ----------------------------------------------------------------------------
 //    Receive images from 1 video track (video surface can have several tracks)
 // ----------------------------------------------------------------------------

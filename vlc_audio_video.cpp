@@ -49,8 +49,6 @@
 #include <QProcess>
 #endif
 
-#define GL (*graphic_state)
-
 
 inline QString operator +(std::string s)
 // ----------------------------------------------------------------------------
@@ -172,8 +170,6 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
 {
     if (!vlc)
     {
-        glewInit();
-
         QVector<const char *> argv;
         argv.append("--no-video-title-show");
 

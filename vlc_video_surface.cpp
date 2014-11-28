@@ -46,7 +46,7 @@
 #endif
 
 DLL_PUBLIC Tao::GraphicState * graphic_state = NULL;
-#define GL (*graphic_state)
+
 
 VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
                                  unsigned int w, unsigned int h,
@@ -61,11 +61,8 @@ VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
 {
     if (getenv("TAO_VLC_NO_PBO"))
         usePBO = false;
-#ifdef WIN32
-    if (glGenBuffers == NULL || glBufferData == NULL || glMapBuffer == NULL ||
-        glBindBuffer == NULL)
+    if (!GL.HasBuffers())
         usePBO = false;
-#endif
     IFTRACE(video)
         debug() << "Will " << (char*)(usePBO ? "" : "not ") << "use PBOs\n";
 }
@@ -428,7 +425,7 @@ VideoTrack::~VideoTrack()
     {
         IFTRACE(video)
             debug() << "Deleting PBOs\n";
-        glDeleteBuffers(2, pbo);
+        GL.DeleteBuffers(2, pbo);
     }
 
     IFTRACE(video)
@@ -585,8 +582,8 @@ void VideoTrack::transferPBO()
 
     // Copy and convert at the same time the latest picture into the current
     // PBO
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[curPBO]);
-    curPBOPtr = (GLubyte*) glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+    GL.BindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[curPBO]);
+    curPBOPtr = (GLubyte*) GL.MapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
     if (!curPBOPtr)
     {
         curPBOPtr = (GLubyte*)1;
@@ -605,14 +602,14 @@ void VideoTrack::transferPBO()
         QImage to((uchar *)curPBOPtr, w, h, QImage::Format_RGB32);
         convertToGLFormat(to, from);
     }
-    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    GL.UnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 
     // Copy from previous PBO to texture
 
     if (!firstFrame)
     {
         GL.BindTexture(GL_TEXTURE_2D, textureId);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[1-curPBO]);
+        GL.BindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[1-curPBO]);
         doGLTexImage2D();
     }
 
@@ -737,11 +734,11 @@ void VideoTrack::genPBO()
     // Assure we save and restore settings to avoid
     // conflict with Tao GL states
     glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
-    glGenBuffers(2, pbo);
-    glBindBuffer(t, pbo[0]);
-    glBufferData(t, image.size, NULL, GL_STREAM_DRAW);
-    glBindBuffer(t, pbo[1]);
-    glBufferData(t, image.size, NULL, GL_STREAM_DRAW);
+    GL.GenBuffers(2, pbo);
+    GL.BindBuffer(t, pbo[0]);
+    GL.BufferData(t, image.size, NULL, GL_STREAM_DRAW);
+    GL.BindBuffer(t, pbo[1]);
+    GL.BufferData(t, image.size, NULL, GL_STREAM_DRAW);
     curPBOPtr = (GLubyte *)1; // REVISIT?
     curPBO = 1;
 

@@ -36,6 +36,7 @@
 #include "base.h"  // IFTRACE()
 #include <QWidget>
 #include <QKeyEvent>
+#include <QPainter>
 #include <vlc/libvlc_media_player.h>
 
 
@@ -148,7 +149,7 @@ void VlcVideoFullscreen::startPlayback()
 #elif defined (Q_OS_UNIX)
         libvlc_media_player_set_xwindow(player, videoWidget->winId());
 #elif defined (Q_OS_WIN)
-        libvlc_media_player_set_hwnd(player, videoWidget->winId());
+        libvlc_media_player_set_hwnd(player, (void *) videoWidget->winId());
 #else
 #error "Don't know how to play video into a widget."
 #endif
