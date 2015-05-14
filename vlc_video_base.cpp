@@ -668,10 +668,10 @@ void AsyncSetVolume::run()
         if (done)
             return;
 
-        Q_ASSERT(!pendingPlayers.isEmpty());
+        XL_ASSERT(!pendingPlayers.isEmpty());
         libvlc_media_player_t * player = pendingPlayers.takeFirst();
-        Q_ASSERT(!pendingPlayers.contains(player));
-        Q_ASSERT(volumes.contains(player));
+        XL_ASSERT(!pendingPlayers.contains(player));
+        XL_ASSERT(volumes.contains(player));
         int volume = volumes[player];
         volumes.remove(player);
 

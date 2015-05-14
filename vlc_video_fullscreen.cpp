@@ -69,7 +69,7 @@ protected:
     virtual void closeEvent(QCloseEvent *event)
     {
         closing = true;
-        Q_ASSERT(vobj);
+        XL_ASSERT(vobj);
         vobj->stop();
         VlcAudioVideo::tao->removeWidget(this);
         event->accept();

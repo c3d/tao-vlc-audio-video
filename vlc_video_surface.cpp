@@ -524,8 +524,8 @@ static void convertToGLFormat(QImage &dst, const QImage &src)
     // Adapted from Qt source code: qglcpp
     // (License: LGPL)
 
-    Q_ASSERT(src.depth() == 32);
-    Q_ASSERT(dst.depth() == 32);
+    XL_ASSERT(src.depth() == 32);
+    XL_ASSERT(dst.depth() == 32);
 
     const int width = src.width();
     const int height = src.height();
@@ -569,8 +569,8 @@ void VideoTrack::transferPBO()
 //   PBO update and GL texture transfer
 // ----------------------------------------------------------------------------
 {
-    Q_ASSERT(image.ptr);
-    Q_ASSERT(image.size);
+    XL_ASSERT(image.ptr);
+    XL_ASSERT(image.size);
 
     checkGLContext();
 
@@ -728,7 +728,7 @@ void VideoTrack::genPBO()
 //   Create two GL Pixel Buffer Objects for asynchronous transfer to texture
 // ----------------------------------------------------------------------------
 {
-    Q_ASSERT(image.size);
+    XL_ASSERT(image.size);
     GLuint t = GL_PIXEL_UNPACK_BUFFER;
 
     // Assure we save and restore settings to avoid
@@ -765,7 +765,7 @@ void * VideoTrack::lockFrame(void *obj, void **plane)
 // ----------------------------------------------------------------------------
 {
     VideoTrack *v = (VideoTrack *)obj;
-    Q_ASSERT(v->image.size);
+    XL_ASSERT(v->image.size);
 
 #ifdef Q_OS_WIN32
     *plane = __mingw_aligned_malloc(v->image.size, 32);
@@ -787,7 +787,7 @@ void VideoTrack::displayFrame(void *obj, void *picture)
 // ----------------------------------------------------------------------------
 {
     VideoTrack *v = (VideoTrack *)obj;
-    Q_ASSERT(v->w && v->h && "Invalid video size");
+    XL_ASSERT(v->w && v->h && "Invalid video size");
 
     if (v->dropFrames())
     {
