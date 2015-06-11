@@ -60,7 +60,11 @@ movie x:real, y:real, sx:real, sy:real, name:text ->
         movie_texture name
         rectangle x, y, texture_width * sx, texture_height * sy
 
-movie name:text -> movie 0, 0, 1, 1, name
+movie name:text         -> movie 0, 0, 1, 1, name
+
+vlc_init Args           -> vlc_reset; vlc_args Args; vlc_init
+vlc_args Arg:text       -> vlc_arg Arg
+vlc_args Head, Rest     -> vlc_args Head; vlc_args Rest
 
 // This empty regular expression matches all currently known movies
 // May be used in all functions that support the "re:" syntax.

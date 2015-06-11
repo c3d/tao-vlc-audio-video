@@ -19,13 +19,22 @@
 //  (C) 2010-2011 Taodyne SAS
 // ****************************************************************************
 
-PREFIX(VlcInit,  tree,  "vlc_init",
-       PARM(t, tree, "The VLC options as a comma-separated list of text."),
-       return VlcAudioVideo::vlc_init(self, t),
+PREFIX(VlcReset,  name,  "vlc_reset", ,
+       return VlcAudioVideo::vlc_reset(self),
+       GROUP(video)
+       SYNOPSIS("Reset the VLC library options.")
+       DESCRIPTION("Clear the list of user-supplied VLC options."))
+PREFIX(VlcArg,  name,  "vlc_arg",
+       PARM(a, text, "One VLC option to pass to VLC initialization."),
+       return VlcAudioVideo::vlc_arg(self, a),
+       GROUP(video)
+       SYNOPSIS("Pass one specific init-time option to the VLC library.")
+       DESCRIPTION("Append the argument to the list of VLC options."))
+PREFIX(VlcInit,  name,  "vlc_init", ,
+       return VlcAudioVideo::vlc_init(self),
        GROUP(video)
        SYNOPSIS("Initialize the VLC library with specific options.")
-       DESCRIPTION("Append the specified options to the default ones, and "
-                   "initialize the VLC library."))
+       DESCRIPTION("Initialize the VLC library, passing user-supplied options"))
 PREFIX(MovieTexture,  tree,  "movie_texture",
        PARM(u, text, "The URL of the movie to play"),
        return VlcAudioVideo::movie_texture(context, self, u),

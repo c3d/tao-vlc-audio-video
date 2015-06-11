@@ -77,42 +77,9 @@ text VlcAudioVideo::modulePath;
 #endif
 libvlc_instance_t *         VlcAudioVideo::vlc = NULL;
 QStringList                 VlcAudioVideo::userOptions;
+QStringList                 VlcAudioVideo::lastUserOptions;
 bool                        VlcAudioVideo::initFailed = false;
 VlcAudioVideo::VlcCleanup   VlcAudioVideo::cleanup;
-
-
-
-struct ParseTextTree : XL::Action
-// ----------------------------------------------------------------------------
-//   Extract text from a tree of blocks and infixes, into a QStringList
-// ----------------------------------------------------------------------------
-{
-    ParseTextTree(QStringList &list) : list(list) {}
-
-    Tree *DoBlock(Block *what)
-    {
-        return what->child->Do(this);
-    }
-    Tree *DoInfix(Infix *what)
-    {
-        if (Tree * t = what->left->Do(this))
-            return t;
-        return what->right->Do(this);
-    }
-    Tree *DoText(Text *what)
-    {
-        list << +what->value;
-        return NULL;
-    }
-    Tree *Do(Tree *what)
-    {
-        Q_UNUSED(what); return NULL;
-    }
-
-    QStringList &list;
-};
-
-
 
 
 std::ostream & VlcAudioVideo::sdebug()
@@ -176,7 +143,7 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
         // Tracing options
         IFTRACE(vlc)
         {
-            argv.append("--verbose=2");
+            argv.append("--verbose=4");
         }
         else
         {
@@ -241,52 +208,47 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
 }
 
 
-XL::Name_p VlcAudioVideo::vlc_init(XL::Tree_p self, XL::Tree_p opts)
+XL::Name_p VlcAudioVideo::vlc_reset(XL::Tree_p self)
 // ----------------------------------------------------------------------------
-//   Add option to the list of VLC initialization options
+//   Clear the user options list
 // ----------------------------------------------------------------------------
 {
-    bool ok = (vlc != NULL);
-
-    if (!vlc)
-    {
-        QStringList options;
-        ParseTextTree parse(options);
-        opts->Do(parse);
-
-        // If previous init has failed, we want to try again only if options
-        // have changed
-        static QStringList prevOptions;
-        bool doInit = !initFailed || (options != prevOptions);
-        if (doInit)
-        {
-            prevOptions = options;
-            ok = vlcInit(options);
-            if (!ok)
-            {
-                QString err = "Failed to initialize libVLC: $1";
-                if (options.size())
-                {
-                    err += "\nCheck user-supplied options: ";
-                    foreach (QString opt, options)
-                        err += "'" + opt + "' ";
-                    err += "\n";
-                }
-                Ooops(+err, self);
-            }
-        }
-    }
-    return ok ? XL::xl_true : XL::xl_false;
+    Q_UNUSED(self);
+    userOptions.clear();
+    return XL::xl_true;
 }
 
 
-bool VlcAudioVideo::vlcInit(QStringList options)
+XL::Name_p VlcAudioVideo::vlc_arg(XL::Tree_p self, text opt)
 // ----------------------------------------------------------------------------
-//   Initialize VLC, possibly with additional options
+//   Append the given option to the list of user-defined options
 // ----------------------------------------------------------------------------
 {
-    userOptions = options;
-    return (vlcInstance() != NULL);
+    Q_UNUSED(self);
+    userOptions.append(+opt);
+    return XL::xl_true;
+}
+
+
+XL::Name_p VlcAudioVideo::vlc_init(XL::Tree_p self)
+// ----------------------------------------------------------------------------
+//   Initialize VLC with the given options
+// ----------------------------------------------------------------------------
+{
+    bool needInit = userOptions != lastUserOptions || (!vlc && !initFailed);
+    if (needInit)
+    {
+        if (vlc)
+            deleteVlcInstance();
+        lastUserOptions = userOptions;
+        libvlc_instance_t *ok = vlcInstance();
+        if (!ok)
+        {
+            Ooops("Failed to initialize VLC library: $1", self);
+            return XL::xl_false;
+        }
+    }
+    return XL::xl_true;
 }
 
 

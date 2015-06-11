@@ -60,8 +60,9 @@ public:
 
 public:
     // XL interface
-    static XL::Name_p           vlc_init(XL::Tree_p self,
-                                         XL::Tree_p opts);
+    static XL::Name_p           vlc_reset(XL::Tree_p self);
+    static XL::Name_p           vlc_arg (XL::Tree_p self, text opt);
+    static XL::Name_p           vlc_init(XL::Tree_p self);
 
     static XL::Integer_p        movie_texture(XL::Context_p context,
                                               XL::Tree_p self,
@@ -121,7 +122,6 @@ protected:
 protected:
     static VlcVideoBase *       surface(text name);
     static QList<VlcVideoBase*> surfaces(text name);
-    static bool                 vlcInit(QStringList options);
     static std::ostream &       sdebug();
 #ifdef USE_LICENSE
     static bool                 licenseOk();
@@ -140,7 +140,7 @@ protected:
 protected:
     static bool                 initFailed;
     static libvlc_instance_t *  vlc;
-    static QStringList          userOptions;
+    static QStringList          userOptions, lastUserOptions;
     static VlcCleanup           cleanup;
 
 public:
