@@ -208,23 +208,21 @@ libvlc_instance_t * VlcAudioVideo::vlcInstance()
 }
 
 
-XL::Name_p VlcAudioVideo::vlc_reset(XL::Tree_p self)
+XL::Name_p VlcAudioVideo::vlc_reset(XL::Tree_p /* self */)
 // ----------------------------------------------------------------------------
 //   Clear the user options list
 // ----------------------------------------------------------------------------
 {
-    Q_UNUSED(self);
     userOptions.clear();
     return XL::xl_true;
 }
 
 
-XL::Name_p VlcAudioVideo::vlc_arg(XL::Tree_p self, text opt)
+XL::Name_p VlcAudioVideo::vlc_arg(XL::Tree_p /* self */, text opt)
 // ----------------------------------------------------------------------------
 //   Append the given option to the list of user-defined options
 // ----------------------------------------------------------------------------
 {
-    Q_UNUSED(self);
     userOptions.append(+opt);
     return XL::xl_true;
 }
