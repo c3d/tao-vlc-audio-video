@@ -96,6 +96,10 @@ void VlcVideoSurface::stop()
 }
 
 
+// This is actually deprecated now
+LIBVLC_API float libvlc_media_player_get_fps( libvlc_media_player_t *p_mi );
+
+
 void VlcVideoSurface::exec()
 // ----------------------------------------------------------------------------
 //   Run state machine in main thread
