@@ -93,7 +93,7 @@ isEmpty(VLC_FOUND)|isEmpty(VLC_VERSION_OK) {
 
   QT       += core gui opengl
 
-  INCLUDEPATH += "$${VLC}/include"
+  !linux:INCLUDEPATH += "$${VLC}/include"
   win32 {
       # VLC >= 2.1 does not ship lib<name>.dll.a anymore. It does not provide lib<name>.a, either.
       # The lib/ directory has lib<name>.lib which is non-standard since it would require -llib<name>.
