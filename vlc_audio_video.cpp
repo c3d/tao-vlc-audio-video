@@ -442,7 +442,7 @@ XL::Integer_p VlcAudioVideo::movie_texture(XL::Context_p context,
         const int TIMEOUT = 2000;
         t0.start();
         surface->setTime(itime);
-        
+
         IFTRACE(video)
             sdebug() << "Seeking at " << t0.elapsed()
                      << " movie " << surface->time()

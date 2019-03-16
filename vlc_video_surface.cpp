@@ -47,6 +47,10 @@
 
 DLL_PUBLIC Tao::GraphicState * graphic_state = NULL;
 
+// REVISIT: Deprecated, but currently used to set audio delay in PBO case
+extern "C"
+float libvlc_media_player_get_fps( libvlc_media_player_t *p_mi );
+
 
 VlcVideoSurface::VlcVideoSurface(QString mediaNameAndOptions,
                                  unsigned int w, unsigned int h,
